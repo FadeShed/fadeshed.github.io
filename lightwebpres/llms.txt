@@ -1,0 +1,9 @@
+# LightWebPres
+
+> LightWebPres is a beta lightweight static publishing tool for Markdown-driven web pages and presentations.
+
+It generates self-contained HTML intended to be readable as a scrolling page and usable as a landscape presentation. It is suitable for human-written or agent-generated content.
+
+## Source
+
+- [GitHub repository](https://github.com/Fade78/lightwebpres): Source code, documentation, examples, and current release information.
