@@ -1,0 +1,68 @@
+name: Prepare approved site copy
+on:
+  push:
+    branches: ["install/fileshed-microsite-assets"]
+    paths: [".github/workflows/prepare-site-copy.yml"]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Build verified text blobs without changing main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, os, re
+          from urllib.request import Request, urlopen
+          root = 'https://api.github.com/repos/FadeShed/fadeshed.github.io'
+          headers = {'Authorization': 'Bearer '+os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'}
+          expected = {'index.html':'7cf5c72030ea4e161facbac1dbed7c7c031184c6', 'style.css':'8bc062260671fe2de4dd1c6f046430316fde636b', 'pasteberth/index.html':'a27128ec6dcfbf05fb7fca973ee30d140ed5d8fa'}
+          def read(path):
+              url = root+'/contents/'+path+'?ref=03b5b4c719f8ff76a6e1a838313ffec86cd0743c'
+              with urlopen(Request(url, headers=headers), timeout=30) as r:
+                  obj = json.load(r)
+              assert obj['sha'] == expected[path]
+              return base64.b64decode(obj['content']).decode('utf-8')
+          def replace(text, old, new, count=1):
+              assert text.count(old) == count, repr(old)
+              return text.replace(old, new)
+          home = read('index.html')
+          home = replace(home, 'https://avatars.githubusercontent.com/u/326678042?v=4', 'assets/fadeshed-mark.webp', 3)
+          home = replace(home, 'type="image/png"', 'type="image/webp"')
+          home = replace(home, 'href="style.css"', 'href="style.css?v=fileshed-2-alpha"')
+          home = replace(home, '<img src="assets/fadeshed-mark.webp" alt=""><span>Fade', '<img src="assets/fadeshed-mark.webp" alt="" width="42" height="42"><span>Fade')
+          home = replace(home, '<img src="assets/fadeshed-mark.webp" alt="">', '<img src="assets/fadeshed-mark.webp" width="448" height="394" alt="" fetchpriority="high">')
+          home = replace(home, 'A persistent filesystem workspace for LLM and agent workflows in Open WebUI.', 'An Open WebUI add-on that let LLMs run data workflows, transform documents and media, edit with history, collaborate, and deliver files.')
+          home = replace(home, 'Open WebUI OpenTerminal now covers much of the original need, so FileShed can rest on the shelf.', 'Retired as OpenTerminal took over much of my own workflow. The code and ideas remain worth exploring.')
+          home = replace(home, '<span class="link">Open project page →</span>', '<span class="link">Discover the FileShed story →</span>', 2) if False else home.replace('<span class="link">Open project page →</span>', '<span class="link">Discover the FileShed story →</span>', 1)
+          home = replace(home, '</head>', '<link rel="describedby" href="llms.txt" type="text/markdown">\n<link rel="alternate" href="index.md" type="text/markdown">\n</head>')
+          css = read('style.css')
+          css = replace(css, 'grid-template-columns:1.08fr .92fr', 'grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)')
+          css = replace(css, 'grid-template-columns:repeat(3,1fr)', 'grid-template-columns:repeat(3,minmax(0,1fr))')
+          old = '.hero-visual{position:relative;min-height:530px;display:flex;align-items:center;justify-content:center;overflow:visible}.hero-visual img{width:min(100%,500px);height:auto;display:block;clip-path:polygon(50% 12%,81% 30%,76% 35%,76% 66%,24% 66%,24% 35%,19% 30%);filter:drop-shadow(0 34px 34px rgba(0,0,0,.34));transform:scale(1.12)}'
+          new = '.hero-visual{position:relative;min-height:430px;display:flex;align-items:center;justify-content:center}.hero-visual img{width:min(100%,448px);height:auto;display:block;background:transparent}'
+          css = replace(css, old, new)
+          css = replace(css, '@media(max-width:850px)', 'a:focus-visible{outline:2px solid var(--amber2);outline-offset:5px}@media(max-width:850px)')
+          css = replace(css, '.hero-visual{order:-1;min-height:390px}.hero-visual img{width:min(76vw,410px);transform:scale(1.08)}', '.hero-visual{order:-1;min-height:300px}.hero-visual img{width:min(76vw,365px)}')
+          css = replace(css, '.hero-visual{min-height:300px}.hero-visual img{width:min(82vw,340px);transform:scale(1.05)}', '.hero-visual{min-height:240px}.hero-visual img{width:min(82vw,300px)}')
+          css = css.rstrip()+'@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}\n'
+          assert hashlib.sha256(css.encode()).hexdigest() == '6f49a58bdc1c7a6d3abcdbbd7e540aa510f4bc3b44f3e08a570a8d834d25116b'
+          pb = read('pasteberth/index.html')
+          pb = replace(pb, '05 / THE PRODUCT, NOT A MOCKUP', '05 / YOUR WORKSPACE, AT A GLANCE')
+          pb = replace(pb, '<h2>Real interface.<br><em>Public captures.</em></h2>', '<h2><span class="en">Your projects.<br><em>Your working files.</em></span><span class="fr">Vos projets.<br><em>Vos fichiers de travail.</em></span></h2>')
+          pb = replace(pb, '<p>These screenshots are loaded from Pasteberth’s public repository documentation. No private captures from the site design process are published here.</p>', '<p><span class="en">Browse project zones, preview an artifact, spot new arrivals and select several files for the next task.</span><span class="fr">Parcourez les zones de vos projets, prévisualisez un élément, repérez les nouveaux fichiers et sélectionnez ceux de votre prochaine tâche.</span></p>')
+          pb = replace(pb, 'alt="Pasteberth workspace"', 'alt="Project zones and artifact previews in Pasteberth"')
+          pb = replace(pb, 'alt="Pasteberth new files"', 'alt="New files highlighted in a project zone"')
+          pb = replace(pb, 'alt="Pasteberth multiple selection"', 'alt="Several artifacts selected for a group action"')
+          pb = replace(pb, '</head>', '<link rel="describedby" href="llms.txt" type="text/markdown">\n<link rel="alternate" href="index.md" type="text/markdown">\n</head>')
+          assert not re.search(r'private captures|public captures|not a mockup|site design process|public repository documentation', pb, re.I)
+          for path, text in [('index.html',home),('style.css',css),('pasteberth/index.html',pb)]:
+              body = json.dumps({'encoding':'utf-8','content':text}).encode()
+              with urlopen(Request(root+'/git/blobs', data=body, headers=headers, method='POST'), timeout=30) as r:
+                  result = json.load(r)
+              print(json.dumps({'path':path,'sha':result['sha'],'sha256':hashlib.sha256(text.encode()).hexdigest()}))
+          PY
