@@ -4,13 +4,13 @@ on:
     branches: ["install/fileshed-microsite-assets"]
     paths: [".github/workflows/import-fadeshed-mark.yml"]
 permissions:
-  contents: read
+  contents: write
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Check uploaded image against the installation package
+      - name: Restore and store the byte-exact approved image
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -18,27 +18,19 @@ jobs:
           python3 - <<'PY'
           import base64, hashlib, json, os
           from urllib.request import Request, urlopen
-          url = 'https://api.github.com/repos/FadeShed/fadeshed.github.io/git/blobs/9cbd455fef5bf5990dea5ab291317d074625eea9'
-          req = Request(url, headers={'Authorization': 'Bearer '+os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
-          with urlopen(req, timeout=30) as r:
-              data = base64.b64decode(json.load(r)['content'])
-          hashes = '''6c85f73bac8e3369a983ec03e8be26eafdb6e768d7142da378b9c671bba59033
-          16b15c095071314a718d8c6fda64998143841fbb1943e0de880cb2ffee6ea97f
-          7bd07776e1f691d36d97cf35ce802c3cda6cf60427210a0b9f183cb461c130fa
-          0cb27babe105f711f7bbe8ab7f0191c379f2f5da5ea0a3cb97ed00496eea52fd
-          89989eb2ae43d6ba0f02df9f1a046e1a2ca113417c9dbdccd116e01b907e7d96
-          621408b2f995c4e9f6fffc0af828b114d22439848b06fd6a2f81dd408ba5d9da
-          d0e1809ffde00cb9badece2243a9ad768779b06384d4d3093df3f4f2ea65734e
-          71b2ac4698107c243104c55e1fa103d4465579f882199485627481f56ca39d9b
-          da7ef0a34ea8cd2eff377df18da6520d9de63a8effb999b4380dbb7d8287c5c2
-          f52eb155628b75e2cf0a706ba4af312a7b4ce9693269d6649551b30590b1d07a
-          69496092512609a48d160e4f075ead9639295bec06172e3f6069dee1831c3dbb
-          ce41b664e598ddbc003fd16e273e29affc1746b702c1bf86c4cd1b7addc5f6a1'''.split()
-          print('Bytes:',len(data),'SHA256:',hashlib.sha256(data).hexdigest())
-          for n, expected in enumerate(hashes):
-              chunk = data[n*1024:(n+1)*1024]
-              if hashlib.sha256(chunk).hexdigest() != expected:
-                  print('Mismatched chunk', n, base64.b64encode(chunk).decode())
-          if hashlib.sha256(data).hexdigest() != '0d4b0d2c2c73cf4af54d51afbf24c54c2b2e06a7baab1cc571de29eefbca4fc5':
-              raise SystemExit('Image transfer integrity check failed; nothing published.')
+          root = 'https://api.github.com/repos/FadeShed/fadeshed.github.io/git/blobs'
+          headers = {'Authorization': 'Bearer '+os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'}
+          with urlopen(Request(root+'/9cbd455fef5bf5990dea5ab291317d074625eea9', headers=headers), timeout=30) as response:
+              data = base64.b64decode(json.load(response)['content'])
+          assert hashlib.sha256(data).hexdigest() == '2d2cf7dae3cb06f29a568a61566d53bfa98ec646e9df106fa434b4d7a9ba9b39'
+          # Remove the duplicated 15-byte run introduced in transport.
+          assert data[2209:2224].hex() == 'ea7fa5fe57ea7fa5fe57ea7fa5fe57'
+          data = data[:2209] + data[2224:]
+          assert len(data) == 11510
+          assert hashlib.sha256(data).hexdigest() == '0d4b0d2c2c73cf4af54d51afbf24c54c2b2e06a7baab1cc571de29eefbca4fc5'
+          payload = json.dumps({'encoding':'base64','content':base64.b64encode(data).decode()}).encode()
+          with urlopen(Request(root, data=payload, headers=headers, method='POST'), timeout=30) as response:
+              result = json.load(response)
+          assert result['sha'] == '48b0ac9c9ca8413f97837d948561e68fa7028344'
+          print('Verified image stored:', result['sha'])
           PY
