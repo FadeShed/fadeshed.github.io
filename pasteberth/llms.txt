@@ -1,0 +1,28 @@
+# Pasteberth
+
+> Pasteberth is a beta artifact staging and exchange layer backed by ordinary filesystem directories, with Web, clipboard, filesystem, CLI, API, and MCP access paths.
+
+Pasteberth is designed for agentic and mixed human/tool workflows. It does not assign fixed roles to participants: a human, agent, script, or process can use whichever interface fits its environment.
+
+## Core concepts
+
+- Zones are named artifact staging points backed by real directories.
+- Managed items are ordinary data files paired with JSON sidecars; unrelated files remain foreign.
+- Web users can paste, drag and drop, select, copy supported content, download files, and work with multiple items.
+- `drop` is daemon-backed and can publish files into a zone.
+- `register` is filesystem-only: it validates an existing regular file and creates or refreshes only its sidecar without contacting the daemon.
+- Dynamic zone collections can discover project exchange directories from filesystem conventions without per-project configuration edits or daemon restarts.
+
+## Typical uses
+
+- Personal staging: paste now, copy or download later.
+- Human ↔ agent, human ↔ human, agent ↔ agent, and process ↔ process artifact handoff.
+- Tool output without building a dedicated artifact GUI.
+- QA/debug loops with screenshots, logs, reports, archives, and other files.
+- Project templates that provision exchange directories automatically.
+
+## Source and documentation
+
+- [Pasteberth source](https://github.com/Fade78/pasteberth)
+- [Guide](https://github.com/Fade78/pasteberth/blob/main/GUIDE.md)
+- [Changelog](https://github.com/Fade78/pasteberth/blob/main/CHANGELOG.md)
