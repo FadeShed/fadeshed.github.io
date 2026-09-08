@@ -1,0 +1,16 @@
+# FadeShed
+
+> FadeShed is an open collection of practical software tools for agentic workflows, developer tooling, and human-agent collaboration.
+
+FadeShed projects are built from real workflow problems. They favor small, understandable tools that compose with agents, browsers, terminals, filesystems, and existing developer environments.
+
+## Projects
+
+- [FileShed](https://fadeshed.github.io/fileshed/llms.txt): Retired. A persistent filesystem workspace for LLM and agent workflows in Open WebUI. Open WebUI OpenTerminal now covers much of the original need.
+- [Pasteberth](https://fadeshed.github.io/pasteberth/llms.txt): Beta. Artifact staging and exchange across browsers, clipboards, filesystems, CLI tools, scripts, people and agents.
+- [LightWebPres](https://fadeshed.github.io/lightwebpres/llms.txt): Beta. Lightweight static publishing for Markdown-driven web pages and presentations.
+
+## Source
+
+- [FadeShed on GitHub](https://github.com/FadeShed): Organization home.
+- [Fade78](https://github.com/Fade78): Original source repositories while projects migrate into FadeShed.
