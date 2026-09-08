@@ -1,16 +1,25 @@
 # FadeShed
 
-> FadeShed is an open collection of practical software tools for agentic workflows, developer tooling, and human-agent collaboration.
+> FadeShed is Fade78's open software workshop: practical tools for agentic workflows, developer tooling, and collaboration between people and software.
 
-FadeShed projects are built from real workflow problems. They favor small, understandable tools that compose with agents, browsers, terminals, filesystems, and existing developer environments.
+The projects are independent and solve different problems. FileShed performs work inside Open WebUI; Pasteberth stages and exchanges artifacts across working contexts; LightWebPres publishes Markdown as readable pages and presentations. Agent-oriented does not mean agent-only, and no interface is reserved for a particular type of participant.
 
-## Projects
+Project status is explicit: **FileShed — Retired; Pasteberth — Beta; LightWebPres — Beta.** Retirement does not erase the code or imply complete equivalence with a successor. Beta is not a production-support or compatibility guarantee. Use each project's more specific `llms.txt` and the documentation matching the selected release or source revision.
 
-- [FileShed](https://fadeshed.github.io/fileshed/llms.txt): Retired. A persistent filesystem workspace for LLM and agent workflows in Open WebUI. Open WebUI OpenTerminal now covers much of the original need.
-- [Pasteberth](https://fadeshed.github.io/pasteberth/llms.txt): Beta. Artifact staging and exchange across browsers, clipboards, filesystems, CLI tools, scripts, people and agents.
-- [LightWebPres](https://fadeshed.github.io/lightwebpres/llms.txt): Beta. Lightweight static publishing for Markdown-driven web pages and presentations.
+## Choose a project
 
-## Source
+- [FileShed](https://fadeshed.github.io/fileshed/llms.txt): Open WebUI workbench for approved command execution, data pipelines, document and media transformations, precise edits, Git-versioned documents, group collaboration and authenticated deliverables. Retired when OpenTerminal covered much of the author's own workflow.
+- [Pasteberth](https://fadeshed.github.io/pasteberth/llms.txt): Self-hosted artifact staging through Web, filesystem, CLI and programmatic interfaces. Includes clipboard reuse, arbitrary allowed files, local registration without network transfer, and automatically discovered project zones. Beta.
+- [LightWebPres](https://fadeshed.github.io/lightwebpres/llms.txt): Markdown-to-HTML publishing with portrait reading, landscape navigation, long-form content, themes, presentation presets, identity kits, a CLI and a browser builder. Beta.
 
-- [FadeShed on GitHub](https://github.com/FadeShed): Organization home.
-- [Fade78](https://github.com/Fade78): Original source repositories while projects migrate into FadeShed.
+## Read the overviews
+
+- [FadeShed](https://fadeshed.github.io/index.md): workshop purpose, product relationships and status.
+- [FileShed workbench](https://fadeshed.github.io/fileshed/overview.md): capabilities, workspace model, historical workflow and source boundaries.
+- [Pasteberth staging model](https://fadeshed.github.io/pasteberth/index.md): artifacts, zones, participants, retrieval paths and limits.
+- [LightWebPres publishing model](https://fadeshed.github.io/lightwebpres/index.md): source, output, authoring interfaces, agent use and trust boundaries.
+
+## Optional
+
+- [Website repository](https://github.com/FadeShed/fadeshed.github.io): the organization site and product microsites, not the application implementations.
+- [Original application repositories](https://github.com/Fade78): source repositories while projects migrate to FadeShed.

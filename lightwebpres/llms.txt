@@ -1,9 +1,23 @@
 # LightWebPres
 
-> LightWebPres is a beta lightweight static publishing tool for Markdown-driven web pages and presentations.
+> LightWebPres is a single-file Python publisher that turns Markdown into self-contained HTML articles and presentations, with portrait reading, landscape navigation, optional long-form content and a series index.
 
-It generates self-contained HTML intended to be readable as a scrolling page and usable as a landscape presentation. It is suitable for human-written or agent-generated content.
+Status: **Beta**. The website package identifies its engine as **0.56.0, unreleased**. Match documentation to the chosen source or release rather than treating the website build as the latest stable version.
 
-## Source
+Use the CLI for unattended builds, strict audits, output verification and watch workflows. Identity, preset and theme are separate appearance concepts; self-contained Identity Kits can provide their own layouts, chrome and assets. The included Pyodide browser builder runs the same engine and requires HTTP(S). It is distinct from the separate `lightwebpres-gui` editor. The format skill describes syntax; the optional sourced-presentation skill describes an editorial method.
 
-- [GitHub repository](https://github.com/Fade78/lightwebpres): Source code, documentation, examples, and current release information.
+Trusted sources only: raw HTML and scripts can pass through. Speaker notes are published in the HTML; tags are not access controls. Deleting source files does not automatically remove stale output. The engine's GPL license and Output Exception distinguish the generator from normal generated presentations.
+
+## Start here
+
+- [Product overview](https://fadeshed.github.io/lightwebpres/index.md): publishing model, authoring interfaces, agent use, licensing and trust boundaries.
+- [Operational guide](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/GUIDE.md): create a series, author articles, choose appearance, build, verify and publish.
+- [Format skill](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/agent/skills/lightwebpres/SKILL.md): exact article grammar for people and agents.
+- [Glossary](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/GLOSSARY.md): fields, defaults and fallback behavior.
+
+## Optional
+
+- [Specification](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/specifications.md): detailed format and behavior reference in French.
+- [Editorial method](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/agent/skills/sourced-presentation/SKILL.md): optional source-grounded presentation workflow, separate from the renderer.
+- [Contributor guide](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/AGENTS.md): source layout, tests and contribution rules.
+- [FadeShed](https://fadeshed.github.io/llms.txt): related projects.

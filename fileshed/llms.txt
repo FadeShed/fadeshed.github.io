@@ -1,9 +1,22 @@
 # FileShed
 
-> FileShed is a retired persistent filesystem workspace for LLM and agent workflows in Open WebUI.
+> FileShed is a retired Open WebUI add-on for agentic work: command-driven operations, data pipelines, document and media transformations, precise editing, Git-versioned documents, group collaboration and authenticated deliverables. Persistent storage is one foundation, not its full scope.
 
-Status: Retired. Open WebUI OpenTerminal now covers much of the original need that motivated FileShed.
+Status: **Retired**. The author, Fade78, stopped active development when Open WebUI OpenTerminal covered much of his own workflow. The project remains available for its implementation and design ideas; this is not a current compatibility or maintenance promise.
 
-## Source
+Use FileShed's documentation for its Open WebUI tool-calling interface. Use Pasteberth for artifact staging between tools, or LightWebPres to publish Markdown as readable pages and presentations: they are different projects, not interchangeable implementations.
 
-- [GitHub repository](https://github.com/Fade78/Fileshed): Source code, documentation, and history.
+The documented workflow combines `shed_exec`, SQLite, CSV export, ZIP creation and authenticated download links. External commands must be installed; network access is disabled by default. Documents and Groups use automatic Git history, unlike every file in Storage. Application safeguards are not an OS sandbox. Personal encryption has documented limits.
+
+The source snapshot declares 1.1.0 and 44 public `shed_*` methods; the README and historical reports describe 1.0.5 and 38 functions. Read the source notes before relying on a version-specific feature or historical test result.
+
+## Start here
+
+- [Product overview](https://fadeshed.github.io/fileshed/overview.md): capabilities, workspace contexts, workflow, source versions and security boundaries.
+- [Original guide](https://raw.githubusercontent.com/Fade78/Fileshed/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/README.md): installation in Open WebUI, Native Function Calling, examples and function reference.
+- [Design specification](https://raw.githubusercontent.com/Fade78/Fileshed/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/docs/SPEC.md): layered architecture, groups, permissions, help, locking and encryption.
+
+## Optional
+
+- [Source](https://github.com/Fade78/Fileshed/tree/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9): the revision documented by this retrospective.
+- [FadeShed](https://fadeshed.github.io/llms.txt): the other tools and their status.
