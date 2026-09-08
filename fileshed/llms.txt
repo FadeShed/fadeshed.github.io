@@ -1,0 +1,9 @@
+# FileShed
+
+> FileShed is a retired persistent filesystem workspace for LLM and agent workflows in Open WebUI.
+
+Status: Retired. Open WebUI OpenTerminal now covers much of the original need that motivated FileShed.
+
+## Source
+
+- [GitHub repository](https://github.com/Fade78/Fileshed): Source code, documentation, and history.
