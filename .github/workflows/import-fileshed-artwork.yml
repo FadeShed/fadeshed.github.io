@@ -1,0 +1,52 @@
+name: Import verified FileShed artwork
+
+on:
+  push:
+    branches: ["install/fileshed-microsite-assets"]
+    paths: [".github/workflows/import-fileshed-artwork.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  import-artwork:
+    if: github.repository == 'FadeShed/fadeshed.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the staging branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Download and verify the two original public images
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from urllib.request import urlopen
+
+          base = 'https://raw.githubusercontent.com/Fade78/Fileshed/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/assets/'
+          images = [
+              ('Fileshed_logo.png', 'original-logo.png', '224997f7216581bd30fe3a71215eb16a0c991dfe650efcdb7ccfe3c1f44d9266'),
+              ('Fileshed_dl_to_sqlite_to_archive.png', 'original-workflow.png', 'bd913adee5163eec484a74ce52919df1d962c07321285c55332f6f3698d9286a'),
+          ]
+          destination = Path('fileshed/assets')
+          destination.mkdir(parents=True, exist_ok=True)
+          for original, target, expected in images:
+              with urlopen(base + original, timeout=60) as response:
+                  data = response.read(2_000_001)
+              if len(data) > 2_000_000 or hashlib.sha256(data).hexdigest() != expected:
+                  raise SystemExit('Image integrity check failed: ' + original)
+              path = destination / target
+              if path.is_symlink() or path.exists():
+                  raise SystemExit('Refusing to replace an existing path: ' + str(path))
+              path.write_bytes(data)
+              print('Verified:', path, len(data), 'bytes')
+          PY
+      - name: Commit only the verified images to the staging branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- fileshed/assets/original-logo.png fileshed/assets/original-workflow.png
+          git commit -m 'Import original FileShed artwork with verified SHA-256 [skip ci]'
+          git push origin HEAD:refs/heads/install/fileshed-microsite-assets
