@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Keep demo navigation compatible with the existing no-network sandbox CSP."""
 from pathlib import Path
+import ast
 import base64
 import hashlib
 import json
@@ -54,38 +55,26 @@ def main():
     embed_demo_chrome(out)
     bp = root / '.github/bilingual/build.py'
     text = bp.read_text()
-    marker = '    manifest={p.relative_to(output).as_posix():'
-    if marker not in text:
-        raise RuntimeError('Missing publication manifest hook')
-    text = text.replace(marker, '    from demo_chrome import embed_demo_chrome\n    embed_demo_chrome(output)\n' + marker, 1)
-    bp.write_text(text)
+    assignments = [node for node in ast.walk(ast.parse(text)) if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='manifest' for t in node.targets)]
+    if len(assignments)!=1:
+        raise RuntimeError('Expected one output manifest assignment: '+repr([(getattr(n,'lineno',0),type(n).__name__) for n in assignments]))
+    lines=text.splitlines(keepends=True);line=assignments[0].lineno-1;indent=lines[line][:len(lines[line])-len(lines[line].lstrip())]
+    lines[line:line]=[indent+'from demo_chrome import embed_demo_chrome\n',indent+'embed_demo_chrome(output)\n'];bp.write_text(''.join(lines))
     qp = root / '.github/bilingual/qa.py'
-    text = qp.read_text()
-    marker = "                check(f'Demo loads {locale}',frame.locator('.zone').count()>0)"
-    if marker not in text:
-        raise RuntimeError('Missing demo check hook')
-    additions = "\n                check(f'Embedded navigation hidden {locale}',not frame.locator('.fs-utility').is_visible())"
-    additions += "\n                check(f'Demo images decoded {locale}',frame.locator('img').evaluate_all(\"nodes=>nodes.filter(e=>e.getBoundingClientRect().width>0).every(e=>e.complete&&e.naturalWidth>0)\"))"
-    qp.write_text(text.replace(marker, marker + additions, 1))
+    text=qp.read_text();calls=[]
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node,ast.Expr) and isinstance(node.value,ast.Call) and isinstance(node.value.func,ast.Name) and node.value.func.id=='check' and node.value.args:
+            arg=node.value.args[0]
+            if isinstance(arg,ast.JoinedStr) and any(isinstance(v,ast.Constant) and isinstance(v.value,str) and v.value.startswith('Demo loads') for v in arg.values):calls.append(node)
+    if len(calls)!=1:raise RuntimeError('Expected one demo readiness assertion')
+    lines=text.splitlines(keepends=True);line=calls[0].end_lineno;indent=lines[calls[0].lineno-1][:len(lines[calls[0].lineno-1])-len(lines[calls[0].lineno-1].lstrip())]
+    lines[line:line]=[indent+"check(f'Embedded navigation hidden {locale}',not frame.locator('.fs-utility').is_visible())\n",indent+"check(f'Demo images decoded {locale}',frame.locator('img').evaluate_all(\"nodes=>nodes.filter(e=>e.getBoundingClientRect().width>0).every(e=>e.complete&&e.naturalWidth>0)\"))\n"]
+    qp.write_text(''.join(lines))
     manifest = out / 'assets/bilingual-manifest.json'
     data = json.loads(manifest.read_text())
     for name in ['pasteberth/demo.html', 'fr/pasteberth/demo.html']:
         data['files'][name] = hashlib.sha256((out / name).read_bytes()).hexdigest()
     manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-    workflow = root / '.github/workflows/publish-bilingual.yml'
-    wf = workflow.read_text()
-    start, end = wf.index('on:'), wf.index('permissions:')
-    wf = wf[:start] + 'on:\n  workflow_dispatch:\n' + wf[end:]
-    start = wf.index('      - name: Verify and unpack bilingual build sources')
-    end = wf.index('      - name: Install isolated browser test tooling', start)
-    workflow.write_text(wf[:start] + wf[end:])
-    prep = root / '.github/bilingual/prepare_commit.py'
-    text = prep.read_text()
-    marker = "    print('Uploading',len(files),'public/source files',flush=True)"
-    if marker not in text:
-        raise RuntimeError('Missing commit preparation hook')
-    text = text.replace(marker, "    files['.github/workflows/publish-bilingual.yml']=root/'.github/workflows/publish-bilingual.yml'\n" + marker, 1)
-    prep.write_text(text)
     print('Demo resources embedded; original sandbox CSP retained.')
 
 
