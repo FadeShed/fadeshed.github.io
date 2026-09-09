@@ -1,0 +1,66 @@
+name: Build and verify reader refresh
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-reader-refresh.yml'
+      - '.github/reader-refresh/refine.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: reader-refresh-publication
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify reviewed build sources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64,hashlib,json,lzma
+          root=Path('.github/reader-refresh')
+          encoded=''.join((root/('payload-%02d.txt'%i)).read_text().strip() for i in range(1,4))
+          packed=base64.b64decode(encoded,validate=True)
+          if hashlib.sha256(packed).hexdigest()!='82c595e4f6c300a8d66594e5d6ab003df2a9fbc8b19ecd942dacdc46deb3b5e8':raise RuntimeError('Source checksum mismatch')
+          data=json.loads(lzma.decompress(packed))
+          if set(data)!={'build.py','editorial.py','evergreen.py','reader-site.css','reader-site.js','capture.py','qa.py','prepare_commit.py'}:raise RuntimeError('Unexpected source set')
+          for name,text in data.items():(root/name).write_text(text,encoding='utf-8')
+          PY
+          if test -f .github/reader-refresh/refine.py; then python3 .github/reader-refresh/refine.py; fi
+      - name: Pull the current LightWebPres main
+        run: |
+          git clone --depth=1 --branch main https://github.com/Fade78/lightwebpres.git "$RUNNER_TEMP/upstream"
+          test "$(git -C "$RUNNER_TEMP/upstream" rev-parse HEAD)" = ec24ec481ee3b0083cb520398d4bea82885df8bf
+          echo 'Fetched the reviewed upstream main; binary identity is checked by the builder.'
+      - name: Install isolated rendering checks
+        run: |
+          python3 -m venv "$RUNNER_TEMP/reader-venv"
+          "$RUNNER_TEMP/reader-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0 pillow
+          "$RUNNER_TEMP/reader-venv/bin/python" -m playwright install --with-deps chromium
+      - name: Rebuild complete English and French sites
+        run: |
+          "$RUNNER_TEMP/reader-venv/bin/python" .github/reader-refresh/build.py --root . --upstream "$RUNNER_TEMP/upstream" --output "$RUNNER_TEMP/publication"
+      - name: Capture the working example for each edition
+        run: |
+          "$RUNNER_TEMP/reader-venv/bin/python" .github/reader-refresh/capture.py "$RUNNER_TEMP/publication" .
+      - name: Verify pages, languages, touch zoom, demos and browser builds
+        run: |
+          "$RUNNER_TEMP/reader-venv/bin/python" .github/reader-refresh/qa.py "$RUNNER_TEMP/publication" "$RUNNER_TEMP/qa"
+      - name: Prepare verified publication without moving main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/reader-refresh/prepare_commit.py
+      - name: Retain verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reader-refresh-qa
+          path: ${{ runner.temp }}/qa
+          retention-days: 3
+          if-no-files-found: warn
