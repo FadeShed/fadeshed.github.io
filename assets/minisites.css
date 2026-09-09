@@ -1,0 +1,40 @@
+/* Shared navigation, not a shared product theme. */
+body.fs-fileshed .hero>*,body.fs-fileshed .section-head>*,body.fs-fileshed .workflow-grid>*,body.fs-fileshed .engineering>*,body.fs-fileshed .legacy-grid>*{min-width:0}
+body.fs-fileshed pre{max-width:100%}
+@media(max-width:440px){body.fs-fileshed .hero h1{font-size:clamp(3.6rem,18vw,4.8rem)}body.fs-fileshed .deliverable>div{min-width:0}body.fs-fileshed .deliverable strong{overflow-wrap:anywhere}}
+
+.fs-breadcrumb{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap;font:500 14px/1.4 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--fs-ink,#142b40)}
+.fs-breadcrumb a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;min-height:44px;gap:10px;font:inherit;letter-spacing:normal}
+.fs-breadcrumb .fs-home{font-weight:780;white-space:nowrap}
+.fs-home img{display:block;width:32px;height:30px;object-fit:contain;border:0;border-radius:0;box-shadow:none;filter:none;transform:none;clip-path:none}
+.fs-home strong{color:var(--fs-accent,#be4709);font-weight:inherit}
+.fs-breadcrumb .fs-separator{opacity:.5;font-weight:400}
+.fs-breadcrumb .fs-product{white-space:nowrap;font-weight:550}
+.fs-breadcrumb a:hover{text-decoration:underline;text-underline-offset:4px}
+.fs-breadcrumb a:focus-visible,.fs-utility a:focus-visible{outline:3px solid var(--fs-focus,#3182d5);outline-offset:4px;border-radius:3px}
+.fs-status{display:inline-flex;align-items:center;padding:4px 7px;border:1px solid #608674;border-radius:4px;font:700 10px/1.35 ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--fs-status-ink,#235c42);background:var(--fs-status-bg,#edf8f0)}
+.fs-on-dark{--fs-ink:#edf1f4;--fs-accent:#f0bc67;--fs-focus:#badafa;--fs-status-ink:#b7eed1;--fs-status-bg:#173629}
+.fs-utility{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-sizing:border-box;padding:10px 24px;border-bottom:1px solid #8896a333;background:var(--fs-surface,#f6f5f0);font:13px/1.4 system-ui,sans-serif}
+.fs-utility.fs-on-dark{--fs-surface:#111b25;color:#edf1f4}
+.fs-utility>a{color:inherit;min-height:44px;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.fs-utility.fs-floating{position:fixed;inset:0 0 auto;z-index:25;background:var(--fs-surface,#111b25);padding-block:4px}
+:fullscreen .fs-utility.fs-floating{display:none}
+body.fs-pasteberth .header-inner{gap:18px}
+body.fs-pasteberth .fs-breadcrumb{flex-shrink:0;gap:9px}
+body.fs-pasteberth .header-actions{flex-shrink:0}
+body.fs-pasteberth .desktop-nav{gap:20px}
+body.fs-pasteberth .hero-proof .fs-status:before{display:none}
+body.fs-pasteberth .documentation-links a{color:var(--ink,#142b40)}
+body.fs-pasteberth .demo-status{flex-wrap:wrap;gap:6px}
+body.fs-pasteberth .demo-status>span{min-width:0}
+body.fs-pasteberth .demo-notes p{max-width:760px}
+body.fs-fileshed .nav>.fs-breadcrumb{flex-shrink:0}
+body.fs-fileshed .nav nav a{display:inline-flex}
+.lwp-web-nav>.fs-breadcrumb{--fs-ink:#eef0ed;--fs-accent:#f0bc67;--fs-focus:#d8f986;gap:10px;flex-shrink:0}
+.lwp-web-nav>.fs-breadcrumb .fs-status{--fs-status-ink:#d7fca7;--fs-status-bg:#273521}
+.lwp-web-nav{flex-wrap:wrap;gap:12px}
+@media(max-width:1100px){body.fs-pasteberth .header-cta{display:none}body.fs-pasteberth .desktop-nav{gap:14px}}
+@media(max-width:850px){body.fs-pasteberth .desktop-nav{display:none}body.fs-pasteberth .menu-toggle{display:inline-flex}}
+@media(max-width:620px){.fs-breadcrumb{gap:8px;font-size:13px}.fs-home img{width:29px;height:28px}.fs-breadcrumb a{gap:7px}body.fs-pasteberth .header-inner{flex-wrap:wrap;justify-content:space-between;padding-block:8px;gap:2px 10px}body.fs-pasteberth .header-actions{margin-left:auto}body.fs-pasteberth .header-inner .fs-status{display:none}.fs-utility{padding:8px 14px}.fs-utility.fs-floating>a{display:none}.lwp-web-nav>.fs-breadcrumb{gap:7px}.lwp-web-nav .fs-status{display:none}.lwp-web-nav-links{flex-wrap:wrap}.fs-breadcrumb .fs-product{font-size:13px}body.fs-fileshed .nav{column-gap:12px}body.fs-fileshed .nav nav{flex-wrap:wrap;gap:14px}}
+@media print{.fs-utility,.fs-breadcrumb{display:none!important}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

@@ -1,57 +1,38 @@
 # Pasteberth
 
-> Your files, ready for what's next. A self-hosted artifact staging and exchange layer backed by ordinary filesystem directories.
+> Your files. Ready for what is next.
 
-Status: **Beta**. Pasteberth is a FadeShed project. It helps move work between clipboard-oriented, browser-oriented and filesystem-oriented contexts without requiring a separate artifact interface for every tool.
+**Beta.** Pasteberth is a self-hosted place to stage and retrieve working files across browsers, clipboards, terminals and filesystems. A person, an agent or a script can use whichever interface fits. It is useful alone as well as between participants.
 
-## Artifacts, not just pasted screenshots
+## Put it down once; pick it up your way
 
-An artifact can be an image, text, HTML clipboard content, a PDF, a spreadsheet, CSV, an archive, a log or another allowed file. Storing and retrieving a format is not the same as interpreting it. Specialized previews and clipboard-copy behavior are available only for supported content types.
+Paste a screenshot or text, drop a PDF or workbook, or publish a script's output. Retrieve supported content through the clipboard, copy a server-side filesystem reference, download the file, or collect a selection as a ZIP when enabled. A copied reference is not a public URL: its consumer needs filesystem access to that path. Pasteberth stores arbitrary allowed files, but does not edit their document formats.
 
-An item can be deposited once and picked up later as supported clipboard content, a filesystem reference or path, a downloaded file, or part of a multi-selection. A solo user can paste something now and copy it again later. Two people, a person and an agent, two agents, or scripts and processes can also exchange artifacts. Pasteberth does not require the human to use the graphical interface or the agent to use the CLI.
+## Try the workspace
 
-## A zone is a real directory
+The [interactive demo](https://fadeshed.github.io/pasteberth/#interface) includes sample files, project views, selection, comments, transfers and downloads. Additions remain in the browser tab's memory and disappear on reset or reload. The sandbox is not an authenticated or persistent Pasteberth installation.
 
-A zone is a named staging or exchange point on the filesystem used by the Pasteberth service. Managed items pair a data file with a JSON sidecar. A coherent sidecar identifies a file as managed; unrelated files do not automatically become Pasteberth items.
+## Ordinary files, explicit publication
 
-The filesystem is an interface, not an opaque storage implementation. Normal tools can produce ordinary files. A copied file can be registered where it already belongs:
+A managed item consists of a data file and its JSON sidecar. `register FILE` creates or refreshes the sidecar of a completed local regular file without rewriting data or contacting the daemon. It does not apply the running daemon's retention or per-zone free-space policy. Use a fresh name and the [safe registration recipe](reference/docs/recipes/register-file.md) rather than overwriting an existing managed pair.
 
-```sh
-cp report.pdf /repo/atlas/ignoredbygit/exchange/
-pasteberth register /repo/atlas/ignoredbygit/exchange/report.pdf
-```
+`drop` asks the daemon to publish; even direct local staging still contacts it. HTTP supports the documented browsing and managed operations. MCP currently exposes only `drop` to a known zone. None of these interfaces assigns a human or agent to a particular side.
 
-`register` validates the existing file and creates or refreshes its sidecar. It does not rewrite the data file or contact the daemon. This is not an upload.
+## Project conventions
 
-`drop` is different: it contacts the service. Local staging can avoid transferring a large payload through HTTP, but the operation is still daemon-backed. The optional MCP adapter provides a publication path for compatible tools; its existence does not imply a full browsing or administration API.
+A collection can discover existing exchange directories such as `/repo/<project>/ignoredbygit/exchange`. Configure the rule and a group once; project templates provide eligible directories and permissions. A later overview refresh exposes new matching zones. This is request-triggered scanning, not an instantaneous watcher. Discovery creates neither projects nor managed files. Groups can provide focused views without duplicating data.
 
-## Automatic project discovery
+## Context, not an imposed process
 
-Zone collections can discover directories that match a convention such as `/repo/<project>/ignoredbygit/exchange`. Project templates create the directories with suitable permissions; Pasteberth discovers eligible matches on refresh. No per-project configuration edit or daemon restart is needed.
-
-Discovery uses background scanning, not instantaneous filesystem notifications. It does not create the project directories, bypass permissions or turn Pasteberth into an unrestricted recursive file browser. Groups organize views of zones; they are not access-control boundaries.
-
-## Working with the interface
-
-Browse project zones, preview an artifact, spot new arrivals and select several files for the next task. For supported content, copy it back to the clipboard. Use a file reference when another tool works on the same filesystem, or download the actual file when that is what the next context needs.
-
-Multi-selection and zone transfers support working sets rather than only individual files. Commands and available operations should be checked against the installed release.
-
-## Common workflows
-
-- Personal staging: paste now, copy or retrieve later.
-- Document handoff: stage a workbook and requirements document, then retrieve a generated report or archive.
-- Agent and script outputs: keep producing files while Pasteberth provides the interface for inspection and retrieval.
-- QA and debugging: collect screenshots, logs and diagnostic bundles in a project zone.
-- Template-provisioned exchange: let new workspaces appear through a common directory convention.
-
-## Boundaries
-
-Pasteberth is not a cloud drive, a public file host, a document editor, a synchronization service between independent servers, or an identity-management platform. A server-side path is useful only in a context that can access that filesystem. Rich clipboard support is not universal file-format support. Review authentication, permissions and deployment guidance before exposing the service beyond its intended environment.
+Zones can be organized by project, subject or stage. Comments can carry context; copies and moves can support review. There is no enforced order, assignment or approval system. Retention can delete older items, and multi-file operations may partially succeed. Important deliverables belong in durable storage outside the working area.
 
 ## Documentation
 
-- [README](https://github.com/Fade78/pasteberth/blob/main/README.md): product entry point and release-specific requirements.
-- [User guide](https://github.com/Fade78/pasteberth/blob/main/GUIDE.md): installation, configuration, CLI and operational guidance.
-- [Agent index](llms.txt): the short path to relevant documentation.
-- [FadeShed](../index.md): related projects.
+- [Task map](reference/GUIDE.md)
+- [Using Pasteberth](reference/docs/using-pasteberth.md)
+- [Integrations](reference/docs/integrations.md)
+- [Project provisioning](reference/docs/provisioning.md)
+- [Deployment and trust boundaries](reference/docs/deployment.md)
+- [Agent index](llms.txt)
+
+The service uses shared authentication, not individual accounts or per-zone ACLs. The documentation snapshot describes the pinned source used for this site; follow the release matching your installation. Pasteberth is AGPL-3.0-or-later.

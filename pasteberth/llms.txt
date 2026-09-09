@@ -1,20 +1,34 @@
 # Pasteberth
 
-> Pasteberth is a self-hosted staging and exchange layer for files and clipboard artifacts, backed by ordinary filesystem directories and accessible through Web, filesystem, CLI and programmatic workflows.
+> Pasteberth stages, exchanges and retrieves files and clipboard content across working contexts, using ordinary filesystem directories.
 
-Status: **Beta**. An artifact is not limited to text or screenshots: PDFs, spreadsheets, archives and other allowed files can also be staged and retrieved. Previewing or copying content to the clipboard depends on the content type. Participants may be one person returning later, people, agents, scripts or processes; graphical and terminal interfaces are not assigned to fixed roles.
+Status: **Beta**. Use it alone, between people, between agents, or with scripts and other tools. Web, filesystem, CLI, HTTP API and MCP are access choices, not assigned participant roles. PDFs, workbooks, archives and other allowed files are useful without document-format interpretation; previews and clipboard copying depend on content and browser capabilities.
 
-A zone is a named directory. Managed items use a coherent data-file/JSON-sidecar pair; unrelated files remain foreign. `cp` followed by `register` validates an existing file and creates or refreshes the sidecar without rewriting the data or contacting the daemon. `drop` contacts the service, even when local staging avoids an HTTP payload transfer. The optional MCP adapter is a publication interface, not a claim of complete browsing and administration support.
+A managed item is a data file plus a coherent JSON sidecar. Publication is explicit. `register FILE` validates a completed local file and creates or refreshes its sidecar, without rewriting data or contacting the daemon. `drop` always contacts the daemon, even when direct local staging avoids an HTTP payload transfer. MCP exposes only `drop` to a known zone; use HTTP or filesystem interfaces for other operations.
 
-Zone collections discover eligible directories through background scans. Project templates can provision exchange directories under a shared convention; discovery does not create them or bypass permissions. Groups are views, not ACLs. Pasteberth is not a public file host, cloud drive or cross-server synchronization service.
+Collections discover eligible existing leaf directories by configured conventions. Project templates can create them without per-project Pasteberth configuration changes. Service reads trigger discovery, with background scans for Web overviews and visible-browser polling; there is no instantaneous filesystem watcher. Discovery does not register the files inside a zone. Groups are views, not ACLs. Comments and transfers allow optional workflows without assignments or approvals. Retention can remove older items: this is a working area, not backup or permanent storage.
 
-## Start here
+## Discover and use
 
-- [Product overview](https://fadeshed.github.io/pasteberth/index.md): artifact model, solo and collaborative uses, clipboard reuse, local registration, discovery and limits.
-- [README](https://raw.githubusercontent.com/Fade78/pasteberth/main/README.md): entry point and requirements; check the version corresponding to the installed release.
-- [User guide](https://raw.githubusercontent.com/Fade78/pasteberth/main/GUIDE.md): installation, configuration, CLI, zone collections and deployment guidance.
+- [Overview](https://fadeshed.github.io/pasteberth/index.md): purposes, publication, retrieval and boundaries.
+- [Interactive sandbox](https://fadeshed.github.io/pasteberth/#interface): sample files, selection, transfers and downloads; browser-memory simulation, not the deployed service.
+- [Documentation map](https://fadeshed.github.io/pasteberth/reference/GUIDE.md): choose a task and its reference.
+- [Concepts](https://fadeshed.github.io/pasteberth/reference/docs/concepts.md): artifacts, zones, groups and optional workflows.
+- [Using Pasteberth](https://fadeshed.github.io/pasteberth/reference/docs/using-pasteberth.md): paste, select, inspect, copy and download.
+- [Project provisioning](https://fadeshed.github.io/pasteberth/reference/docs/provisioning.md): configure collections once and provision eligible exchange directories.
+
+## Integrate and deploy
+
+- [Integrations](https://fadeshed.github.io/pasteberth/reference/docs/integrations.md): interfaces, locality and daemon dependencies.
+- [Safe local registration](https://fadeshed.github.io/pasteberth/reference/docs/recipes/register-file.md): avoid data and sidecar collisions; registration is not managed replacement.
+- [CLI](https://fadeshed.github.io/pasteberth/reference/docs/reference/cli.md): exact commands and exit codes.
+- [HTTP API](https://fadeshed.github.io/pasteberth/reference/docs/reference/api.md): browsing, retrieval and managed operations.
+- [MCP](https://fadeshed.github.io/pasteberth/reference/docs/reference/mcp.md): publication tool and partial-success behavior.
+- [Deployment](https://fadeshed.github.io/pasteberth/reference/docs/deployment.md): Linux support, configuration, permissions, authentication and HTTPS.
 
 ## Optional
 
-- [Source and release history](https://github.com/Fade78/pasteberth): implementation and published versions.
-- [FadeShed](https://fadeshed.github.io/llms.txt): related tools and project status.
+- [Current-result recipe](https://fadeshed.github.io/pasteberth/reference/docs/recipes/current-result.md): explicit replacement of managed items.
+- [Free-form zone workflow](https://fadeshed.github.io/pasteberth/reference/docs/recipes/zone-workflow.md): use comments and transfers without imposed process.
+- [Upstream source and releases](https://github.com/Fade78/pasteberth): match technical documentation to your installed revision.
+- [FadeShed](https://fadeshed.github.io/llms.txt): related tools.

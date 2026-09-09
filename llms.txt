@@ -12,6 +12,12 @@ Project status is explicit: **FileShed — Retired; Pasteberth — Beta; LightWe
 - [Pasteberth](https://fadeshed.github.io/pasteberth/llms.txt): Self-hosted artifact staging through Web, filesystem, CLI and programmatic interfaces. Includes clipboard reuse, arbitrary allowed files, local registration without network transfer, and automatically discovered project zones. Beta.
 - [LightWebPres](https://fadeshed.github.io/lightwebpres/llms.txt): Markdown-to-HTML publishing with portrait reading, landscape navigation, long-form content, themes, presentation presets, identity kits, a CLI and a browser builder. Beta.
 
+## Explore the products
+
+- [FileShed workbench](https://fadeshed.github.io/fileshed/): retired Open WebUI add-on, illustrated with data pipelines and deliverables.
+- [Pasteberth demo](https://fadeshed.github.io/pasteberth/#interface): an interactive browser-memory workspace with sample files.
+- [LightWebPres portal](https://fadeshed.github.io/lightwebpres/): complete supplied portal, articles, demonstration, guide, downloads and browser builder.
+
 ## Read the overviews
 
 - [FadeShed](https://fadeshed.github.io/index.md): workshop purpose, product relationships and status.

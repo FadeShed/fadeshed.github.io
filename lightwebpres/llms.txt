@@ -8,16 +8,24 @@ Use the CLI for unattended builds, strict audits, output verification and watch 
 
 Trusted sources only: raw HTML and scripts can pass through. Speaker notes are published in the HTML; tags are not access controls. Deleting source files does not automatically remove stale output. The engine's GPL license and Output Exception distinguish the generator from normal generated presentations.
 
+## Try and explore
+
+- [Full product portal](https://fadeshed.github.io/lightwebpres/): six paths through reading, authoring, appearance and publishing; the supplied portal is in French.
+- [Interactive example](https://fadeshed.github.io/lightwebpres/demo/ma-page.html): one document to read in portrait or present in landscape.
+- [Rendered guide](https://fadeshed.github.io/lightwebpres/guide/guide.html): full operational manual as a LightWebPres document.
+- [Theme gallery](https://fadeshed.github.io/lightwebpres/themes.html): inspect built-in themes in rendered examples.
+- [Browser builder](https://fadeshed.github.io/lightwebpres/web/): build a series in a tab with the bundled engine and local Pyodide assets; HTTP(S) required.
+
 ## Start here
 
 - [Product overview](https://fadeshed.github.io/lightwebpres/index.md): publishing model, authoring interfaces, agent use, licensing and trust boundaries.
-- [Operational guide](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/GUIDE.md): create a series, author articles, choose appearance, build, verify and publish.
-- [Format skill](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/agent/skills/lightwebpres/SKILL.md): exact article grammar for people and agents.
-- [Glossary](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/GLOSSARY.md): fields, defaults and fallback behavior.
+- [Operational guide](https://fadeshed.github.io/lightwebpres/reference/GUIDE.md): create a series, author articles, choose appearance, build, verify and publish.
+- [Format skill](https://fadeshed.github.io/lightwebpres/reference/agent/skills/lightwebpres/SKILL.md): exact article grammar for people and agents.
+- [Glossary](https://fadeshed.github.io/lightwebpres/reference/GLOSSARY.md): fields, defaults and fallback behavior.
 
 ## Optional
 
-- [Specification](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/specifications.md): detailed format and behavior reference in French.
-- [Editorial method](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/agent/skills/sourced-presentation/SKILL.md): optional source-grounded presentation workflow, separate from the renderer.
-- [Contributor guide](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/AGENTS.md): source layout, tests and contribution rules.
+- [Specification](https://fadeshed.github.io/lightwebpres/reference/specifications.md): detailed format and behavior reference in French.
+- [Editorial method](https://fadeshed.github.io/lightwebpres/reference/agent/skills/sourced-presentation/SKILL.md): optional source-grounded presentation workflow, separate from the renderer.
+- [Contributor guide](https://fadeshed.github.io/lightwebpres/reference/AGENTS.md): source layout, tests and contribution rules.
 - [FadeShed](https://fadeshed.github.io/llms.txt): related projects.
