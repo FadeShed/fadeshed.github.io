@@ -37,7 +37,7 @@ jobs:
       - name: Recover the approved bytes and render comparison illustrations
         run: |
           "$RUNNER_TEMP/venv/bin/python" .github/lwp-publication/resume.py . work/source-site work/source-upstream "$RUNNER_TEMP/approved-lwp"
-      - name: Verify current native reader dialogs and complete product journeys
+      - name: Verify native submenus, content zoom and complete product journeys
         run: |
           "$RUNNER_TEMP/venv/bin/python" .github/lwp-publication/qa.py "$RUNNER_TEMP/approved-lwp/publication" "$RUNNER_TEMP/qa"
       - name: Prepare one verified Git commit without moving main

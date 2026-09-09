@@ -18,8 +18,8 @@ def run(root,report,base):
     source=source.replace("page.locator('#navMenu').tap();expect(page.locator('#presenterMenu')).to_be_visible()", "page.locator('#navMenu').tap();expect(page.locator('#presenterMenu')).to_be_visible();page.locator('#menuReading').tap();expect(page.locator('#readingMenu')).to_be_visible()")
     source=source.replace("page.locator('#presenterMenu').bounding_box()", "page.locator('#readingMenu').bounding_box()")
     source=source.replace("page.locator('#presenterMenu').tap(position={'x':4,'y':4});expect(page.locator('#presenterMenu')).not_to_be_visible()", "page.locator('#readingMenu').tap(position={'x':4,'y':4});expect(page.locator('#readingMenu')).not_to_be_visible()")
-    source=source.replace("parseFloat(document.documentElement.style.zoom)>1", "parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--lwp-presentation-zoom'))>1")
-    source=source.replace("!document.documentElement.style.zoom||Number(document.documentElement.style.zoom)===1", "parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--lwp-presentation-zoom'))===1")
+    source=source.replace("parseFloat(document.documentElement.style.zoom)>1", "parseFloat(getComputedStyle(document.documentElement).getPropertyValue(\"--lwp-presentation-zoom\"))>1")
+    source=source.replace("!document.documentElement.style.zoom||Number(document.documentElement.style.zoom)===1", "parseFloat(getComputedStyle(document.documentElement).getPropertyValue(\"--lwp-presentation-zoom\"))===1")
     suite={'__name__':'reader_regressions','__file__':str(baseline)}
     exec(compile(source,str(baseline),'exec'),suite);suite['ENGINE']=ENGINE
     checks=suite['run'](root,report,base)

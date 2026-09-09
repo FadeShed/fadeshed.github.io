@@ -29,9 +29,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,json,os,time,urllib.request
-          selection=['index.html','usages.html','demarrer.html','apparence.html','img/concepts/docs.webp','img/concepts/field-notes.webp','concepts/docs/first-page.html','concepts/field-notes/first-page.html','demo/library.html','web/lightwebpres','web/index.html','proposal.css','proposal.js','llms.txt']
+          selection=['index.html','usages.html','demarrer.html','apparence.html','img/concepts/docs.webp','img/concepts/field-notes.webp','concepts/docs/first-page.html','concepts/field-notes/first-page.html','demo/library.html','web/lightwebpres','web/index.html','guide/guide.html','themes.html','llms.txt']
           files=[p+'lightwebpres/'+n for p in ['', 'fr/'] for n in selection]
-          files+=['index.html','fr/index.html','fileshed/index.html','fr/fileshed/index.html','pasteberth/demo.html','fr/pasteberth/demo.html','assets/bilingual-manifest.json']
+          files+=['index.html','fr/index.html','fileshed/index.html','fr/fileshed/index.html','pasteberth/demo.html','fr/pasteberth/demo.html','assets/bilingual-manifest.json','assets/minisites.js','assets/minisites.css']
           out=Path(os.environ['RUNNER_TEMP'])/'qa';out.mkdir(exist_ok=True)
           pending=set(files);results={}
           for attempt in range(24):
