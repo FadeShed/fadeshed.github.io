@@ -1,0 +1,72 @@
+name: Verify native-only reader controls
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/remove-extra-reader-control.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Remove redundant site control and update its build and tests
+        run: python3 .github/reader-refresh/use-native-controls.py .
+      - name: Prepare a public-only preview and browser tooling
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,shutil
+          out=Path(os.environ['RUNNER_TEMP'])/'public';out.mkdir()
+          for name in ['.nojekyll','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','fr']:
+              src=Path(name);dst=out/name
+              if src.is_symlink() or (src.is_dir() and any(p.is_symlink() for p in src.rglob('*'))):raise RuntimeError('Symlink')
+              if src.is_dir():shutil.copytree(src,dst)
+              else:shutil.copyfile(src,dst)
+          PY
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
+          "$RUNNER_TEMP/venv/bin/python" -m playwright install --with-deps chromium
+      - name: Test both languages, native touch zoom and existing journeys
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" .github/reader-refresh/qa.py "$RUNNER_TEMP/public" "$RUNNER_TEMP/qa"
+      - name: Prepare the verified commit without moving main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64,json,os,subprocess,urllib.request
+          repo=os.environ['GITHUB_REPOSITORY'];parent=os.environ['GITHUB_SHA']
+          if repo!='FadeShed/fadeshed.github.io':raise RuntimeError('Wrong repository')
+          report=json.loads((Path(os.environ['RUNNER_TEMP'])/'qa/report.json').read_text())
+          if report['checks']!=report['passed']:raise RuntimeError('Tests failed')
+          def api(path,data=None):
+              request=urllib.request.Request('https://api.github.com/repos/'+repo+path,data=None if data is None else json.dumps(data).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'},method='GET' if data is None else 'POST')
+              with urllib.request.urlopen(request,timeout=90) as response:return json.load(response)
+          if api('/git/ref/heads/main')['object']['sha']!=parent:raise RuntimeError('Main advanced')
+          paths=subprocess.check_output(['git','diff','--name-only'],text=True).splitlines();entries=[]
+          for name in paths:
+              allowed=name.startswith(('assets/reader-site.','fr/assets/reader-site.','lightwebpres/','fr/lightwebpres/','.github/reader-refresh/')) or name in ['assets/bilingual-manifest.json','.github/workflows/publish-reader-refresh.yml']
+              if not allowed:raise RuntimeError('Unexpected change: '+name)
+              p=Path(name)
+              if not p.is_file() or p.is_symlink():raise RuntimeError('Unsafe file')
+              blob=api('/git/blobs',{'encoding':'base64','content':base64.b64encode(p.read_bytes()).decode()})
+              entries.append({'path':name,'mode':'100644','type':'blob','sha':blob['sha']})
+          tree=api('/git/trees',{'base_tree':api('/git/commits/'+parent)['tree']['sha'],'tree':entries})
+          commit=api('/git/commits',{'tree':tree['sha'],'parents':[parent],'message':'Remove duplicate Reading & zoom control; use native LightWebPres menu\n\nKeep English and French editions, native touch zoom and shared navigation. Test the native menu directly and stop historical bootstrap sources from restoring the extra control.'})
+          proof={'sha':commit['sha'],'parent':parent,'changed_files':paths,'checks':report['checks']}
+          (Path(os.environ['RUNNER_TEMP'])/'qa/prepared-commit.json').write_text(json.dumps(proof,indent=2)+'\n')
+          print(json.dumps(proof,indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-reader-qa
+          path: ${{ runner.temp }}/qa
+          retention-days: 3
+          if-no-files-found: warn
