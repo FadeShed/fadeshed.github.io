@@ -1,0 +1,71 @@
+name: Build and verify bilingual minisites
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/bilingual/payload-*.txt'
+      - '.github/bilingual/refine.py'
+      - '.github/workflows/publish-bilingual.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: bilingual-publication
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify and unpack bilingual build sources
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,json,lzma
+          from pathlib import Path,PurePosixPath
+          root=Path('.github/bilingual').resolve()
+          encoded=''.join((root/('payload-%02d.txt'%i)).read_text().strip() for i in range(1,9))
+          packed=base64.b64decode(encoded,validate=True)
+          if hashlib.sha256(packed).hexdigest()!='31d148161121a53f2a449739fd7f40fe12038e84f4b03e68c2570bd67874a935':
+              raise RuntimeError('Bilingual source checksum mismatch')
+          sources=json.loads(lzma.decompress(packed))
+          if len(sources)!=56: raise RuntimeError('Unexpected source set')
+          destinations=[]
+          for name,text in sources.items():
+              relative=PurePosixPath(name)
+              target=root/name
+              if relative.is_absolute() or '..' in relative.parts or not target.resolve().is_relative_to(root): raise RuntimeError('Unsafe output path')
+              if target.is_symlink() or any(p.is_symlink() for p in target.parents): raise RuntimeError('Unexpected symlink')
+              if not isinstance(text,str): raise RuntimeError('Expected UTF-8 source')
+              destinations.append((target,text))
+          for target,text in destinations:
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_text(text,encoding='utf-8')
+          print('Verified and unpacked 56 bilingual source files.')
+          PY
+          if test -f .github/bilingual/refine.py; then python3 .github/bilingual/refine.py; fi
+      - name: Install isolated browser test tooling
+        run: |
+          python3 -m venv "$RUNNER_TEMP/bilingual-venv"
+          "$RUNNER_TEMP/bilingual-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
+          "$RUNNER_TEMP/bilingual-venv/bin/python" -m playwright install --with-deps chromium
+      - name: Build complete English and French editions
+        run: |
+          "$RUNNER_TEMP/bilingual-venv/bin/python" .github/bilingual/build.py --root . --output "$RUNNER_TEMP/publication"
+      - name: Verify language, navigation, full portal and demos
+        run: |
+          "$RUNNER_TEMP/bilingual-venv/bin/python" .github/bilingual/qa.py "$RUNNER_TEMP/publication" "$RUNNER_TEMP/qa"
+      - name: Prepare verified commit without moving main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/bilingual/prepare_commit.py
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bilingual-publication-qa
+          path: ${{ runner.temp }}/qa
+          retention-days: 3
+          if-no-files-found: warn
