@@ -1,0 +1,56 @@
+name: Check published reader refresh
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/check-live-reader-refresh.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install isolated browser checks
+        run: |
+          python3 -m venv "$RUNNER_TEMP/reader-venv"
+          "$RUNNER_TEMP/reader-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
+          "$RUNNER_TEMP/reader-venv/bin/python" -m playwright install --with-deps chromium
+      - name: Wait for both editions to reach Pages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,time,urllib.request
+          files=['index.html','fr/index.html','fileshed/index.html','fr/fileshed/index.html','fileshed/overview.md','fr/fileshed/overview.md','pasteberth/demo.html','fr/pasteberth/demo.html','lightwebpres/index.html','fr/lightwebpres/index.html','lightwebpres/usages.html','fr/lightwebpres/usages.html','lightwebpres/demo/library.html','fr/lightwebpres/demo/library.html','lightwebpres/guide/guide.html','fr/lightwebpres/guide/guide.html','lightwebpres/web/lightwebpres','fr/lightwebpres/web/lightwebpres','assets/reader-site.js','assets/reader-site.css','assets/bilingual-manifest.json']
+          out=Path(os.environ['RUNNER_TEMP'])/'qa';out.mkdir(exist_ok=True)
+          for attempt in range(18):
+              results=[]
+              for name in files:
+                  expected=hashlib.sha256(Path(name).read_bytes()).hexdigest()
+                  try:
+                      with urllib.request.urlopen('https://fadeshed.github.io/'+name+'?check='+os.environ['GITHUB_SHA'],timeout=30) as response:
+                          body=response.read();status=response.status
+                      actual=hashlib.sha256(body).hexdigest()
+                      results.append({'path':name,'status':status,'expected':expected,'actual':actual,'match':actual==expected})
+                  except Exception as error:results.append({'path':name,'match':False,'error':str(error)})
+              (out/'deployed-bytes.json').write_text(json.dumps(results,indent=2)+'\n')
+              if all(item['match'] for item in results):
+                  print('Deployed bytes match:',len(files),'files');break
+              print('Waiting for Pages:',[x['path'] for x in results if not x['match']],flush=True)
+              time.sleep(10)
+          else:raise RuntimeError('Published files have not propagated')
+          PY
+      - name: Exercise published pages and touch-only reader controls
+        run: |
+          "$RUNNER_TEMP/reader-venv/bin/python" .github/reader-refresh/qa.py . "$RUNNER_TEMP/qa" --base-url https://fadeshed.github.io/
+      - name: Retain deployed verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reader-refresh-live-qa
+          path: ${{ runner.temp }}/qa
+          retention-days: 3
+          if-no-files-found: warn
