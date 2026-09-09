@@ -30,13 +30,14 @@ p=ROOT/'build.py';s=p.read_text()
 s=s.replace("const u=new URL(location.href), q=u.searchParams.get('lang');", "const u=new URL(location.href), q=u.searchParams.get('lang');window.__fsEntryHash=u.hash;")
 p.write_text(s)
 p=ROOT/'language.js';s=p.read_text()
-old="if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();"
-new="""function ready(){
- enhance();
+old="refresh();window.addEventListener('hashchange',refresh);"
+new="""refresh();window.addEventListener('hashchange',refresh);
+function restoreEntry(){
  const entry=window.__fsEntryHash;
  if(entry&&document.querySelector('section.slide')&&!new URL(location.href).searchParams.has('lang')){
   requestAnimationFrame(()=>{
-   const target=document.getElementById(decodeURIComponent(entry.slice(1)));
+   let id;try{id=decodeURIComponent(entry.slice(1))}catch{return}
+   const target=document.getElementById(id);
    if(!target)return;
    if(location.hash!==entry)history.replaceState(history.state,'',location.pathname+location.search+entry);
    target.scrollIntoView({behavior:'instant',block:'start'});
@@ -44,7 +45,7 @@ new="""function ready(){
   });
  }
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();"""
+if(document.readyState==='complete')restoreEntry();else window.addEventListener('load',restoreEntry,{once:true});"""
 if old not in s:raise RuntimeError('Language readiness hook changed')
 p.write_text(s.replace(old,new,1))
 p=ROOT/'language.css';p.write_text(p.read_text()+'''
