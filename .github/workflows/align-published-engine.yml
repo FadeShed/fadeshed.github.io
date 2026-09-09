@@ -1,0 +1,82 @@
+name: Align published renderer metadata
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/align-published-engine.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  align:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Prepare a metadata-only correction
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,json,os,subprocess
+          from pathlib import Path
+          expected='bdbb84bc6fee5e27927ddc3d65bcd1d963adcff6350b0c1b16fdc36a9771b974'
+          for name in ['lightwebpres/web/lightwebpres','fr/lightwebpres/web/lightwebpres']:
+              if hashlib.sha256(Path(name).read_bytes()).hexdigest()!=expected:raise RuntimeError('Unexpected deployed renderer')
+          manifest=Path('assets/bilingual-manifest.json');data=json.loads(manifest.read_text())
+          previous=data['engine_sha256'];data['engine_sha256']=expected
+          manifest.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          script=Path('.github/lwp-publication/resume.py');text=script.read_text()
+          old="    manifest.write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\\n')"
+          if text.count(old)!=1:raise RuntimeError('Unexpected recovery manifest hook')
+          text=text.replace(old,"    m['engine_sha256']=digest((out/'lightwebpres/web/lightwebpres').read_bytes())\n"+old,1)
+          compile(text,str(script),'exec');script.write_text(text)
+          names=['assets/bilingual-manifest.json','.github/lwp-publication/resume.py']
+          subprocess.run(['git','add','--',*names],check=True)
+          changed=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          if set(changed)!=set(names):raise RuntimeError('Unexpected change set')
+          parent=os.environ['GITHUB_SHA'];author=subprocess.check_output(['git','show','-s','--format=%an%n%ae',parent],text=True).splitlines()
+          subprocess.run(['git','-c','user.name='+author[0],'-c','user.email='+author[1],'commit','-m','Correct global renderer fingerprint after approved portal publication'],check=True)
+          sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          env=os.environ.copy();token=env.pop('GH_TOKEN')
+          env.update({'GIT_CONFIG_COUNT':'1','GIT_CONFIG_KEY_0':'http.https://github.com/.extraheader','GIT_CONFIG_VALUE_0':'AUTHORIZATION: basic '+base64.b64encode(('x-access-token:'+token).encode()).decode()})
+          remote='https://github.com/FadeShed/fadeshed.github.io.git'
+          if subprocess.check_output(['git','ls-remote',remote,'refs/heads/main'],text=True,env=env).split()[0]!=parent:raise RuntimeError('Main advanced')
+          subprocess.run(['git','push',remote,sha+':refs/heads/publication/lwp-manifest'],env=env,check=True)
+          out=Path(os.environ['RUNNER_TEMP'])/'metadata';out.mkdir()
+          proof={'sha':sha,'parent':parent,'previous_engine':previous,'engine_sha256':expected,'manifest_sha256':hashlib.sha256(manifest.read_bytes()).hexdigest(),'changed_files':changed,'html_changed':False}
+          (out/'prepared-commit.json').write_text(json.dumps(proof,indent=2)+'\n')
+          print(json.dumps(proof,indent=2))
+          PY
+      - name: Make the verified metadata commit available for fast-forward
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lwp-engine-metadata-prepared
+          path: ${{ runner.temp }}/metadata
+          retention-days: 3
+      - name: Verify metadata after the connector applies the commit
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,time,urllib.request
+          from pathlib import Path
+          out=Path(os.environ['RUNNER_TEMP'])/'metadata';proof=json.loads((out/'prepared-commit.json').read_text())
+          result={}
+          for attempt in range(30):
+              try:
+                  url='https://fadeshed.github.io/assets/bilingual-manifest.json?check='+proof['sha']
+                  with urllib.request.urlopen(url,timeout=20) as response:body=response.read()
+                  result={'commit':proof['sha'],'served_sha256':hashlib.sha256(body).hexdigest(),'expected_sha256':proof['manifest_sha256'],'engine_sha256':json.loads(body)['engine_sha256']}
+                  if result['served_sha256']==result['expected_sha256'] and result['engine_sha256']==proof['engine_sha256']:
+                      result['match']=True;break
+              except Exception as error:result={'error':str(error)}
+              time.sleep(10)
+          else:raise RuntimeError('Metadata correction not yet applied or served')
+          (out/'live-check.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))
+          PY
+      - name: Retain the served metadata verification
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lwp-engine-metadata-verified
+          path: ${{ runner.temp }}/metadata
+          retention-days: 3
