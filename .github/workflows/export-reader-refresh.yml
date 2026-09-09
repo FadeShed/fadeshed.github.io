@@ -1,0 +1,41 @@
+name: Export reader refresh inputs
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/export-reader-refresh.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Export selected site inputs and fetch current renderer
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,shutil,subprocess
+          out=Path(os.environ['RUNNER_TEMP'])/'reader-input';out.mkdir()
+          for name in ['.nojekyll','README.md','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','fr','.github/bilingual','.github/minisites','.github/restore-lightwebpres']:
+              src=Path(name);dst=out/'website'/name
+              if not src.exists():continue
+              if src.is_symlink() or (src.is_dir() and any(p.is_symlink() for p in src.rglob('*'))):raise RuntimeError('Symlink in input')
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              if src.is_dir():shutil.copytree(src,dst)
+              else:shutil.copyfile(src,dst)
+          temp=Path(os.environ['RUNNER_TEMP'])/'lwp-source'
+          subprocess.run(['git','clone','--depth=1','--branch','main','https://github.com/Fade78/lightwebpres.git',str(temp)],check=True)
+          revision=subprocess.check_output(['git','-C',str(temp),'rev-parse','HEAD'],text=True).strip()
+          (out/'LWP_COMMIT').write_text(revision+'\n');(out/'SITE_COMMIT').write_text(os.environ['GITHUB_SHA']+'\n')
+          subprocess.run(['git','-C',str(temp),'archive','--format=tar','--output',str(out/'lightwebpres-source.tar'),'HEAD'],check=True)
+          print('Latest renderer fetched:',revision)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reader-refresh-input
+          path: ${{ runner.temp }}/reader-input
+          include-hidden-files: true
+          retention-days: 3
