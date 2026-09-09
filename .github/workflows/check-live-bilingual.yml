@@ -1,0 +1,57 @@
+name: Check published bilingual minisites
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/check-live-bilingual.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install isolated browser checks
+        run: |
+          python3 -m venv "$RUNNER_TEMP/bilingual-venv"
+          "$RUNNER_TEMP/bilingual-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
+          "$RUNNER_TEMP/bilingual-venv/bin/python" -m playwright install --with-deps chromium
+      - name: Verify that both editions have reached Pages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,time,urllib.request
+          files=['index.html','fr/index.html','fileshed/index.html','fr/fileshed/index.html','pasteberth/index.html','fr/pasteberth/index.html','pasteberth/demo.html','fr/pasteberth/demo.html','lightwebpres/index.html','fr/lightwebpres/index.html','lightwebpres/ecrire.html','fr/lightwebpres/ecrire.html','lightwebpres/guide/guide.html','fr/lightwebpres/guide/guide.html','assets/minisites.js','assets/minisites.css','fr/assets/minisites.js','fr/assets/minisites.css','assets/bilingual-manifest.json']
+          root=Path(os.environ['RUNNER_TEMP'])/'qa';root.mkdir(exist_ok=True)
+          for attempt in range(24):
+              results=[]
+              for name in files:
+                  expected=hashlib.sha256(Path(name).read_bytes()).hexdigest()
+                  try:
+                      url='https://fadeshed.github.io/'+name+'?check='+os.environ['GITHUB_SHA']
+                      with urllib.request.urlopen(url,timeout=30) as response:
+                          data=response.read();status=response.status
+                      actual=hashlib.sha256(data).hexdigest()
+                      results.append({'path':name,'status':status,'expected':expected,'actual':actual,'match':actual==expected})
+                  except Exception as e:results.append({'path':name,'match':False,'error':str(e)})
+              (root/'deployed-bytes.json').write_text(json.dumps(results,indent=2)+'\n')
+              if all(x['match'] for x in results):
+                  print('Both editions served byte-for-byte:',len(results),'files');break
+              print('Waiting for Pages:',[x['path'] for x in results if not x['match']],flush=True)
+              time.sleep(10)
+          else:raise RuntimeError('The verified editions have not reached Pages')
+          PY
+      - name: Exercise English and French public pages
+        run: |
+          "$RUNNER_TEMP/bilingual-venv/bin/python" .github/bilingual/qa.py . "$RUNNER_TEMP/qa" --base-url https://fadeshed.github.io/
+      - name: Retain deployed verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bilingual-live-qa
+          path: ${{ runner.temp }}/qa
+          retention-days: 3
+          if-no-files-found: warn
