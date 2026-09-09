@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<html data-fs-locale="fr" data-fs-page="index.html" lang="fr">
+<head><script id="fs-language-route">(() => {const u=new URL(location.href), q=u.searchParams.get('lang');window.__fsEntryHash=u.hash;
+const fr=u.pathname==='/fr'||u.pathname.startsWith('/fr/');
+if(q==='en'||q==='fr'){const p=u.pathname.replace(/^\/fr(?=\/|$)/,'')||'/';
+const target=(q==='fr'?'/fr':'')+p;u.searchParams.delete('lang');
+if(target!==u.pathname||location.search.includes('lang=')){u.pathname=target;location.replace(u.href);}}
+})();</script><script>if(window!==window.top)document.documentElement.setAttribute('data-fs-embedded','true');</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>FadeShed — Des outils pour le travail agentique</title>
+<meta content="FadeShed est un atelier ouvert de logiciels pratiques pour le travail agentique, les outils de développement et la collaboration entre humains et agents." name="description"/>
+<meta content="#0d141d" name="theme-color"/>
+<link href="assets/fadeshed-mark.webp" rel="icon" type="image/webp"/>
+<link href="style.css?v=fileshed-2-alpha" rel="stylesheet"/>
+<link href="llms.txt" rel="describedby" type="text/markdown"/>
+<link href="index.md" rel="alternate" type="text/markdown"/>
+<link href="/assets/minisites.css?v=bilingual-1" rel="stylesheet"/><link href="https://fadeshed.github.io/fr/" rel="canonical"/><link href="https://fadeshed.github.io/" hreflang="en" rel="alternate"/><link href="https://fadeshed.github.io/fr/" hreflang="fr" rel="alternate"/><link href="https://fadeshed.github.io/" hreflang="x-default" rel="alternate"/></head>
+<body>
+<div id="capture-root">
+<header class="wrap site-header fs-home-header fs-on-dark">
+<a class="brand" href="#top"><img alt="" height="42" src="assets/fadeshed-mark.webp" width="42"/><span>Fade<span>Shed</span></span></a>
+<nav aria-label="Navigation principale"><a href="#why">Pourquoi</a><a href="#projects">Projets</a><a href="llms.txt">llms.txt</a><a href="https://github.com/FadeShed">GitHub</a></nav>
+<nav aria-label="Langue" class="fs-language"><a aria-label="English" data-fs-lang="en" href="/" hreflang="en" lang="en">EN</a><span aria-hidden="true">|</span><a aria-current="true" aria-label="Français" data-fs-lang="fr" href="/fr/" hreflang="fr" lang="fr">FR</a></nav></header>
+<main id="top">
+<section class="hero wrap">
+<div class="hero-copy">
+<div class="eyebrow">Un atelier logiciel ouvert</div>
+<h1>Des outils pour<br/><em>le travail agentique.</em></h1>
+<p class="lede">Des logiciels pratiques, conçus pour les points de rencontre entre humains, agents, terminaux, navigateurs et systèmes de fichiers.</p>
+<p class="return">La plupart des outils de cet atelier sont nés d’un besoin personnel. Je les publie parce qu’une grande partie des logiciels dont je dépends existe grâce à d’autres développeurs qui ont choisi de partager. C’est ma manière de rendre un peu à la communauté des développeurs, des administrateurs système, des bidouilleurs et des autres nerds.</p>
+<div class="actions"><a class="btn primary" href="#projects">Voir les outils sur l’établi →</a><a class="btn" href="llms.txt">Lire llms.txt</a></div>
+</div>
+<div aria-hidden="true" class="hero-visual">
+<img alt="" fetchpriority="high" height="394" src="assets/fadeshed-mark.webp" width="448"/>
+</div>
+</section>
+<section class="section" id="why"><div class="wrap manifesto">
+<p class="quote">« Construire ce qui enlève une difficulté. Le garder compréhensible. Laisser la porte ouverte à la prochaine personne qui rencontrera le même problème. »</p>
+<div class="manifesto-copy"><p>FadeShed n’est ni une entreprise ni une grande suite de produits. C’est un lieu pour des logiciels pratiques : petits outils, utilitaires singuliers, expériences qui ont résisté à la réalité et projets devenus assez utiles pour être nettoyés et partagés.</p><p>Le fil conducteur est de plus en plus <strong>l’informatique agentique</strong> : des logiciels qui donnent aux agents des moyens d’agir, leur permettent d’échanger des fichiers avec des personnes et des outils, ou facilitent l’examen, la publication et la réutilisation de leurs résultats.</p><p>Un projet a le droit de se terminer. Si l’écosystème finit par le rendre inutile, il peut prendre sa retraite sans devenir une obligation.</p></div>
+</div></section>
+<section class="section" id="projects"><div class="wrap">
+<div class="eyebrow">Sur l’établi</div><h2>Nés de vrais irritants.</h2>
+<p class="section-intro">Des expériences en cours, des bêtas utiles et des outils qui ont déjà rempli leur rôle.</p>
+<div class="projects">
+<a class="card retired" href="fileshed/">
+<div class="card-top"><span class="num">01 / FILESHED</span><span class="status retired-status">Retraité</span></div>
+<h3>FileShed</h3><p>Une extension Open WebUI qui permettait aux LLM de traiter des données, transformer documents et médias, éditer avec un historique, collaborer et remettre des fichiers.</p>
+<p class="status-note">Retraité depuis qu’OpenTerminal couvre une grande partie de mon propre usage. Le code et les idées restent à explorer.</p><span class="link">Découvrir l’histoire de FileShed →</span>
+</a>
+<a class="card" href="pasteberth/">
+<div class="card-top"><span class="num">02 / PASTEBERTH</span><span class="status beta-status">Bêta</span></div>
+<h3>Pasteberth</h3><p>Dépôt et échange de fichiers entre navigateurs, presse-papiers, systèmes de fichiers, outils, personnes et agents.</p><span class="link">Explorer Pasteberth →</span>
+</a>
+<a class="card" href="lightwebpres/">
+<div class="card-top"><span class="num">03 / LIGHTWEBPRES</span><span class="status beta-status">Bêta</span></div>
+<h3>LightWebPres</h3><p>Publication statique légère de pages et de présentations à partir de Markdown, pour des contenus écrits par des humains ou des agents.</p><span class="link">Ouvrir le site du projet →</span>
+</a>
+</div>
+</div></section>
+<section class="section"><div class="wrap shed-rule"><div><div class="eyebrow">La règle de l’atelier</div><h2>Utile avant d’être impressionnant.</h2></div><p>Pas de feuille de route de façade. Pas besoin de transformer chaque script utile en startup. Un outil qui résout un vrai problème, s’explique clairement et peut aider quelqu’un d’autre a sa place ici.</p></div></section>
+</main>
+<footer class="wrap"><span><strong>FadeShed</strong> — créé par Fade, partagé avec la communauté.</span><span>Lisible par les humains. Lisible par les agents. Sans traceurs.</span></footer>
+</div>
+<script defer="True" src="/assets/minisites.js?v=bilingual-1"></script></body></html>

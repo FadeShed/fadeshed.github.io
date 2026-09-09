@@ -1,0 +1,24 @@
+{
+  "schema": "lightwebpres.website-build/1",
+  "engine": {
+    "version": "0.56.0",
+    "status": "unreleased",
+    "sha256": "5e702fed91c8694a794f0b0c8a0daa8a517d95904ed4269954c3aef835793191"
+  },
+  "language": "fr",
+  "preset": "lightwebpres-site@1.0.0/web",
+  "articles": [
+    "decouvrir.md",
+    "demarrer.md",
+    "ecrire.md",
+    "apparence.md",
+    "publier.md",
+    "ressources.md"
+  ],
+  "checks": {
+    "articles_build_audit_verify": true,
+    "example_build_audit_verify": true
+  },
+  "edition": "static-bilingual",
+  "translation_sources": ".github/bilingual"
+}

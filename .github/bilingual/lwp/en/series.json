@@ -1,0 +1,35 @@
+{
+  "series_meta": {
+    "title": "Write once.<br><span class=\"lwp-web-accent\">Share anywhere.</span><span class=\"lwp-web-sr\"> — LightWebPres</span>",
+    "subtitle": "One Markdown text. Pages to read on a phone, present on a big screen and publish wherever you choose.",
+    "intro": "<a class=\"lwp-web-button\" href=\"demarrer.html\">Create my first page <span aria-hidden=\"true\">↗</span></a> <a class=\"lwp-web-text-link\" href=\"demo/ma-page.html\">Try the demo <span aria-hidden=\"true\">→</span></a><br><span class=\"lwp-web-reassurance\">Python 3.8+ · No extra packages · No account to read</span>",
+    "presentation_preset": "lightwebpres-site@1.0.0/web",
+    "scroll_duration": 200
+  },
+  "themes": [
+    "essential",
+    "nebula",
+    "terminal",
+    "pop-lemon"
+  ],
+  "articles": [
+    {
+      "page_source": "decouvrir.md"
+    },
+    {
+      "page_source": "demarrer.md"
+    },
+    {
+      "page_source": "ecrire.md"
+    },
+    {
+      "page_source": "apparence.md"
+    },
+    {
+      "page_source": "publier.md"
+    },
+    {
+      "page_source": "ressources.md"
+    }
+  ]
+}

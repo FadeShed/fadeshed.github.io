@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 
-<html lang="en">
-<head>
+<html data-fs-locale="en" data-fs-page="fileshed/index.html" lang="en">
+<head><script id="fs-language-route">(() => {const u=new URL(location.href), q=u.searchParams.get('lang');window.__fsEntryHash=u.hash;
+const fr=u.pathname==='/fr'||u.pathname.startsWith('/fr/');
+if(q==='en'||q==='fr'){const p=u.pathname.replace(/^\/fr(?=\/|$)/,'')||'/';
+const target=(q==='fr'?'/fr':'')+p;u.searchParams.delete('lang');
+if(target!==u.pathname||location.search.includes('lang=')){u.pathname=target;location.replace(u.href);}}
+})();</script><script>if(window!==window.top)document.documentElement.setAttribute('data-fs-embedded','true');</script>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>FileShed — An agentic workbench inside Open WebUI · FadeShed</title>
 <meta content="More than persistent storage: FileShed gave tool-calling models in Open WebUI a workbench for data, documents, media, versioned edits, collaboration and finished deliverables. A retired FadeShed project." name="description"/>
 <meta content="#f6f5f0" name="theme-color"/>
-<link href="https://fadeshed.github.io/fileshed/" rel="canonical"/>
+
 <link href="../assets/fadeshed-mark.webp" rel="icon" type="image/webp"/>
 <link href="site.css?v=2" rel="stylesheet"/>
 <link href="overview.md" rel="alternate" title="FileShed overview for readers and agents" type="text/markdown"/>
 <link href="llms.txt" rel="describedby" type="text/markdown"/>
-<link href="../assets/minisites.css?v=20260909" rel="stylesheet"/></head>
+<link href="/assets/minisites.css?v=bilingual-1" rel="stylesheet"/><link href="https://fadeshed.github.io/fileshed/" rel="canonical"/><link href="https://fadeshed.github.io/fileshed/" hreflang="en" rel="alternate"/><link href="https://fadeshed.github.io/fr/fileshed/" hreflang="fr" rel="alternate"/><link href="https://fadeshed.github.io/fileshed/" hreflang="x-default" rel="alternate"/></head>
 <body class="fs-fileshed">
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav shell">
-<div aria-label="Breadcrumb" class="fs-breadcrumb" role="navigation"><a aria-label="FadeShed home" class="fs-home" href="../"><img alt="" height="30" src="../assets/fadeshed-mark.webp" width="32"/><span>Fade<strong>Shed</strong></span></a><span aria-hidden="true" class="fs-separator">/</span><span aria-current="page" class="fs-product">FileShed</span></div>
+<div aria-label="Breadcrumb" class="fs-breadcrumb" role="navigation"><a aria-label="FadeShed home" class="fs-home" href="/"><img alt="" height="30" src="/assets/fadeshed-mark.webp" width="32"/><span>Fade<strong>Shed</strong></span></a><span aria-hidden="true" class="fs-separator">/</span><a class="fs-product" href="/fileshed/">FileShed</a><span class="fs-status">Retired</span></div><nav aria-label="Language" class="fs-language"><a aria-current="true" aria-label="English" data-fs-lang="en" href="/fileshed/" hreflang="en" lang="en">EN</a><span aria-hidden="true">|</span><a aria-label="Français" data-fs-lang="fr" href="/fr/fileshed/" hreflang="fr" lang="fr">FR</a></nav>
 <nav aria-label="Page navigation"><a href="#workflows">Workflows</a><a href="#capabilities">Capabilities</a><a href="llms.txt">For agents</a><a class="source-link" href="https://github.com/Fade78/Fileshed">Source ↗</a></nav>
 </header>
 <main id="main">
@@ -74,6 +79,5 @@ shed_link_create(zone="storage",
 <section class="source-notes shell" id="sources"><p class="kicker">PROJECT RECORDS</p><div class="records"><a href="https://github.com/Fade78/Fileshed/blob/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/README.md"><b>Original guide</b><span>Usage, examples and installation ↗</span></a><a href="https://github.com/Fade78/Fileshed/blob/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/docs/SPEC.md"><b>Design specification</b><span>Architecture, permissions and trade-offs ↗</span></a><a href="overview.md"><b>Technical overview</b><span>Capabilities and documentation →</span></a></div><p class="footnote">Explore the project records for its implementation, examples and technical history. <a href="overview.md">Read the detailed overview.</a></p></section>
 </main>
 <footer class="shell"><a class="parent" href="../">← Back to FadeShed</a><p>Built to be useful. Shared so the ideas can travel.</p><a href="llms.txt">llms.txt</a></footer>
-</body>
+<script defer="True" src="/assets/minisites.js?v=bilingual-1"></script></body>
 </html>
-

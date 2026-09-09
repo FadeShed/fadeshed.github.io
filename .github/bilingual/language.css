@@ -1,0 +1,31 @@
+/* Explicit, accessible editions. Keep each product's palette. */
+.fs-language{display:inline-flex!important;align-items:center;gap:3px;padding:3px;border:1px solid currentColor;border-radius:6px;font:700 12px/1.2 system-ui,sans-serif;white-space:nowrap;flex-shrink:0;color:var(--fs-ink,#142b40)}
+.fs-language a{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:0 6px;margin:0!important;border:0;border-radius:3px;color:inherit!important;text-decoration:none!important;font:inherit!important;opacity:.65}
+.fs-language a[aria-current]{opacity:1;background:var(--fs-switch-bg,#dfebf5)}
+.fs-language a:hover{opacity:1;text-decoration:underline!important}
+.fs-language a:focus-visible{outline:3px solid var(--fs-focus,#3182d5);outline-offset:4px}
+.fs-on-dark,.lwp-web-nav,.fs-home-header{--fs-switch-bg:#304253}
+.lwp-web-nav>.fs-language{--fs-ink:#edf1f4}
+.fs-home-header{gap:20px;flex-wrap:wrap}.fs-home-header>nav:not(.fs-language){margin-left:auto}
+.fs-home-header>.fs-language{--fs-ink:#edf1f4}
+body.fs-fileshed header.nav{flex-wrap:wrap;gap:8px 22px}body.fs-fileshed header.nav>.fs-language{margin-left:auto}body.fs-fileshed header.nav>nav:not(.fs-language){margin-left:auto}
+.fs-utility>.fs-language{margin-left:auto}
+.fs-utility.fs-floating{gap:6px 14px}
+.lwp-web-nav>.fs-language{margin-left:auto}
+@media(max-width:750px){body.fs-fileshed header.nav>nav:not(.fs-language){width:100%;margin:0;justify-content:flex-start}.fs-home-header>nav:not(.fs-language){display:flex;order:3;width:100%;justify-content:space-between;gap:10px}.fs-home-header>nav:not(.fs-language)>a{margin:0}.fs-home-header>.fs-language{margin-left:auto}.lwp-web-nav-links{order:3;width:100%}.fs-language a{min-width:34px;min-height:38px}}
+@media(max-width:390px){.fs-breadcrumb{gap:5px;font-size:12px}.fs-breadcrumb .fs-status{display:none}.fs-breadcrumb .fs-product{font-size:12px}.fs-language{padding:1px}.fs-language a{min-width:28px;padding:0 4px}.fs-utility{padding-inline:10px}.fs-utility>.fs-breadcrumb{gap:5px}.lwp-web-nav{column-gap:6px}}
+@media print{.fs-language{display:none!important}}
+
+html[data-fs-embedded=true] .fs-utility{display:none!important}
+.fs-reference-lang{font:600 .65em/1 system-ui,sans-serif;opacity:.7;white-space:nowrap}
+html:not([data-fs-embedded=true]) body.fs-pbdemo{padding-top:68px}
+
+@media(max-width:520px){
+ html[data-fs-page="index.html"] .hero h1{font-size:clamp(2.65rem,16.2vw,4.5rem)}
+ html[data-fs-page="index.html"] .shed-rule h2{font-size:clamp(1.65rem,8vw,2.1rem);overflow-wrap:anywhere}
+ html[data-fs-page="index.html"] .shed-rule>div{min-width:0}
+}
+
+/* Keep the edition control reachable without scrolling away from the current card. */
+body:not(.index-page) .lwp-web-nav>.fs-language{position:fixed;top:16px;right:24px;z-index:35;background:#14171b;--fs-ink:#edf1f4}
+@media(max-width:750px){body:not(.index-page) .lwp-web-nav>.fs-language{top:10px;right:12px}}

@@ -1,60 +1,66 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html>
+
+<html data-fs-locale="en" data-fs-page="index.html" lang="en">
+<head><script id="fs-language-route">(() => {const u=new URL(location.href), q=u.searchParams.get('lang');window.__fsEntryHash=u.hash;
+const fr=u.pathname==='/fr'||u.pathname.startsWith('/fr/');
+if(q==='en'||q==='fr'){const p=u.pathname.replace(/^\/fr(?=\/|$)/,'')||'/';
+const target=(q==='fr'?'/fr':'')+p;u.searchParams.delete('lang');
+if(target!==u.pathname||location.search.includes('lang=')){u.pathname=target;location.replace(u.href);}}
+})();</script><script>if(window!==window.top)document.documentElement.setAttribute('data-fs-embedded','true');</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>FadeShed — Tools for agentic work</title>
-<meta name="description" content="FadeShed is an open workshop for practical software built around agentic workflows, developer tooling, and human-agent collaboration.">
-<meta name="theme-color" content="#0d141d">
-<link rel="icon" type="image/webp" href="assets/fadeshed-mark.webp">
-<link rel="stylesheet" href="style.css?v=fileshed-2-alpha">
-<link rel="describedby" href="llms.txt" type="text/markdown">
-<link rel="alternate" href="index.md" type="text/markdown">
-</head>
+<meta content="FadeShed is an open workshop for practical software built around agentic workflows, developer tooling, and human-agent collaboration." name="description"/>
+<meta content="#0d141d" name="theme-color"/>
+<link href="assets/fadeshed-mark.webp" rel="icon" type="image/webp"/>
+<link href="style.css?v=fileshed-2-alpha" rel="stylesheet"/>
+<link href="llms.txt" rel="describedby" type="text/markdown"/>
+<link href="index.md" rel="alternate" type="text/markdown"/>
+<link href="/assets/minisites.css?v=bilingual-1" rel="stylesheet"/><link href="https://fadeshed.github.io/" rel="canonical"/><link href="https://fadeshed.github.io/" hreflang="en" rel="alternate"/><link href="https://fadeshed.github.io/fr/" hreflang="fr" rel="alternate"/><link href="https://fadeshed.github.io/" hreflang="x-default" rel="alternate"/></head>
 <body>
 <div id="capture-root">
-<header class="wrap site-header">
-  <a class="brand" href="#top"><img src="assets/fadeshed-mark.webp" alt="" width="42" height="42"><span>Fade<span>Shed</span></span></a>
-  <nav aria-label="Main navigation"><a href="#why">Why</a><a href="#projects">Projects</a><a href="llms.txt">llms.txt</a><a href="https://github.com/FadeShed">GitHub</a></nav>
-</header>
+<header class="wrap site-header fs-home-header fs-on-dark">
+<a class="brand" href="#top"><img alt="" height="42" src="assets/fadeshed-mark.webp" width="42"/><span>Fade<span>Shed</span></span></a>
+<nav aria-label="Main navigation"><a href="#why">Why</a><a href="#projects">Projects</a><a href="llms.txt">llms.txt</a><a href="https://github.com/FadeShed">GitHub</a></nav>
+<nav aria-label="Language" class="fs-language"><a aria-current="true" aria-label="English" data-fs-lang="en" href="/" hreflang="en" lang="en">EN</a><span aria-hidden="true">|</span><a aria-label="Français" data-fs-lang="fr" href="/fr/" hreflang="fr" lang="fr">FR</a></nav></header>
 <main id="top">
 <section class="hero wrap">
-  <div class="hero-copy">
-    <div class="eyebrow">An open software workshop</div>
-    <h1>Tools for<br><em>agentic work.</em></h1>
-    <p class="lede">Practical software built around the places where humans, agents, terminals, browsers and filesystems actually meet.</p>
-    <p class="return">Most things in the shed started as a tool I needed myself. I publish them because so much of the software I rely on exists only because another developer chose to share. This is my small way of returning the favor to developers, sysadmins, tinkerers, and fellow nerds.</p>
-    <div class="actions"><a class="btn primary" href="#projects">See what’s on the bench →</a><a class="btn" href="llms.txt">Read llms.txt</a></div>
-  </div>
-  <div class="hero-visual" aria-hidden="true">
-    <img src="assets/fadeshed-mark.webp" width="448" height="394" alt="" fetchpriority="high">
-  </div>
+<div class="hero-copy">
+<div class="eyebrow">An open software workshop</div>
+<h1>Tools for<br/><em>agentic work.</em></h1>
+<p class="lede">Practical software built around the places where humans, agents, terminals, browsers and filesystems actually meet.</p>
+<p class="return">Most things in the shed started as a tool I needed myself. I publish them because so much of the software I rely on exists only because another developer chose to share. This is my small way of returning the favor to developers, sysadmins, tinkerers, and fellow nerds.</p>
+<div class="actions"><a class="btn primary" href="#projects">See what’s on the bench →</a><a class="btn" href="llms.txt">Read llms.txt</a></div>
+</div>
+<div aria-hidden="true" class="hero-visual">
+<img alt="" fetchpriority="high" height="394" src="assets/fadeshed-mark.webp" width="448"/>
+</div>
 </section>
 <section class="section" id="why"><div class="wrap manifesto">
-  <p class="quote">“Build the thing that removes friction. Keep it understandable. Leave the door open for the next person with the same problem.”</p>
-  <div class="manifesto-copy"><p>FadeShed is not a company or a grand product suite. It is a home for practical software: small tools, odd utilities, experiments that survived contact with reality, and projects that became useful enough to clean up and share.</p><p>The common thread is increasingly <strong>agentic computing</strong>: software that gives agents useful surfaces, lets them exchange artifacts with people and tools, or makes their output easier to inspect, publish and reuse.</p><p>Projects are allowed to finish. If the ecosystem eventually makes one unnecessary, it can retire without turning into an obligation.</p></div>
+<p class="quote">“Build the thing that removes friction. Keep it understandable. Leave the door open for the next person with the same problem.”</p>
+<div class="manifesto-copy"><p>FadeShed is not a company or a grand product suite. It is a home for practical software: small tools, odd utilities, experiments that survived contact with reality, and projects that became useful enough to clean up and share.</p><p>The common thread is increasingly <strong>agentic computing</strong>: software that gives agents useful surfaces, lets them exchange artifacts with people and tools, or makes their output easier to inspect, publish and reuse.</p><p>Projects are allowed to finish. If the ecosystem eventually makes one unnecessary, it can retire without turning into an obligation.</p></div>
 </div></section>
 <section class="section" id="projects"><div class="wrap">
-  <div class="eyebrow">On the bench</div><h2>Built from real annoyances.</h2>
-  <p class="section-intro">Active experiments, useful betas, and tools that have already done their job.</p>
-  <div class="projects">
-    <a class="card retired" href="fileshed/">
-      <div class="card-top"><span class="num">01 / FILESHED</span><span class="status retired-status">Retired</span></div>
-      <h3>FileShed</h3><p>An Open WebUI add-on that let LLMs run data workflows, transform documents and media, edit with history, collaborate, and deliver files.</p>
-      <p class="status-note">Retired as OpenTerminal took over much of my own workflow. The code and ideas remain worth exploring.</p><span class="link">Discover the FileShed story →</span>
-    </a>
-    <a class="card" href="pasteberth/">
-      <div class="card-top"><span class="num">02 / PASTEBERTH</span><span class="status beta-status">Beta</span></div>
-      <h3>Pasteberth</h3><p>Artifact staging and exchange across browsers, clipboards, filesystems, tools, people and agents.</p><span class="link">Explore Pasteberth →</span>
-    </a>
-    <a class="card" href="lightwebpres/">
-      <div class="card-top"><span class="num">03 / LIGHTWEBPRES</span><span class="status beta-status">Beta</span></div>
-      <h3>LightWebPres</h3><p>Lightweight static publishing for Markdown-driven pages and presentations, suitable for human or agent-generated output.</p><span class="link">Open project page →</span>
-    </a>
-  </div>
+<div class="eyebrow">On the bench</div><h2>Built from real annoyances.</h2>
+<p class="section-intro">Active experiments, useful betas, and tools that have already done their job.</p>
+<div class="projects">
+<a class="card retired" href="fileshed/">
+<div class="card-top"><span class="num">01 / FILESHED</span><span class="status retired-status">Retired</span></div>
+<h3>FileShed</h3><p>An Open WebUI add-on that let LLMs run data workflows, transform documents and media, edit with history, collaborate, and deliver files.</p>
+<p class="status-note">Retired as OpenTerminal took over much of my own workflow. The code and ideas remain worth exploring.</p><span class="link">Discover the FileShed story →</span>
+</a>
+<a class="card" href="pasteberth/">
+<div class="card-top"><span class="num">02 / PASTEBERTH</span><span class="status beta-status">Beta</span></div>
+<h3>Pasteberth</h3><p>Artifact staging and exchange across browsers, clipboards, filesystems, tools, people and agents.</p><span class="link">Explore Pasteberth →</span>
+</a>
+<a class="card" href="lightwebpres/">
+<div class="card-top"><span class="num">03 / LIGHTWEBPRES</span><span class="status beta-status">Beta</span></div>
+<h3>LightWebPres</h3><p>Lightweight static publishing for Markdown-driven pages and presentations, suitable for human or agent-generated output.</p><span class="link">Open project page →</span>
+</a>
+</div>
 </div></section>
 <section class="section"><div class="wrap shed-rule"><div><div class="eyebrow">The shed rule</div><h2>Practical beats impressive.</h2></div><p>No roadmap theatre. No need to turn every useful script into a startup. If a tool solves a real problem, can be explained clearly, and might help someone else, it belongs here.</p></div></section>
 </main>
 <footer class="wrap"><span><strong>FadeShed</strong> — built by Fade, shared with the community.</span><span>Human-readable. Agent-readable. No trackers.</span></footer>
 </div>
-</body></html>
+<script defer="True" src="/assets/minisites.js?v=bilingual-1"></script></body></html>

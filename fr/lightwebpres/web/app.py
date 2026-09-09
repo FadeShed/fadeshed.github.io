@@ -1,0 +1,137 @@
+"""Browser glue for LightWebPres.
+
+Loaded into Pyodide after lightwebpres itself (see index.html), which
+defines cmd_build() as a global in this same Python namespace. This module
+never modifies or duplicates lightwebpres — it only wires a zip upload/zip
+download flow around the existing, unmodified build() entry point.
+
+Everything here runs against Pyodide's in-memory virtual filesystem: the
+uploaded zip never leaves the browser tab.
+"""
+
+import contextlib
+import io
+import shutil
+import zipfile
+from pathlib import Path, PurePosixPath
+
+ZIP_WORK_DIR = Path('/lwp_web_work')
+
+# index.html injects the page-owned values before loading this glue. These
+# defaults keep the module testable in isolation; the deployment values live
+# in the static page so both browser tabs use the same limits.
+ZIP_MAX_ENTRIES = int(globals().get('ZIP_MAX_ENTRIES', 4096))
+ZIP_MAX_COMPRESSED_BYTES = int(
+    globals().get('ZIP_MAX_COMPRESSED_BYTES', 500 * 1024 * 1024))
+ZIP_MAX_UNCOMPRESSED_BYTES = int(
+    globals().get('ZIP_MAX_UNCOMPRESSED_BYTES', 500 * 1024 * 1024))
+
+
+def _validate_zip_members(zf):
+    """Rejects hostile, oversized or ambiguous members before extraction.
+
+    The vendored runtime's zipfile already sanitizes `..` and absolute
+    paths, but that is one layer; the defence-in-depth check here makes
+    the intent explicit and keeps the glue safe on any runtime. Duplicate
+    names are rejected too: otherwise the later entry silently replaces
+    the earlier one, and slash/dot variants can disagree across runtimes.
+    Size is capped as well: extraction goes into an in-memory filesystem,
+    so a decompression bomb would exhaust the tab instead of erroring.
+    """
+    seen = set()
+    total_bytes = 0
+    if len(zf.infolist()) > ZIP_MAX_ENTRIES:
+        raise RuntimeError(
+            'archive declares %d entries — more than the %d-entry limit.'
+            % (len(zf.infolist()), ZIP_MAX_ENTRIES))
+    for info in zf.infolist():
+        name = info.filename
+        normalized = name.replace('\\', '/')
+        parts = PurePosixPath(normalized).parts
+        canonical = '/'.join(parts)
+        if (not name or '\x00' in name
+                or normalized.startswith('/')
+                or (len(normalized) >= 2 and normalized[1] == ':')
+                or '..' in parts or not canonical or canonical in seen):
+            raise RuntimeError(
+                'archive contains an invalid or duplicate member name: %r' % name)
+        seen.add(canonical)
+        total_bytes += info.file_size
+        if total_bytes > ZIP_MAX_UNCOMPRESSED_BYTES:
+            raise RuntimeError(
+                'archive decompresses to more than %d bytes — refusing to '
+                'extract it.' % ZIP_MAX_UNCOMPRESSED_BYTES)
+
+
+def _find_series_dir_in_zip(root):
+    """Locates the series directory inside the extracted zip.
+
+    Accepts either a zip whose root already contains series.json, or a zip
+    with a single top-level folder containing series.json (the common shape
+    produced by "Compress" / "Send to > zip" on most operating systems).
+    """
+    if (root / 'series.json').exists():
+        return root
+    subdirs = [p for p in root.iterdir() if p.is_dir()]
+    if len(subdirs) == 1 and (subdirs[0] / 'series.json').exists():
+        return subdirs[0]
+    raise RuntimeError(
+        'series.json not found at the root of the zip, nor inside a single '
+        'top-level folder.'
+    )
+
+
+def build_from_zip_bytes(data, lang='fr'):
+    """Builds a series from an uploaded zip's bytes.
+
+    Returns (result_zip_bytes_or_None, log_text, error_text_or_None).
+    On success, error_text is None and result_zip_bytes holds the zipped
+    public/ output. On failure, result_zip_bytes is None and error_text
+    describes what went wrong; log_text always holds whatever build/verify
+    printed, for troubleshooting either way.
+    """
+    log = io.StringIO()
+
+    # The JavaScript caller checks File.size before creating this object. Keep
+    # the same guard here for direct callers and to avoid a second copy before
+    # the archive reaches zipfile or the virtual filesystem.
+    if len(data) > ZIP_MAX_COMPRESSED_BYTES:
+        return (
+            None,
+            log.getvalue(),
+            'Archive exceeds the %d-byte compressed-size limit - refusing to '
+            'load it.' % ZIP_MAX_COMPRESSED_BYTES,
+        )
+
+    if ZIP_WORK_DIR.exists():
+        shutil.rmtree(ZIP_WORK_DIR)
+    ZIP_WORK_DIR.mkdir()
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(bytes(data))) as zf:
+            _validate_zip_members(zf)
+            zf.extractall(ZIP_WORK_DIR)
+
+        series_dir = _find_series_dir_in_zip(ZIP_WORK_DIR)
+        output_dir = series_dir / 'public'
+
+        with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+            cmd_build(str(series_dir), {'--output': str(output_dir), '--lang': lang})  # noqa: F821
+
+        if not output_dir.exists() or not any(output_dir.iterdir()):
+            return None, log.getvalue(), 'Build produced no output — see the log above.'
+
+        result = io.BytesIO()
+        with zipfile.ZipFile(result, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for f in sorted(output_dir.rglob('*')):
+                if f.is_file():
+                    zf.write(f, f.relative_to(output_dir))
+
+        return result.getvalue(), log.getvalue(), None
+
+    except SystemExit as e:
+        return None, log.getvalue(), 'Build stopped (exit code %s) — see the log above.' % e.code
+    except Exception as e:
+        return None, log.getvalue(), '%s: %s' % (type(e).__name__, e)
+    finally:
+        shutil.rmtree(ZIP_WORK_DIR, ignore_errors=True)

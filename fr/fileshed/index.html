@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html data-fs-locale="fr" data-fs-page="fileshed/index.html" lang="fr">
+<head><script id="fs-language-route">(() => {const u=new URL(location.href), q=u.searchParams.get('lang');window.__fsEntryHash=u.hash;
+const fr=u.pathname==='/fr'||u.pathname.startsWith('/fr/');
+if(q==='en'||q==='fr'){const p=u.pathname.replace(/^\/fr(?=\/|$)/,'')||'/';
+const target=(q==='fr'?'/fr':'')+p;u.searchParams.delete('lang');
+if(target!==u.pathname||location.search.includes('lang=')){u.pathname=target;location.replace(u.href);}}
+})();</script><script>if(window!==window.top)document.documentElement.setAttribute('data-fs-embedded','true');</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>FileShed — Un établi agentique dans Open WebUI · FadeShed</title>
+<meta content="Bien plus qu’un stockage persistant : FileShed donnait aux modèles d’Open WebUI un établi pour les données, les documents, les médias, les éditions versionnées, la collaboration et les livrables. Un projet FadeShed retraité." name="description"/>
+<meta content="#f6f5f0" name="theme-color"/>
+
+<link href="../assets/fadeshed-mark.webp" rel="icon" type="image/webp"/>
+<link href="site.css?v=2" rel="stylesheet"/>
+<link href="overview.md" rel="alternate" title="Présentation de FileShed pour les lecteurs et les agents" type="text/markdown"/>
+<link href="llms.txt" rel="describedby" type="text/markdown"/>
+<link href="/assets/minisites.css?v=bilingual-1" rel="stylesheet"/><link href="https://fadeshed.github.io/fr/fileshed/" rel="canonical"/><link href="https://fadeshed.github.io/fileshed/" hreflang="en" rel="alternate"/><link href="https://fadeshed.github.io/fr/fileshed/" hreflang="fr" rel="alternate"/><link href="https://fadeshed.github.io/fileshed/" hreflang="x-default" rel="alternate"/></head>
+<body class="fs-fileshed">
+<a class="skip" href="#main">Aller au contenu</a>
+<header class="nav shell">
+<div aria-label="Fil d’Ariane" class="fs-breadcrumb" role="navigation"><a aria-label="Accueil FadeShed" class="fs-home" href="/fr/"><img alt="" height="30" src="/assets/fadeshed-mark.webp" width="32"/><span>Fade<strong>Shed</strong></span></a><span aria-hidden="true" class="fs-separator">/</span><a class="fs-product" href="/fr/fileshed/">FileShed</a><span class="fs-status">Retraité</span></div><nav aria-label="Langue" class="fs-language"><a aria-label="English" data-fs-lang="en" href="/fileshed/" hreflang="en" lang="en">EN</a><span aria-hidden="true">|</span><a aria-current="true" aria-label="Français" data-fs-lang="fr" href="/fr/fileshed/" hreflang="fr" lang="fr">FR</a></nav>
+<nav aria-label="Navigation de la page"><a href="#workflows">Parcours</a><a href="#capabilities">Possibilités</a><a href="llms.txt">Pour les agents</a><a class="source-link" href="https://github.com/Fade78/Fileshed">Code source ↗</a></nav>
+</header>
+<main id="main">
+<section class="hero shell">
+<div class="hero-copy">
+<div class="eyebrow"><span class="badge">Retraité</span><span>Un projet de l’atelier</span></div>
+<h1>FileShed<span class="dot">.</span></h1>
+<p class="hero-title">Un établi agentique.<br/><em>Dans votre conversation.</em></p>
+<p class="lead">Pas seulement un endroit où un LLM conserve des fichiers. Une extension Open WebUI qui lui permettait de travailler dessus : traiter des données, transformer documents et médias, éditer avec un historique, collaborer et remettre un résultat terminé.</p>
+<div class="actions"><a class="button primary" href="#workflows">Voir ce qu’il permettait <span aria-hidden="true">↓</span></a><a class="button secondary" href="https://github.com/Fade78/Fileshed">Explorer le code <span aria-hidden="true">↗</span></a></div>
+<p class="small hero-note">Le développement actif est terminé. Le code, les idées et les réalisations restent à découvrir.</p>
+</div>
+<aside aria-label="Illustration d’un parcours FileShed documenté" class="workbench">
+<div class="bench-head"><span aria-hidden="true" class="mini-lights"><i></i><i></i><i></i></span><span>CONVERSATION → LIVRABLE</span></div>
+<div class="request"><span class="tiny">LA DEMANDE</span><p>« Récupère les données des pays. Classe-les par densité de population. Donne-moi le ZIP. »</p></div>
+<div class="bench-body"><div aria-hidden="true" class="rail"></div><div class="operation"><span class="step-no">01</span><div><strong>Récupérer et préparer</strong><p>JSON → CSV</p></div><code>shed_exec</code></div><div class="operation"><span class="step-no">02</span><div><strong>Interroger et calculer</strong><p>CSV → SQLite → résultats classés</p></div><code>shed_sqlite</code></div><div class="operation"><span class="step-no">03</span><div><strong>Regrouper et livrer</strong><p>Export → archive → téléchargement</p></div><code>shed_zip<br/>shed_link_create</code></div></div>
+<div class="deliverable"><span aria-hidden="true" class="file-icon">ZIP</span><div><strong>countries_density.zip</strong><span>Un fichier à utiliser. Pas un mur de texte dans le chat.</span></div><span aria-hidden="true" class="end-arrow">↗</span></div>
+<p class="bench-caption">Des données de pays, classées avec SQLite et livrées en ZIP.</p>
+</aside>
+</section>
+<div class="principles shell"><span><b>Pensé pour les appels d’outils</b><small>Langage naturel → opérations concrètes</small></span><span><b>Du travail réel, sur disque</b><small>Examiner l’essentiel ; garder le volume dans les fichiers</small></span><span><b>Au-delà d’une session</b><small>Reprendre, versionner, collaborer, livrer</small></span></div>
+<section class="section shell" id="capabilities">
+<div class="section-head"><div><p class="kicker">01 / LA BOÎTE À OUTILS</p><h2>Le stockage était la fondation.<br/><span>Le travail était la raison d’être.</span></h2></div><p>FileShed apportait des outils de travail dans la conversation, avec un modèle commun pour les fichiers, les zones, les permissions et les résultats.</p></div>
+<div class="capabilities">
+<article class="cap"><span class="cap-number">/01</span><h3>Des données, sans saturer le chat.</h3><p>Importer du CSV dans SQLite, l’interroger, calculer de nouvelles colonnes et exporter les résultats. La sortie des commandes peut aller directement sur disque ; les résultats SQL peuvent devenir un CSV plutôt que des milliers de tokens de conversation.</p><p class="tags">SQLite · import/export CSV · jq · redirection de sortie</p></article>
+<article class="cap"><span class="cap-number">/02</span><h3>Des fichiers aux résultats terminés.</h3><p>Convertir des documents avec Pandoc, traiter des médias avec FFmpeg, examiner des données binaires, décompresser des archives et préparer des livrables. Les liens de téléchargement ramènent le résultat dans Open WebUI.</p><p class="tags">Documents · médias · archives · téléchargements authentifiés</p></article>
+<article class="cap"><span class="cap-number">/03</span><h3>Éditer, enregistrer ou revenir en arrière.</h3><p>Modifier du texte par ligne ou par motif, corriger des octets, ou utiliser une copie de travail verrouillée avec enregistrement et annulation explicites. Les espaces Documents et Groupes ajoutent un historique Git automatique.</p><p class="tags">Éditions précises · copies de travail · verrous · historique Git</p></article>
+<article class="cap"><span class="cap-number">/04</span><h3>Des outils qui s’expliquent.</h3><p>Le modèle peut demander un mode d’emploi adapté à une tâche, découvrir les commandes installées et examiner la configuration. Les erreurs structurées fournissent du contexte et des pistes pour corriger un appel plutôt que le répéter à l’aveugle.</p><p class="tags">shed_help · shed_allowed_commands · indications contextuelles</p></article>
+</div>
+<p class="footnote">Les commandes externes doivent être installées dans l’environnement Open WebUI. L’accès réseau est désactivé par défaut. La création de PDF et certaines opérations sur les images demandent des outils supplémentaires.</p>
+</section>
+<section class="section workflow-section" id="workflows"><div class="shell">
+<div class="section-head"><div><p class="kicker">02 / DE LA DEMANDE AU RÉSULTAT</p><h2>Une demande.<br/><span>Une chaîne d’opérations utiles.</span></h2></div><p>Le dépôt documente un traitement de données de pays réalisé avec un modèle de 20 milliards de paramètres. Sa force était la composition : des outils familiers, reliés par le modèle, produisant un véritable livrable.</p></div>
+<div class="workflow-grid">
+<div class="workflow-steps">
+<details open=""><summary><span>01</span>Amener les données sur l’établi <b aria-hidden="true">+</b></summary><div class="detail-body"><p>Avec l’accès réseau explicitement activé, télécharger du JSON dans un fichier puis le transformer en CSV avec <code>jq</code>. Le jeu de données n’a pas besoin d’être collé dans la conversation.</p><pre><code>shed_exec(zone="storage", cmd="curl",
+  args=["-L", "-o", "countries.json", URL])</code></pre></div></details>
+<details><summary><span>02</span>Rendre les fichiers interrogeables <b aria-hidden="true">+</b></summary><div class="detail-body"><p>Importer le CSV, ajouter une colonne de densité, la calculer et trier les résultats dans SQLite. Ce sont des appels d’outils sur des données stockées, pas des calculs improvisés dans du texte.</p><pre><code>shed_sqlite(zone="storage", path="data.db",
+  import_csv="countries.csv", table="countries")</code></pre></div></details>
+<details><summary><span>03</span>Exporter, regrouper, remettre le résultat <b aria-hidden="true">+</b></summary><div class="detail-body"><p>Exporter la requête en CSV, regrouper les fichiers et créer un lien de téléchargement Open WebUI authentifié.</p><pre><code>shed_zip(zone="storage", src="results",
+  dest="countries_density.zip")
+shed_link_create(zone="storage",
+  path="countries_density.zip")</code></pre></div></details>
+<p class="footnote">Les appels ci-dessus illustrent le parcours documenté ; ils ne constituent pas un script exécutable complet. L’exécution d’origine comporte des reprises et des demandes de continuation, pas une garantie de nombre de tours.</p>
+</div>
+<figure class="evidence"><a href="assets/original-workflow.png" rel="noopener" target="_blank"><div class="evidence-top"><span>DONNÉES DES PAYS → RÉSULTATS</span><span>Ouvrir la capture complète ↗</span></div><img alt="Conversation Open WebUI avec des appels d’outils FileShed et un tableau de densités de population exportées." height="1607" loading="lazy" src="assets/original-workflow.png" width="927"/></a><figcaption>D’une conversation Open WebUI à un jeu de données classé, un export CSV et un téléchargement ZIP.</figcaption></figure>
+</div>
+</div></section>
+<section class="section shell" id="architecture">
+<p class="kicker">03 / UN ESPACE DE TRAVAIL COHÉRENT</p><h2>Un atelier privé.<br/><span>Une étagère commune.</span></h2><p class="section-lead">Trois zones personnelles et des espaces de groupe donnaient une place au travail. La distinction était voulue : expérimenter en privé, conserver des documents versionnés, puis collaborer avec des règles de propriété explicites.</p>
+<div class="zones"><article><span class="zone-icon">↘</span><h3>Pièces jointes</h3><p>Importer les pièces jointes de la conversation en cours.</p><small>À l’échelle de la conversation</small></article><article><span class="zone-icon">⌘</span><h3>Stockage</h3><p>Transformer les fichiers, exécuter des opérations et conserver le travail entre les conversations.</p><small>Espace de travail personnel</small></article><article><span class="zone-icon">↶</span><h3>Documents</h3><p>Conserver des documents avec un historique Git automatique.</p><small>Personnel et versionné</small></article><article><span class="zone-icon">⇄</span><h3>Groupes</h3><p>Publier et collaborer selon l’appartenance aux groupes Open WebUI.</p><small>Partagé et versionné</small></article></div>
+<div class="engineering"><div><h3>De la puissance, avec des limites explicites.</h3><p>Commandes autorisées, contrôles des chemins, quotas, délais et modes réseau définis par l’administrateur. Les fichiers de groupe disposent des modes d’écriture <code>owner</code>, <code>group</code> et <code>owner_ro</code> .</p><p class="footnote">Ce sont des protections applicatives, pas une isolation au niveau du système d’exploitation. Les revues historiques assistées par IA ne constituent pas une certification de sécurité indépendante.</p></div><div><details><summary>En quoi était-il pensé pour les agents ? <b aria-hidden="true">+</b></summary><div class="detail-body"><p>Seuls les outils publics <code>shed_*</code> étaient destinés à être exposés au modèle ; la logique interne se trouvait dans <code>_FileshedCore</code>. L’aide par tâche, les limites de sortie et les indications correctives faisaient des appels du modèle une interface à part entière.</p></div></details><details><summary>Que contient encore le code ? <b aria-hidden="true">+</b></summary><div class="detail-body"><p>Le code fourni en version 1.1.0 contient aussi un chiffrement facultatif des fichiers personnels avec AES-256-GCM et Argon2id. Ce n’est pas un chiffrement universel de bout en bout : les groupes ne sont pas chiffrés, les clés sont utilisées à l’exécution et les commandes shell voient les octets chiffrés. Perdre la clé signifie perdre l’accès.</p></div></details></div></div>
+</section>
+<section class="legacy"><div class="shell legacy-grid"><div><span class="badge">Retraité</span><h2>Retraité.<br/><em>Pas effacé.</em></h2><figure class="original-mark"><img alt="Logo original FileShed : une remise bleue, un toit orange, un dossier et des outils." height="400" loading="lazy" src="assets/original-logo.png" width="1024"/><figcaption>L’identité d’origine du projet.</figcaption></figure></div><div><p class="legacy-lead">Un outil utile a le droit d’avoir terminé son travail.</p><p>J’ai mis FileShed à la retraite parce qu’OpenTerminal d’Open WebUI couvre désormais une grande partie de mes besoins d’origine. Cela n’efface pas le travail : le code, les parcours et les choix de conception restent disponibles pour ceux qui veulent s’en inspirer.</p><p>FileShed fait partie de l’histoire de FadeShed : rendre les modèles conversationnels utiles au-delà de la conversation et partager les outils qui l’ont permis.</p><p class="small">Il s’agit d’une rétrospective du projet, pas d’une promesse de maintenance continue ou de compatibilité avec les versions actuelles d’Open WebUI.</p><a class="text-link" href="https://github.com/Fade78/Fileshed">Parcourir le projet d’origine ↗</a></div></div></section>
+<section class="source-notes shell" id="sources"><p class="kicker">ARCHIVES DU PROJET</p><div class="records"><a href="https://github.com/Fade78/Fileshed/blob/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/README.md" hreflang="en"><b>Guide d’origine</b><span>Usages, exemples et installation ↗</span><small aria-label="ressource en anglais" class="fs-reference-lang"> EN</small></a><a href="https://github.com/Fade78/Fileshed/blob/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/docs/SPEC.md" hreflang="en"><b>Spécification de conception</b><span>Architecture, permissions et compromis ↗</span><small aria-label="ressource en anglais" class="fs-reference-lang"> EN</small></a><a href="overview.md"><b>Présentation technique</b><span>Possibilités et documentation →</span></a></div><p class="footnote">Explorez les archives du projet pour son implémentation, ses exemples et son histoire technique. <a href="overview.md">Lire la présentation détaillée.</a></p></section>
+</main>
+<footer class="shell"><a class="parent" href="../">← Retour à FadeShed</a><p>Créé pour être utile. Partagé pour que les idées circulent.</p><a href="llms.txt">llms.txt</a></footer>
+<script defer="True" src="/assets/minisites.js?v=bilingual-1"></script></body>
+</html>

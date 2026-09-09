@@ -1,0 +1,11 @@
+{
+  "series_meta": {
+    "title": "Ma première série",
+    "subtitle": "Un projet de départ pour LightWebPres."
+  },
+  "articles": [
+    {
+      "page_source": "ma-page.md"
+    }
+  ]
+}
