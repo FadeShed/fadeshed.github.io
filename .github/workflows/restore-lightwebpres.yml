@@ -1,0 +1,29 @@
+name: Restore supplied LightWebPres portal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/restore-lightwebpres/manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: restore-lightwebpres
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the website revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Rebuild the supplied portal and verify every original file
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/restore-lightwebpres/restore.py
