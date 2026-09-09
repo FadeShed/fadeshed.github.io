@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Complete translated reader metadata and check explicit locale routing first."""
+"""Complete translated reader metadata and verify explicit locale routing."""
 from pathlib import Path
 root=Path(__file__).resolve().parent
 p=root/'language.css';p.write_text(p.read_text().replace('body:not(.lwp-index)','body:not(.index-page)'))
@@ -39,3 +39,30 @@ needle="page.goto(base+'lightwebpres/ecrire.html?lang=fr#notes-et-liens',wait_un
 replacement="""page.goto(base+'lightwebpres/ecrire.html?lang=fr#notes-et-liens',wait_until='networkidle');(report/'actual-switch-route.json').write_text(json.dumps(page.evaluate(\"({url:location.href,entry:window.__fsEntryHash,lang:document.documentElement.lang,storage:Object.fromEntries(Object.entries(localStorage))})\"),ensure_ascii=False,indent=2));page.wait_for_url"""
 if needle not in s:raise RuntimeError('Final route check changed')
 p.write_text(s.replace(needle,replacement,1))
+# Align the requested card after the reader's initial animated scroll settles.
+p=root/'language.js';s=p.read_text()
+start=s.index('function restoreEntry(){');end=s.index('// Preserve the logical slide',start)
+s=s[:start]+'''function restoreEntry(){
+ const entry=window.__fsEntryHash;
+ if(!entry||!document.querySelector('section.slide')||new URL(location.href).searchParams.has('lang'))return;
+ let cancelled=false;
+ const cancel=()=>{cancelled=true};
+ const inputs=['wheel','touchstart','pointerdown','keydown'];
+ inputs.forEach(type=>window.addEventListener(type,cancel,{once:true,passive:true}));
+ const duration=Number(document.body.getAttribute('data-lwp-scroll-duration'))||200;
+ Promise.resolve(document.fonts?.ready).then(()=>setTimeout(()=>{
+  inputs.forEach(type=>window.removeEventListener(type,cancel));
+  if(cancelled)return;
+  let id;try{id=decodeURIComponent(entry.slice(1))}catch{return}
+  const target=document.getElementById(id);
+  if(!target)return;
+  // Fractional layout must not leave the preceding card at the viewport edge.
+  const top=Math.ceil(target.getBoundingClientRect().top+window.scrollY)+2;
+  window.scrollTo({top:top,left:0,behavior:'instant'});
+  if(location.hash!==entry)history.replaceState(history.state,'',location.pathname+location.search+entry);
+  refresh();
+ },Math.min(Math.max(duration,0),2000)+100));
+}
+if(document.readyState==='complete')restoreEntry();else window.addEventListener('load',restoreEntry,{once:true});
+''' + s[end:]
+p.write_text(s)
