@@ -1,0 +1,45 @@
+name: Prepare minisite publication
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/prepare-minisites.yml']
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Collect only public website files and the reviewed Pasteberth export
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, shutil, subprocess, tempfile
+          root = pathlib.Path.cwd()
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'minisites-input'
+          out.mkdir()
+          for name in ['index.html', 'style.css', 'index.md', 'llms.txt', '.nojekyll', 'assets', 'fileshed', 'lightwebpres', 'pasteberth']:
+              p = root / name
+              if p.is_dir(): shutil.copytree(p, out / name)
+              elif p.is_file(): shutil.copy2(p, out / name)
+          with tempfile.TemporaryDirectory() as td:
+              src = pathlib.Path(td) / 'source'
+              subprocess.run(['git', 'init', '-q', str(src)], check=True)
+              subprocess.run(['git','-C',str(src),'fetch','--depth=1','https://github.com/Fade78/pasteberth.git','36f2da3c5b57fc35e237225b8d9bd4c3c7eeb50b'],check=True)
+              subprocess.run(['git','-C',str(src),'checkout','--detach','-q','FETCH_HEAD'],check=True)
+              for name in (src/'site/publish-files.txt').read_text().splitlines():
+                  p=src/name
+                  if p.resolve() != src/name or not p.is_file() or p.is_symlink(): raise RuntimeError(name)
+                  dest=out/'pasteberth-source'/name
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(p,dest)
+          print('Public review input prepared.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: minisites-input
+          path: ${{ runner.temp }}/minisites-input
+          include-hidden-files: true
+          retention-days: 3
