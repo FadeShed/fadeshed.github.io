@@ -1,0 +1,58 @@
+name: Check published minisites
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/check-live-minisites.yml']
+permissions:
+  contents: read
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install browser checks
+        run: |
+          python3 -m venv "$RUNNER_TEMP/check-venv"
+          "$RUNNER_TEMP/check-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
+          "$RUNNER_TEMP/check-venv/bin/python" -m playwright install --with-deps chromium
+      - name: Wait for the verified publication to reach Pages
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, time, urllib.request
+          paths=['index.html','fileshed/index.html','pasteberth/index.html','pasteberth/demo.html','lightwebpres/index.html','assets/minisites.css','assets/minisites.js','llms.txt','pasteberth/llms.txt','lightwebpres/llms.txt']
+          expected={name:hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() for name in paths}
+          base='https://fadeshed.github.io/'
+          report=pathlib.Path(os.environ['RUNNER_TEMP'])/'live-qa'; report.mkdir()
+          for attempt in range(20):
+              results=[]
+              for name in paths:
+                  try:
+                      request=urllib.request.Request(base+name,headers={'User-Agent':'FadeShed-publication-check','Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(request,timeout=25) as response:
+                          digest=hashlib.sha256(response.read()).hexdigest()
+                          results.append({'path':name,'status':response.status,'matches':digest==expected[name],'sha256':digest})
+                  except Exception as error:
+                      results.append({'path':name,'matches':False,'error':str(error)})
+              if all(item['matches'] for item in results):
+                  (report/'deployed-bytes.json').write_text(json.dumps({'base_url':base,'files':results},indent=2)+'\n')
+                  print('All ten deployed files match the committed publication exactly.')
+                  break
+              print('Waiting for Pages:',[r['path'] for r in results if not r['matches']],flush=True)
+              time.sleep(15)
+          else: raise RuntimeError('Pages did not serve the expected publication')
+          PY
+      - name: Exercise the live sites and local-browser sandboxes
+        run: |
+          "$RUNNER_TEMP/check-venv/bin/python" .github/minisites/qa.py . "$RUNNER_TEMP/live-qa" --base-url https://fadeshed.github.io/
+      - name: Retain live verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: minisites-live-qa
+          path: ${{ runner.temp }}/live-qa
+          retention-days: 3
+          if-no-files-found: warn
