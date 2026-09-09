@@ -153,6 +153,7 @@ def main():
     manifest=out/'assets/bilingual-manifest.json';m=json.loads(manifest.read_text())
     for name in proof['files']:
         if not name.startswith('.github/'):m['files'][name]=proof['files'][name]
+    m['engine_sha256']=digest((out/'lightwebpres/web/lightwebpres').read_bytes())
     manifest.write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n')
     (work/'publication-proof.json').write_text(json.dumps(proof,ensure_ascii=False,indent=2)+'\n')
     print('Recovered approved publication:',len(recipe['outputs']),'outputs;',len(protected),'unrelated files unchanged')
