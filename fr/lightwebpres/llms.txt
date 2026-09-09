@@ -1,36 +1,22 @@
 # LightWebPres
 
-> LightWebPres is a single-file Python publisher that turns Markdown into self-contained HTML articles and presentations, with portrait reading, landscape navigation, optional long-form content and a series index.
+> Outil de génération de pages à lire, présenter et publier à partir de sources Markdown. Bêta.
 
-Status: **Beta**. The website package identifies its engine as **0.56.0, unreleased**. Match documentation to the chosen source or release rather than treating the website build as the latest stable version.
+Le lecteur utilise son navigateur. Le constructeur web et le CLI utilisent le même moteur ; l’agent de rédaction et l’hébergement sont externes. Les tags filtrent des contenus rédigés, ils ne traduisent pas et ne contrôlent pas les accès. Les notes sont publiées ; le moteur n’est pas un assainisseur HTML.
 
-Use the CLI for unattended builds, strict audits, output verification and watch workflows. Identity, preset and theme are separate appearance concepts; self-contained Identity Kits can provide their own layouts, chrome and assets. The included Pyodide browser builder runs the same engine and requires HTTP(S). It is distinct from the separate `lightwebpres-gui` editor. The format skill describes syntax; the optional sourced-presentation skill describes an editorial method.
+## Parcours
 
-Trusted sources only: raw HTML and scripts can pass through. Speaker notes are published in the HTML; tags are not access controls. Deleting source files does not automatically remove stale output. The engine's GPL license and Output Exception distinguish the generator from normal generated presentations.
+- [Présentation](https://fadeshed.github.io/fr/lightwebpres/index.md)
+- [LightWebPres](https://fadeshed.github.io/fr/lightwebpres/index.html)
+- [Usages](https://fadeshed.github.io/fr/lightwebpres/usages.html)
+- [Dossier interactif](https://fadeshed.github.io/fr/lightwebpres/demo/library.html)
+- [Créer](https://fadeshed.github.io/fr/lightwebpres/demarrer.html)
+- [Guide](https://fadeshed.github.io/fr/lightwebpres/guide/guide.html)
+- [Constructeur navigateur](https://fadeshed.github.io/fr/lightwebpres/web/)
 
-## Try and explore
+## Références techniques originales
 
-- [Full product portal](https://fadeshed.github.io/lightwebpres/): six paths through reading, authoring, appearance and publishing; the supplied portal is in French.
-- [Interactive example](https://fadeshed.github.io/lightwebpres/demo/ma-page.html): one document to read in portrait or present in landscape.
-- [Rendered guide](https://fadeshed.github.io/lightwebpres/guide/guide.html): full operational manual as a LightWebPres document.
-- [Theme gallery](https://fadeshed.github.io/lightwebpres/themes.html): inspect built-in themes in rendered examples.
-- [Browser builder](https://fadeshed.github.io/lightwebpres/web/): build a series in a tab with the bundled engine and local Pyodide assets; HTTP(S) required.
-
-## Start here
-
-- [Product overview](https://fadeshed.github.io/lightwebpres/index.md): publishing model, authoring interfaces, agent use, licensing and trust boundaries.
-- [Operational guide](https://fadeshed.github.io/lightwebpres/reference/GUIDE.md): create a series, author articles, choose appearance, build, verify and publish.
-- [Format skill](https://fadeshed.github.io/lightwebpres/reference/agent/skills/lightwebpres/SKILL.md): exact article grammar for people and agents.
-- [Glossary](https://fadeshed.github.io/lightwebpres/reference/GLOSSARY.md): fields, defaults and fallback behavior.
-
-## Optional
-
-- [Specification](https://fadeshed.github.io/lightwebpres/reference/specifications.md): detailed format and behavior reference in French.
-- [Editorial method](https://fadeshed.github.io/lightwebpres/reference/agent/skills/sourced-presentation/SKILL.md): optional source-grounded presentation workflow, separate from the renderer.
-- [Contributor guide](https://fadeshed.github.io/lightwebpres/reference/AGENTS.md): source layout, tests and contribution rules.
-- [FadeShed](https://fadeshed.github.io/llms.txt): related projects.
-
-## Website languages
-
-- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
-- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
+- [README.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/README.md)
+- [GUIDE.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GUIDE.md)
+- [GLOSSARY.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GLOSSARY.md)
+- [agent/skills/lightwebpres/SKILL.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/agent/skills/lightwebpres/SKILL.md)

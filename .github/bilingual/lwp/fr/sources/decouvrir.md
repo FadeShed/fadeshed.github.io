@@ -1,87 +1,80 @@
 <!-- lwp:meta -->
-page_title: Une page, deux façons de la vivre — LightWebPres
-page_desc: Lire, présenter, partager : découvrez le format en l’utilisant.
-card_title: Une page, deux façons de la vivre
-card_desc: Lire, présenter, partager : découvrez le format en l’utilisant.
+page_title: Un document pour tout le parcours — LightWebPres
+page_desc: Lire la vue d’ensemble, explorer les détails et choisir comment créer.
+card_title: Un document pour tout le parcours
+card_desc: Lire la vue d’ensemble, explorer les détails et choisir comment créer.
 card_label: 01 / DÉCOUVRIR
-nav_title: Une page, deux façons de la vivre
-nav_desc: Lire, présenter, partager : découvrez le format en l’utilisant.
+nav_title: Un document pour tout le parcours
+nav_desc: Lire la vue d’ensemble, explorer les détails et choisir comment créer.
 ---
 
 <!-- lwp:slide:cover -->
 slug: ouverture
-kicker: 01 / DÉCOUVRIR
-# Une page.<br>Deux façons<br>de la vivre.
-summary: Vous lisez déjà du LightWebPres. Faites défiler cette page, ou appuyez sur la flèche droite pour la présenter.
+# Avant l’exposé.<br>Pendant.<br>Et après.
+summary: Lire la vue d’ensemble, explorer les détails et choisir comment créer. <br><span><a class="lwp-web-button" href="demo/library.html">Ouvrir l’exemple →</a></span>
 
----
 
-<!-- lwp:slide -->
-slug: une-source
-kicker: LE PRINCIPE
-## Votre source reste du texte.
-summary: Vous écrivez des fiches et, si nécessaire, un article de fond. Le moteur les réunit dans une même page.
-highlight: .md → .html
-highlight-caption: Un fichier source par article. Une page HTML par article.
-source: <a href="reference/README.md">README · One page, two uses</a> ; <a href="ecrire.html">Écrire au format LWP</a>.
-
-Pas de format de présentation opaque à entretenir. Les titres, les contenus et les liens vivent dans des fichiers que vous pouvez relire et versionner.
-
-<div class="lwp-web-actions"><a class="lwp-web-button" href="downloads/demarrage.zip" download>Récupérer l’exemple ↓</a><a href="demo/ma-page.html">Voir sa page générée →</a></div>
-
----
-
-<!-- lwp:slide -->
-slug: deux-usages
-kicker: LIRE OU PRÉSENTER
-## Le contenu s’adapte. Il ne disparaît pas.
-summary: Sur téléphone, faites défiler. En paysage, naviguez à la souris ou au clavier. Le contenu long reste accessible par défilement.
-source: <a href="guide/guide.html#8-present-print-and-share">Guide · Present, print and share</a>.
-
-![Une même fiche LightWebPres, avec le thème Nebula, dans deux vrais viewports Chromium.](img/product-responsive.png "Captures navigateur fournies avec le dépôt, et non photographies d’appareils.")
-
-Le plein écran s’ouvre avec **F** : tourner l’écran ne l’active pas automatiquement.
-
----
-
-<!-- lwp:slide -->
-slug: commandes
-kicker: ESSAYEZ MAINTENANT
-## Les commandes sont déjà là.
-summary: Aucun lecteur à installer : les contrôles accompagnent chaque article.
-source: <a href="guide/guide.html#8-present-print-and-share">Guide · Keyboard et Speaker panel</a>.
-note: Ceci est une vraie note de présentation. Le panneau est visible sur le même écran que le deck. N’y mettez aucune information confidentielle.
-
-<div class="lwp-web-key-grid"><div><kbd>→</kbd><strong>Avancer</strong><span>La fiche suivante</span></div><div><kbd>F</kbd><strong>Présenter</strong><span>Le plein écran</span></div><div><kbd>C</kbd><strong>Changer d’apparence</strong><span>Identité, preset, thème</span></div><div><kbd>N</kbd><strong>Voir les notes</strong><span>Un panneau public</span></div></div>
-
-Appuyez sur **H** pour l’aide complète. Le bouton de partage propose le lien de la série, de l’article ou de la fiche ; les QR codes demandent une adresse HTTP(S) accessible.
-
----
-
-<!-- lwp:slide -->
-slug: fichiers-libres
-kicker: À EMPORTER
-## Votre page n’a pas besoin du moteur pour être lue.
-summary: Le CSS et le JavaScript sont embarqués dans chaque article. Les images locales restent à côté, dans le dossier publié.
-fact-label: Une distinction utile
-source: <a href="reference/README.md">README · Portable pages</a> ; <a href="guide/guide.html#7-verify-and-publish">Guide · Verify and publish</a>.
-
-Le **générateur** utilise Python. Le **lecteur** utilise son navigateur. Vous pouvez ouvrir les HTML localement, ou publier tout le dossier **public/** sur un hébergement statique.
-
-L’option `--inline-images` embarque les images Markdown quand une livraison autonome est nécessaire ; `verify` ne reproduit pas ce mode.
 
 ---
 
 <!-- lwp:slide -->
 slug: pour-qui
-kicker: QUAND L’UTILISER
-## Quand le fond doit survivre à la présentation.
-summary: Un cours à relire, une documentation à montrer, une intervention à partager : le même texte peut servir avant, pendant et après.
-source: <a href="reference/README.md">README · Content model et Safety</a> ; <a href="ressources.html#skills">Les deux skills</a>.
+## Commencez par votre intention.
+summary: Un cours, un dossier, une collection ou une identité à partager.
 
-LightWebPres ne choisit pas votre argument et ne vérifie pas vos faits. Il rend des sources de confiance et accepte du HTML brut : ce n’est pas un outil de nettoyage de contenus externes.
+Le lecteur a besoin d’un parcours clair ; l’auteur, de sources modifiables ; le designer, de choix réutilisables ; le mainteneur, d’un livrable à conserver et reconstruire. Une même personne peut tenir tous ces rôles ; un agent peut aussi participer au travail.
 
-<div class="lwp-web-actions"><a class="lwp-web-button" href="demarrer.html">Passer à ma première page ↗</a></div>
+<div class="lwp-web-actions"><a class="lwp-web-button" href="usages.html">Explorer les six parcours →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: deux-usages
+## La vue d’ensemble et les détails restent ensemble.
+summary: Les fiches guident une présentation. L’article complet accueille son développement.
+
+Ouvrez le dossier de bibliothèque pour découvrir une proposition, son tableau comparatif et la note de travail complète. Suivez les fiches ou allez directement au texte long. Vous choisissez la profondeur utile.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="demo/library.html#detail">Lire la note complète →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: commandes
+## Un menu lecteur. Pas une obligation de clavier.
+summary: Sur téléphone, touchez le menu pour accéder au zoom − / + / Réinitialiser, à l’ajustement du texte et au défilement des tableaux.
+
+Le zoom de présentation agrandit le document. Le pincement reste le zoom de votre navigateur. L’aide propose les gestes tactiles et les raccourcis clavier. Les commandes permettent aussi de changer d’apparence ou de partager la fiche courante.
+
+---
+
+<!-- lwp:slide -->
+slug: une-source
+## Gardez la matière que vous pouvez modifier.
+summary: Les sources Markdown, les images et un fichier de série décrivent le document.
+
+Écrivez vous-même, guidez un agent externe ou automatisez une construction. Le constructeur navigateur et la ligne de commande utilisent le même moteur. Ils ne choisissent pas votre argumentation et ne fournissent pas d’agent de rédaction.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="demarrer.html">Choisir votre point de départ →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: fichiers-libres
+## Transmettez un document, pas le générateur.
+summary: Le lecteur ouvre le HTML dans un navigateur. Conservez les images référencées et les ressources des kits avec les pages.
+
+Publiez le dossier de sortie complet sur un hébergement statique, ou transmettez directement les fichiers. Gardez le projet source pour les modifications et les reconstructions.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="publier.html">Préparer votre publication →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: portrait-landscape
+## Une page, deux contextes de lecture.
+
+![ Un document en portrait et en paysage](img/product-responsive.png)
 
 ---
 

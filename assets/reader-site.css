@@ -1,0 +1,7 @@
+/* Site navigation follows the reader's foreground zoom compensation. */
+.fs-reader-open{position:fixed;right:16px;bottom:18px;z-index:30;min-width:48px;min-height:48px;padding:10px 15px;border-radius:24px;border:1px solid #657681;background:#15212b;color:#fff;font:650 13px/1.3 system-ui,sans-serif;cursor:pointer;zoom:calc(1 / var(--lwp-presentation-zoom,1))}
+.fs-reader-open:focus-visible{outline:3px solid #dcfc87;outline-offset:3px}
+.fs-reader-open:hover{background:#263b4b}
+.fs-floating,.lwp-web-nav>.fs-language{zoom:calc(1 / var(--lwp-presentation-zoom,1))}
+body:has(.presenter-menu.open) .fs-reader-open,body:has(.help-overlay.open) .fs-reader-open,body:has(.theme-menu.open) .fs-reader-open{visibility:hidden}
+@media print{.fs-reader-open{display:none!important}}

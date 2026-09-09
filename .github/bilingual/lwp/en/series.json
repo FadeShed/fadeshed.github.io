@@ -1,10 +1,10 @@
 {
   "series_meta": {
-    "title": "Write once.<br><span class=\"lwp-web-accent\">Share anywhere.</span><span class=\"lwp-web-sr\"> — LightWebPres</span>",
-    "subtitle": "One Markdown text. Pages to read on a phone, present on a big screen and publish wherever you choose.",
-    "intro": "<a class=\"lwp-web-button\" href=\"demarrer.html\">Create my first page <span aria-hidden=\"true\">↗</span></a> <a class=\"lwp-web-text-link\" href=\"demo/ma-page.html\">Try the demo <span aria-hidden=\"true\">→</span></a><br><span class=\"lwp-web-reassurance\">Python 3.8+ · No extra packages · No account to read</span>",
+    "title": "Your ideas.<br><span class=\"lwp-web-accent\">Ready to travel.</span><span class=\"lwp-web-sr\"> — LightWebPres</span>",
+    "subtitle": "A course, a research brief, a project update. Keep the overview and the detail together, in pages to read on a phone, present on a screen and share afterwards.",
+    "intro": "<span class=\"fs-hero-actions\"><span><a class=\"lwp-web-button\" href=\"demo/library.html\">Open a real example →</a></span><a class=\"lwp-web-text-link\" href=\"#usages\">Find your use case →</a><br><span class=\"lwp-web-reassurance\">No installation to read. Editable sources to make it yours.</span></span><span class=\"fs-reader-showcase\"><a href=\"demo/library.html\" aria-label=\"Open the interactive example\"><img src=\"img/reader-preview.webp\" width=\"1100\" height=\"780\" alt=\"One document in reading and presentation layouts\"></a><span class=\"fs-preview-caption\">One document. More than one way to read it. <a href=\"demo/library.html\">Explore the example →</a></span></span>",
     "presentation_preset": "lightwebpres-site@1.0.0/web",
-    "scroll_duration": 200
+    "scroll_duration": 0
   },
   "themes": [
     "essential",
@@ -15,6 +15,9 @@
   "articles": [
     {
       "page_source": "decouvrir.md"
+    },
+    {
+      "page_source": "usages.md"
     },
     {
       "page_source": "demarrer.md"

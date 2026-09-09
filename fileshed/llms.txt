@@ -8,11 +8,10 @@ Use FileShed's documentation for its Open WebUI tool-calling interface. Use Past
 
 The documented workflow combines `shed_exec`, SQLite, CSV export, ZIP creation and authenticated download links. External commands must be installed; network access is disabled by default. Documents and Groups use automatic Git history, unlike every file in Storage. Application safeguards are not an OS sandbox. Personal encryption has documented limits.
 
-The source snapshot declares 1.1.0 and 44 public `shed_*` methods; the README and historical reports describe 1.0.5 and 38 functions. Read the source notes before relying on a version-specific feature or historical test result.
 
 ## Start here
 
-- [Product overview](https://fadeshed.github.io/fileshed/overview.md): capabilities, workspace contexts, workflow, source versions and security boundaries.
+- [Product overview](https://fadeshed.github.io/fileshed/overview.md): capabilities, workspace contexts, workflow, operational and security boundaries.
 - [Original guide](https://raw.githubusercontent.com/Fade78/Fileshed/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/README.md): installation in Open WebUI, Native Function Calling, examples and function reference.
 - [Design specification](https://raw.githubusercontent.com/Fade78/Fileshed/e69757ccab2aed5ce19dd615ffa2d86b16a08ba9/docs/SPEC.md): layered architecture, groups, permissions, help, locking and encryption.
 

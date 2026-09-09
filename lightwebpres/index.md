@@ -1,40 +1,38 @@
 # LightWebPres
 
-> Write one Markdown source. Read it on a phone, present it in landscape, publish it as a static site.
+> Documents to read, present and share. Editable sources to write, organize, design and automate.
 
-Status: **Beta**. LightWebPres is a single-file Python tool for generating self-contained HTML articles with slide navigation, optional long-form text and a series index. The website package uses engine **0.56.0**, identified by its build information as **unreleased**; that is not a claim about the latest public release.
+Status: **Beta**.
 
-## One source, several reading contexts
+## Read and present
 
-Readers can scroll in portrait and navigate the same content in landscape. Generated pages carry their CSS and JavaScript and do not require the reader to install LightWebPres or hold a presentation-service account. Long-form content, notes, images, math and series navigation support more than a fixed slide deck.
+A briefing before a meeting, a course during a session, a reference afterwards. Your audience opens the same pages in a browser: they do not need the generator or a presentation-service account. On a phone they scroll; on a larger screen they can follow the cards. Long content stays available instead of being cut to fit a slide.
 
-## Appearance and publishing
+## Write and explain
 
-Identity, presentation preset and theme are distinct choices. Native and Commons choices coexist with self-contained Identity Kits. Typed configuration and per-series settings support repeatable output; advanced custom CSS remains outside some automated checks.
+Prepare a course, a research brief or a project update without maintaining a disconnected slide deck and handout. Write the main ideas as cards and keep the explanation, references and longer text in the same article project. You decide the argument and the level of detail; LightWebPres renders the structure you provide.
 
-The CLI can build unattended, return exit codes, audit sources and styles, verify output drift, and watch a series for changes. This makes it useful to human authors, scripts and agents. Markdown remains the source of truth; the generated site is an artifact to inspect, publish and share.
+## Organize knowledge
 
-## Authoring interfaces
+A course has modules. Documentation has topics. A briefing selects only what its audience needs. LightWebPres lets a series select and order articles while the source of each article remains reusable. The same canonical text can belong to a short briefing and to a larger reading collection, with context-specific titles and descriptions.
 
-The Python CLI runs with the standard library. The included browser builder runs the same engine under vendored Pyodide. It requires HTTP(S), not `file://`. ZIP builds stay in the browser tab. Its GitLab synchronization mode talks to the configured instance and creates or updates files; it does not delete stale output.
+## Design an identity
 
-The browser builder is not the separate `lightwebpres-gui` editor. Do not treat the CLI, browser builder and external editor as the same component.
+Choose colors and typography with a theme. Use a preset to select an arrangement of appearance choices. When you need layouts, marks, headers and footers together, create an Identity Kit that another author can reuse. A composed kit is self-contained: its recipients need the delivered kit, not a chain of its source kits.
 
-## Agent-oriented documentation
+## Automate a workflow
 
-The format skill specifies the article grammar. The separate sourced-presentation skill is an optional editorial method, not a prerequisite for rendering. A useful automated workflow is to author or update sources, build, audit with strict checks where appropriate, verify with matching options, then inspect the generated result before publishing.
+Generate recurring project reports, update a documentation collection or give an agent a precise publishing task. The command line works with ordinary source files and structured reports. Build the pages, inspect source warnings and compare the output with a fresh render before handing it over. Generation, checking and publication remain distinct steps.
 
-## Trust boundaries
+## Publish and keep
 
-LightWebPres renders trusted sources; it is not an HTML sanitizer. Raw HTML can include scripts. Sanitize untrusted input upstream. Speaker notes are embedded in the output and are not private; source-only comments serve a different purpose. Tags are viewing filters, not access controls. Deleting a source does not automatically remove stale published files.
+Deliver a folder of pages and resources, publish it on static hosting or include it in an existing website. Readers use their browser; the source project stays with you for future edits and backups. Each article carries its own CSS and JavaScript. Referenced images and kit assets must travel with the output directory.
 
-## License
+## Start here
 
-The engine is GPL v3 or later with the LightWebPres Output Exception. Keep the relevant notices when redistributing the executable or vendored runtime. Generated presentations and the generator itself are not the same licensing case; consult the supplied legal texts.
-
-## Documentation
-
-- [README](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/README.md): product entry point.
-- [Guide](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/GUIDE.md): operational manual.
-- [Format skill](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/agent/skills/lightwebpres/SKILL.md): article grammar.
-- [Agent index](llms.txt): documentation routes and limits.
+- [LightWebPres](index.html)
+- [Use cases](usages.html)
+- [Interactive briefing](demo/library.html)
+- [Create](demarrer.html)
+- [Guide](guide/guide.html)
+- [Browser builder](web/)

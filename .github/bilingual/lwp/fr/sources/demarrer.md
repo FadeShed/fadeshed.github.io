@@ -1,18 +1,50 @@
 <!-- lwp:meta -->
-page_title: Votre première page — LightWebPres
-page_desc: Deux commandes pour découvrir. Un exemple complet pour vous lancer.
-card_title: Votre première page
-card_desc: Deux commandes pour découvrir. Un exemple complet pour vous lancer.
-card_label: 02 / DÉMARRER
-nav_title: Votre première page
-nav_desc: Deux commandes pour découvrir. Un exemple complet pour vous lancer.
+page_title: Choisissez comment créer — LightWebPres
+page_desc: Navigateur, agent externe ou éditeur et ligne de commande : choisissez le chemin adapté à votre tâche.
+card_title: Choisissez comment créer
+card_desc: Navigateur, agent externe ou éditeur et ligne de commande : choisissez le chemin adapté à votre tâche.
+card_label: 03 / CRÉER
+nav_title: Choisissez comment créer
+nav_desc: Navigateur, agent externe ou éditeur et ligne de commande : choisissez le chemin adapté à votre tâche.
 ---
 
 <!-- lwp:slide:cover -->
 slug: ouverture
-kicker: 02 / DÉMARRER
-# Deux commandes.<br>Et quelque chose<br>à montrer.
-summary: Python 3.8 ou plus récent suffit pour la ligne de commande. Aucun paquet Python supplémentaire n’est requis.
+# Partez de votre<br>façon de travailler.
+summary: Navigateur, agent externe ou éditeur et ligne de commande : choisissez le chemin adapté à votre tâche.
+
+
+
+---
+
+<!-- lwp:slide -->
+slug: navigateur
+## Construisez dans votre navigateur.
+summary: Partez d’un projet source. Récupérez un dossier de pages.
+
+Téléchargez le projet d’exemple, ouvrez le constructeur navigateur et sélectionnez son ZIP. Choisissez la langue de sortie et construisez. L’archive générée contient les pages à ouvrir ou publier. Les constructions ZIP s’exécutent dans cet onglet, sans envoi des sources à un service de compilation. C’est un constructeur, pas un éditeur WYSIWYG : pour changer le texte, modifiez les sources avant de reconstruire.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="web/">Ouvrir le constructeur navigateur →</a></div><div class="lwp-web-actions"><a class="lwp-web-button" href="downloads/library-project.zip">Récupérer le projet d’exemple →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: agent
+## Écrivez vous-même. Ou avec un agent.
+summary: Les mêmes fichiers modifiables relient les trois chemins de rédaction.
+
+Vous pouvez rédiger l’article, guider un agent externe dans ses révisions ou lui déléguer une tâche délimitée. Fournissez-lui le skill de format, les fichiers autorisés et les contrôles attendus. Relisez le contenu et inspectez les pages avant publication. LightWebPres fournit le format et le moteur, pas l’agent ni ses recherches.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="ressources.html#skills">Ouvrir les ressources pour agents →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: terminal
+## Votre éditeur. Votre automatisation.
+summary: La ligne de commande est là quand elle est le bon outil.
+
+Pour écrire localement, répéter les constructions ou intégrer des scripts, utilisez l’exécutable Python autonome. Les étapes suivantes créent un projet de départ ; les chapitres Écriture et Publication expliquent comment le faire évoluer.
 
 ---
 
@@ -87,7 +119,7 @@ Gardez les mêmes options de langue et de rendu entre construction et vérificat
 ---
 
 <!-- lwp:slide -->
-slug: navigateur
+slug: navigateur-details
 kicker: L’AUTRE ENTRÉE
 ## Sans terminal ? Construisez dans l’onglet.
 summary: Le constructeur web exécute le même moteur Python sous Pyodide. Déposez le zip du projet, récupérez le zip de ses pages.

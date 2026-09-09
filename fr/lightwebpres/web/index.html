@@ -147,7 +147,6 @@ if(target!==u.pathname||location.search.includes('lang=')){u.pathname=target;loc
     display: none;
   }
 </style>
-
 <script>/* French labels for the browser-builder page, not a translation of the engine. */
 window.fsBuilderText = value => {
   const s=String(value);const exact={
@@ -168,7 +167,7 @@ window.fsBuilderText = value => {
     .replace(' MiB compressed-size limit.',' Mio compressés.');
 };
 </script><link href="/assets/minisites.css?v=bilingual-1" rel="stylesheet"/><link href="https://fadeshed.github.io/fr/lightwebpres/web/" rel="canonical"/><link href="https://fadeshed.github.io/lightwebpres/web/" hreflang="en" rel="alternate"/><link href="https://fadeshed.github.io/fr/lightwebpres/web/" hreflang="fr" rel="alternate"/><link href="https://fadeshed.github.io/lightwebpres/web/" hreflang="x-default" rel="alternate"/></head>
-<body><header class="fs-utility fs-on-dark"><div aria-label="Fil d’Ariane" class="fs-breadcrumb fs-on-dark" role="navigation"><a aria-label="Accueil FadeShed" class="fs-home" href="/fr/"><img alt="" height="30" src="/assets/fadeshed-mark.webp" width="32"/><span>Fade<strong>Shed</strong></span></a><span aria-hidden="true" class="fs-separator">/</span><a class="fs-product" href="/fr/lightwebpres/">LightWebPres</a><span class="fs-status">Bêta</span></div><a href="../">← LightWebPres</a><nav aria-label="Langue" class="fs-language"><a aria-label="English" data-fs-lang="en" href="/lightwebpres/web/" hreflang="en" lang="en">EN</a><span aria-hidden="true">|</span><a aria-current="true" aria-label="Français" data-fs-lang="fr" href="/fr/lightwebpres/web/" hreflang="fr" lang="fr">FR</a></nav></header>
+<body><header class="fs-utility fs-on-dark fs-floating"><div aria-label="Fil d’Ariane" class="fs-breadcrumb fs-on-dark" role="navigation"><a aria-label="Accueil FadeShed" class="fs-home" href="/fr/"><img alt="" height="30" src="/assets/fadeshed-mark.webp" width="32"/><span>Fade<strong>Shed</strong></span></a><span aria-hidden="true" class="fs-separator">/</span><a class="fs-product" href="/fr/lightwebpres/">LightWebPres</a><span class="fs-status">Bêta</span></div><nav aria-label="Langue" class="fs-language"><a aria-label="English" data-fs-lang="en" href="/lightwebpres/web/" hreflang="en" lang="en">EN</a><span aria-hidden="true">|</span><a aria-current="true" aria-label="Français" data-fs-lang="fr" href="/fr/lightwebpres/web/" hreflang="fr" lang="fr">FR</a></nav></header>
 <div class="brand">
 <svg aria-hidden="true" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
 <g transform="rotate(-15 120 195)">
@@ -225,8 +224,11 @@ window.fsBuilderText = value => {
 <input id="projectId" placeholder="espace/projet ou ID numérique" type="text"/>
 <label for="branch">Branche</label>
 <input id="branch" placeholder="main" type="text" value="main"/>
-<label for="token">Jeton d’accès personnel (droits read_api + write_repository requis — voir la spécification §23.11)</label>
+<label for="token">Personal access token (api scope for Push; read_api for read-only Pull)</label>
 <input id="token" placeholder="glpat-..." type="password"/>
+<p>The <code>api</code> scope grants broad API read/write access within your
+      GitLab permissions. <code>write_repository</code> covers Git-over-HTTP,
+      not this page's REST commit requests. See specifications.md §23.11.</p>
 <div class="checkbox-row">
 <input id="rememberToken" type="checkbox"/>
 <label for="rememberToken">Mémoriser ce jeton sur cet appareil (conservé après fermeture de l’onglet)</label>
@@ -408,6 +410,7 @@ window.fsBuilderText = value => {
     rememberEl.checked = false;
     setRememberWarning(false);
     setStatus('Connection data cleared.', 'ok');
+    checkGitTarget();
   }
 
   FIELDS.forEach((f) => document.getElementById(f).addEventListener('input', saveConnection));
@@ -526,12 +529,53 @@ window.fsBuilderText = value => {
   let seriesDir = null;
   let gitOperation = null;
   let gitBuilt = false;
+  let snapshotTarget = null;
+  let observedTarget = connectionTarget();
+  let gitNeedsPull = false;
+
+  function connectionTarget() {
+    const { baseUrl, projectId, branch } = connectionValues();
+    return Object.freeze({ baseUrl, projectId, branch });
+  }
+
+  function sameTarget(a, b) {
+    return a !== null && b !== null && a.baseUrl === b.baseUrl
+      && a.projectId === b.projectId && a.branch === b.branch;
+  }
+
+  function hasCurrentSnapshot() {
+    return seriesDir && !gitNeedsPull && sameTarget(snapshotTarget, connectionTarget());
+  }
+
+  function checkGitTarget() {
+    const target = connectionTarget();
+    if (!sameTarget(observedTarget, target)) {
+      observedTarget = target;
+      if (seriesDir || gitOperation !== null) {
+        // Latch invalidation even if the old target is restored while awaiting an operation.
+        gitNeedsPull = true;
+        gitBuilt = false;
+      }
+    }
+    updateGitButtons();
+    if (gitNeedsPull) {
+      setStatus('GitLab target changed. Pull again before Build or Push, even if you restore '
+        + 'the previous target. Local files remain in this tab until the next Pull '
+        + '(no GitLab snapshot download). Any in-flight operation still uses its original target.', 'error');
+    }
+    return !gitNeedsPull;
+  }
+
+  [baseUrlEl, projectIdEl, branchEl].forEach((el) => {
+    el.addEventListener('input', checkGitTarget);
+    el.addEventListener('change', checkGitTarget);
+  });
 
   function updateGitButtons() {
     const busy = !pyodideReady || gitOperation !== null;
     pullBtn.disabled = busy;
-    gitBuildBtn.disabled = busy || !seriesDir;
-    pushBtn.disabled = busy || !seriesDir || !gitBuilt;
+    gitBuildBtn.disabled = busy || !hasCurrentSnapshot();
+    pushBtn.disabled = busy || !hasCurrentSnapshot() || !gitBuilt;
   }
 
   function destroyPyProxy(proxy) {
@@ -634,12 +678,16 @@ window.fsBuilderText = value => {
   // --- GitLab tab ------------------------------------------------------
 
   function connectionValues() {
-    return {
-      baseUrl: baseUrlEl.value.trim(),
+    let baseUrl = baseUrlEl.value.trim();
+    try {
+      baseUrl = new URL(baseUrl).href.replace(/\/+$/, '');
+    } catch (e) { /* requireConnection reports invalid instance URLs */ }
+    return Object.freeze({
+      baseUrl,
       projectId: projectIdEl.value.trim(),
       branch: branchEl.value.trim() || 'main',
       token: tokenEl.value,
-    };
+    });
   }
 
   function isSafeBaseUrl(url) {
@@ -649,6 +697,7 @@ window.fsBuilderText = value => {
     // network path.
     try {
       const u = new URL(url);
+      if (u.username || u.password || u.search || u.hash) return false;
       if (u.protocol === 'https:') return true;
       if (u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')) return true;
       return false;
@@ -664,7 +713,7 @@ window.fsBuilderText = value => {
       return null;
     }
     if (!isSafeBaseUrl(c.baseUrl)) {
-      setStatus('GitLab instance URL must be https:// (plain http:// is only allowed for localhost/127.0.0.1) — the token would otherwise travel in clear text.', 'error');
+      setStatus('GitLab instance URL must be https:// (plain http:// is only allowed for localhost/127.0.0.1), without credentials, query or fragment.', 'error');
       return null;
     }
     return c;
@@ -674,9 +723,13 @@ window.fsBuilderText = value => {
     if (!pyodideReady || gitOperation !== null) return;
     const c = requireConnection();
     if (!c) return;
+    const target = connectionTarget();
 
     gitOperation = 'pull';
     seriesDir = null;
+    snapshotTarget = null;
+    observedTarget = target;
+    gitNeedsPull = false;
     gitBuilt = false;
     updateGitButtons();
     setStatus('Pulling ' + c.branch + ' from ' + c.baseUrl + '…');
@@ -693,6 +746,7 @@ window.fsBuilderText = value => {
         return;
       }
       seriesDir = dir;
+      snapshotTarget = target;
       // Test hook only (tests/git_sync_e2e.cjs): lets the E2E test remove a
       // local file between build and push, to verify push() never turns
       // that into a delete action against the remote (§23.12).
@@ -700,19 +754,21 @@ window.fsBuilderText = value => {
         window.__lwp_pyodide = pyodideReady;
         window.__lwp_series_dir = seriesDir;
       }
-      setStatus('Pulled. Ready to build.', 'ok');
+      if (checkGitTarget()) setStatus('Pulled. Ready to build.', 'ok');
     } catch (err) {
       setStatus('Pull failed: ' + err, 'error');
     } finally {
       destroyPyProxy(resultProxy);
       destroyPyProxy(pullFn);
       gitOperation = null;
-      updateGitButtons();
+      checkGitTarget();
     }
   });
 
   gitBuildBtn.addEventListener('click', async () => {
-    if (!pyodideReady || !seriesDir || gitOperation !== null) return;
+    if (!checkGitTarget() || !pyodideReady || !hasCurrentSnapshot() || gitOperation !== null) return;
+    const dir = seriesDir;
+    const language = gitLangSelect.value;
 
     gitOperation = 'build';
     gitBuilt = false;
@@ -724,7 +780,7 @@ window.fsBuilderText = value => {
     let resultProxy = null;
     try {
       buildFn = pyodideReady.globals.get('build');
-      resultProxy = buildFn(seriesDir, gitLangSelect.value);
+      resultProxy = await buildFn(dir, language);
       const [ok, logText, errorText] = resultProxy.toJs();
       showLog(logText || '');
 
@@ -732,20 +788,23 @@ window.fsBuilderText = value => {
         setStatus('Build failed: ' + errorText, 'error');
         return;
       }
-      gitBuilt = true;
-      setStatus('Build complete. Ready to push.', 'ok');
+      if (checkGitTarget() && hasCurrentSnapshot()) {
+        gitBuilt = true;
+        setStatus('Build complete. Ready to push.', 'ok');
+      }
     } catch (err) {
       setStatus('Build failed: ' + err, 'error');
     } finally {
       destroyPyProxy(resultProxy);
       destroyPyProxy(buildFn);
       gitOperation = null;
-      updateGitButtons();
+      checkGitTarget();
     }
   });
 
   pushBtn.addEventListener('click', async () => {
-    if (!pyodideReady || !seriesDir || !gitBuilt || gitOperation !== null) return;
+    // Re-read the target here too: assigning an input's value need not emit an event.
+    if (!checkGitTarget() || !pyodideReady || !hasCurrentSnapshot() || !gitBuilt || gitOperation !== null) return;
     const c = requireConnection();
     if (!c) return;
 
@@ -762,14 +821,16 @@ window.fsBuilderText = value => {
         commitMessageEl.value || 'Update from LightWebPres git-sync',
       );
       const [ok, summary] = resultProxy.toJs();
-      setStatus(ok ? summary : ('Push failed: ' + summary), ok ? 'ok' : 'error');
+      if (checkGitTarget()) {
+        setStatus(ok ? summary : ('Push failed: ' + summary), ok ? 'ok' : 'error');
+      }
     } catch (err) {
       setStatus('Push failed: ' + err, 'error');
     } finally {
       destroyPyProxy(resultProxy);
       destroyPyProxy(pushFn);
       gitOperation = null;
-      updateGitButtons();
+      checkGitTarget();
     }
   });
 

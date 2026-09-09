@@ -1,10 +1,10 @@
 {
   "series_meta": {
-    "title": "Écrivez une fois.<br><span class=\"lwp-web-accent\">Partagez partout.</span><span class=\"lwp-web-sr\"> — LightWebPres</span>",
-    "subtitle": "Un texte Markdown. Des pages à lire sur téléphone, à présenter en grand et à publier où vous voulez.",
-    "intro": "<a class=\"lwp-web-button\" href=\"demarrer.html\">Créer ma première page <span aria-hidden=\"true\">↗</span></a> <a class=\"lwp-web-text-link\" href=\"demo/ma-page.html\">Essayer la démo <span aria-hidden=\"true\">→</span></a><br><span class=\"lwp-web-reassurance\">Python 3.8+ · Sans paquet à installer · Sans compte pour lire</span>",
+    "title": "Vos idées.<br><span class=\"lwp-web-accent\">Prêtes à voyager.</span><span class=\"lwp-web-sr\"> — LightWebPres</span>",
+    "subtitle": "Un cours, une synthèse de recherche, un point de projet. Gardez la vue d’ensemble et les détails dans les mêmes pages : à lire sur téléphone, à présenter sur grand écran, à partager ensuite.",
+    "intro": "<span class=\"fs-hero-actions\"><span><a class=\"lwp-web-button\" href=\"demo/library.html\">Ouvrir un exemple →</a></span><a class=\"lwp-web-text-link\" href=\"#usages\">Trouver mon usage →</a><br><span class=\"lwp-web-reassurance\">Rien à installer pour lire. Des sources modifiables pour créer.</span></span><span class=\"fs-reader-showcase\"><a href=\"demo/library.html\" aria-label=\"Ouvrir l’exemple interactif\"><img src=\"img/reader-preview.webp\" width=\"1100\" height=\"780\" alt=\"Un document en lecture et en présentation\"></a><span class=\"fs-preview-caption\">Un document. Plusieurs façons de le lire. <a href=\"demo/library.html\">Explorer l’exemple →</a></span></span>",
     "presentation_preset": "lightwebpres-site@1.0.0/web",
-    "scroll_duration": 200
+    "scroll_duration": 0
   },
   "themes": [
     "essential",
@@ -15,6 +15,9 @@
   "articles": [
     {
       "page_source": "decouvrir.md"
+    },
+    {
+      "page_source": "usages.md"
     },
     {
       "page_source": "demarrer.md"

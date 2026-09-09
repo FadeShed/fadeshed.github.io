@@ -1,40 +1,38 @@
 # LightWebPres
 
-> Write one Markdown source. Read it on a phone, present it in landscape, publish it as a static site.
+> Des documents à lire, à présenter et à partager. Des sources modifiables pour créer, organiser, concevoir et automatiser.
 
-Status: **Beta**. LightWebPres is a single-file Python tool for generating self-contained HTML articles with slide navigation, optional long-form text and a series index. The website package uses engine **0.56.0**, identified by its build information as **unreleased**; that is not a claim about the latest public release.
+Statut : **Bêta**.
 
-## One source, several reading contexts
+## Lire et présenter
 
-Readers can scroll in portrait and navigate the same content in landscape. Generated pages carry their CSS and JavaScript and do not require the reader to install LightWebPres or hold a presentation-service account. Long-form content, notes, images, math and series navigation support more than a fixed slide deck.
+Un dossier avant une réunion, un cours pendant une séance, une référence après. Votre public ouvre les mêmes pages dans son navigateur, sans installer le générateur ni créer de compte sur un service de présentation. Sur téléphone, on fait défiler ; sur grand écran, on suit les fiches. Les contenus longs restent accessibles au lieu d’être coupés pour tenir sur une diapositive.
 
-## Appearance and publishing
+## Écrire et expliquer
 
-Identity, presentation preset and theme are distinct choices. Native and Commons choices coexist with self-contained Identity Kits. Typed configuration and per-series settings support repeatable output; advanced custom CSS remains outside some automated checks.
+Préparez un cours, une synthèse de recherche ou un point de projet sans entretenir deux documents déconnectés : les diapositives d’un côté, le support de lecture de l’autre. Écrivez les idées principales sous forme de fiches et conservez explications, références et texte long dans le même projet d’article. Vous choisissez le propos et le niveau de détail ; LightWebPres met en forme cette structure.
 
-The CLI can build unattended, return exit codes, audit sources and styles, verify output drift, and watch a series for changes. This makes it useful to human authors, scripts and agents. Markdown remains the source of truth; the generated site is an artifact to inspect, publish and share.
+## Organiser les connaissances
 
-## Authoring interfaces
+Un cours a ses modules ; une documentation, ses sujets ; un dossier, sa sélection pour un public donné. Une série LightWebPres choisit et ordonne des articles dont les sources restent réutilisables. Le même texte canonique peut servir à un exposé court et à une collection plus vaste, avec des titres et descriptions adaptés au contexte.
 
-The Python CLI runs with the standard library. The included browser builder runs the same engine under vendored Pyodide. It requires HTTP(S), not `file://`. ZIP builds stay in the browser tab. Its GitLab synchronization mode talks to the configured instance and creates or updates files; it does not delete stale output.
+## Concevoir une identité
 
-The browser builder is not the separate `lightwebpres-gui` editor. Do not treat the CLI, browser builder and external editor as the same component.
+Choisissez couleurs et typographie avec un thème. Un preset sélectionne un ensemble de choix d’apparence. Pour réunir dispositions, signes visuels, en-têtes et pieds de page, créez un Identity Kit réutilisable par d’autres auteurs. Un kit composé est autonome : ses destinataires ont besoin du résultat livré, pas d’une chaîne de kits sources.
 
-## Agent-oriented documentation
+## Automatiser une production
 
-The format skill specifies the article grammar. The separate sourced-presentation skill is an optional editorial method, not a prerequisite for rendering. A useful automated workflow is to author or update sources, build, audit with strict checks where appropriate, verify with matching options, then inspect the generated result before publishing.
+Générez des rapports récurrents, actualisez une collection documentaire ou confiez une tâche de publication précise à un agent. La ligne de commande utilise des fichiers sources ordinaires et des rapports structurés. Construisez les pages, examinez les avertissements et comparez la sortie à un rendu neuf avant la livraison. Génération, contrôle et publication restent des étapes distinctes.
 
-## Trust boundaries
+## Publier et conserver
 
-LightWebPres renders trusted sources; it is not an HTML sanitizer. Raw HTML can include scripts. Sanitize untrusted input upstream. Speaker notes are embedded in the output and are not private; source-only comments serve a different purpose. Tags are viewing filters, not access controls. Deleting a source does not automatically remove stale published files.
+Livrez un dossier de pages et de ressources, publiez-le sur un hébergement statique ou intégrez-le à un site existant. Les lecteurs utilisent leur navigateur ; vous conservez le projet source pour les modifications et les sauvegardes. Chaque article emporte son CSS et son JavaScript. Les images référencées et les ressources des kits doivent accompagner le dossier de sortie.
 
-## License
+## Pour commencer
 
-The engine is GPL v3 or later with the LightWebPres Output Exception. Keep the relevant notices when redistributing the executable or vendored runtime. Generated presentations and the generator itself are not the same licensing case; consult the supplied legal texts.
-
-## Documentation
-
-- [README](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/README.md): product entry point.
-- [Guide](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/GUIDE.md): operational manual.
-- [Format skill](https://raw.githubusercontent.com/Fade78/lightwebpres/a43cb344f34f6a8d282f8d1dc9b54863103dc795/agent/skills/lightwebpres/SKILL.md): article grammar.
-- [Agent index](llms.txt): documentation routes and limits.
+- [LightWebPres](index.html)
+- [Usages](usages.html)
+- [Dossier interactif](demo/library.html)
+- [Créer](demarrer.html)
+- [Guide](guide/guide.html)
+- [Constructeur navigateur](web/)

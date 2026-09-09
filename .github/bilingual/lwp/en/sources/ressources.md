@@ -12,7 +12,7 @@ nav_desc: The manual, exact format, examples and project sources.
 slug: ouverture
 kicker: 06 / GO FURTHER
 # No magic.<br>Read it.<br>Inspect it.
-summary: The site provides a route. The repository documents remain the references. The originals below belong to the engine used for this build.
+summary: The site provides a route. The repository documents remain the references. Choose the reference for the task at hand.
 
 ---
 
@@ -47,18 +47,18 @@ kicker: TO TRY IT
 summary: These links lead to the tools and their output. Downloads stay on this site.
 source: <a href="reference/GUIDE.md">Guide · First personal article and Build in the browser</a>.
 
-<div class="lwp-web-resource-list"><a href="demo/ma-page.html"><strong>A first page · EN</strong><span>A minimal example compiled by the repository engine.</span><b aria-hidden="true">↗</b></a><a href="themes.html"><strong>The theme gallery</strong><span>Rendered pages with the generator's filters.</span><b aria-hidden="true">↗</b></a><a href="web/index.html"><strong>The web builder</strong><span>The same engine under Pyodide. Requires HTTP(S).</span><b aria-hidden="true">↗</b></a><a href="downloads/demarrage.zip" download><strong>The starter project</strong><span>Sources, series, engine and licences. Edit, then build.</span><b aria-hidden="true">↓</b></a></div>
+<div class="lwp-web-resource-list"><a href="demo/library.html"><strong>An illustrated briefing</strong><span>A minimal example compiled by the repository engine.</span><b aria-hidden="true">↗</b></a><a href="themes.html"><strong>The theme gallery</strong><span>Rendered pages with the generator's filters.</span><b aria-hidden="true">↗</b></a><a href="web/index.html"><strong>The web builder</strong><span>The same engine under Pyodide. Requires HTTP(S).</span><b aria-hidden="true">↗</b></a><a href="downloads/demarrage.zip" download><strong>The starter project</strong><span>Sources, series, engine and licences. Edit, then build.</span><b aria-hidden="true">↓</b></a></div>
 
 ---
 
 <!-- lwp:slide -->
 slug: ce-site
 kicker: THE SITE DEMONSTRATES ITSELF
-## Made with LightWebPres. Not just styled like it.
+## Read the site. Explore its sources.
 summary: The home page is a series index. The routes are LWP articles. The kit, themes and CSS remain inspectable sources.
 source: <a href="downloads/site-sources.zip">This site's build sources</a>; <a href="reference/AGENTS.md">Repository rules</a>.
 
-`website/series.json` orders the routes. `website/sources/` contains their text. `website/templates/kits/lightwebpres-site/1.0.0/` carries the identity. The `tools/build_website.py` script calls the engine without modifying it.
+`series.json` orders the routes. `sources/` contains their text. `templates/kits/lightwebpres-site/1.0.0/` carries the identity. The `build-site.py` script calls the engine without modifying it.
 
 The guide and gallery are regenerated with existing tools. The build prepares a new output directory so stale files are not retained.
 
@@ -68,12 +68,10 @@ The guide and gallery are regenerated with existing tools. The build prepares a 
 
 <!-- lwp:slide -->
 slug: versions
-kicker: TO FOLLOW THE PROJECT
-## A working version is not a release.
-summary: This site's documents correspond to the code that built them. The changelog distinguishes published versions from Unreleased work.
-source: <a href="reference/CHANGELOG.md">CHANGELOG.md</a>; <a href="reference/DECISIONS.md">DECISIONS.md</a>.
+## Keep exploring. Share what you find.
+summary: Browse the source, follow the project or describe a problem you encounter.
 
-<div class="lwp-web-resource-list"><a href="build-info.json"><strong>Build information</strong><span>Engine version, status and source checksums.</span><b aria-hidden="true">↓</b></a><a href="reference/CHANGELOG.md"><strong>Repository changelog</strong><span>Announced changes in one place.</span><b aria-hidden="true">↓</b></a><a href="https://github.com/Fade78/lightwebpres/releases"><strong>Public releases</strong><span>Choose a published version and its documentation.</span><b aria-hidden="true">↗</b></a><a href="https://github.com/Fade78/lightwebpres/issues"><strong>Report a problem</strong><span>Describe the source, version and what you observe.</span><b aria-hidden="true">↗</b></a></div>
+<div class="lwp-web-actions"><a class="lwp-web-button" href="https://github.com/Fade78/lightwebpres">Open the repository →</a></div><div class="lwp-web-actions"><a class="lwp-web-button" href="https://github.com/Fade78/lightwebpres/issues">Report an issue →</a></div>
 
 ---
 

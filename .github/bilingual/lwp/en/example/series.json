@@ -1,11 +1,23 @@
 {
   "series_meta": {
-    "title": "My first series",
-    "subtitle": "A starter project for LightWebPres."
+    "title": "The neighbourhood library",
+    "subtitle": "An example briefing with a complete working note.",
+    "scroll_duration": 0,
+    "reading": {
+      "table_mode": "scroll"
+    }
   },
   "articles": [
     {
+      "page_source": "library.md"
+    },
+    {
       "page_source": "ma-page.md"
     }
+  ],
+  "themes": [
+    "nebula",
+    "essential",
+    "pop-lemon"
   ]
 }

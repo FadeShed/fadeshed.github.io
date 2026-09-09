@@ -47,18 +47,18 @@ kicker: POUR ESSAYER
 summary: Ces liens mènent aux vrais outils et aux vraies sorties. Les téléchargements restent sur ce site.
 source: <a href="reference/GUIDE.md">Guide · First personal article et Build in the browser</a>.
 
-<div class="lwp-web-resource-list"><a href="demo/ma-page.html"><strong>Une première page · FR</strong><span>Un exemple minimal, compilé par le moteur du dépôt.</span><b aria-hidden="true">↗</b></a><a href="themes.html"><strong>La galerie des thèmes</strong><span>Des rendus réels, avec les filtres du générateur.</span><b aria-hidden="true">↗</b></a><a href="web/index.html"><strong>Le constructeur web</strong><span>Le même moteur sous Pyodide. Nécessite HTTP(S).</span><b aria-hidden="true">↗</b></a><a href="downloads/demarrage.zip" download><strong>Le projet de démarrage</strong><span>Sources, série, moteur et licences. Modifiez, puis construisez.</span><b aria-hidden="true">↓</b></a></div>
+<div class="lwp-web-resource-list"><a href="demo/library.html"><strong>Un dossier à explorer</strong><span>Un exemple minimal, compilé par le moteur du dépôt.</span><b aria-hidden="true">↗</b></a><a href="themes.html"><strong>La galerie des thèmes</strong><span>Des rendus réels, avec les filtres du générateur.</span><b aria-hidden="true">↗</b></a><a href="web/index.html"><strong>Le constructeur web</strong><span>Le même moteur sous Pyodide. Nécessite HTTP(S).</span><b aria-hidden="true">↗</b></a><a href="downloads/demarrage.zip" download><strong>Le projet de démarrage</strong><span>Sources, série, moteur et licences. Modifiez, puis construisez.</span><b aria-hidden="true">↓</b></a></div>
 
 ---
 
 <!-- lwp:slide -->
 slug: ce-site
 kicker: LE SITE SE MONTRE LUI-MÊME
-## Fait avec LightWebPres. Pas seulement habillé comme lui.
+## Lisez le site. Explorez ses sources.
 summary: L’accueil est un index de série. Les parcours sont des articles LWP. Le kit, les thèmes et le CSS restent des sources inspectables.
 source: <a href="downloads/site-sources.zip">Sources de construction de ce site</a> ; <a href="reference/AGENTS.md">Règles du dépôt</a>.
 
-`website/series.json` ordonne les parcours. `website/sources/` contient leur texte. `website/templates/kits/lightwebpres-site/1.0.0/` porte l’identité. Le script `tools/build_website.py` appelle le moteur sans le modifier.
+`series.json` ordonne les parcours. `sources/` contient leur texte. `templates/kits/lightwebpres-site/1.0.0/` porte l’identité. Le script `build-site.py` appelle le moteur sans le modifier.
 
 Le guide et la galerie sont régénérés avec les outils existants. La construction prépare un nouveau dossier de sortie pour ne pas conserver de fichiers périmés.
 
@@ -68,12 +68,10 @@ Le guide et la galerie sont régénérés avec les outils existants. La construc
 
 <!-- lwp:slide -->
 slug: versions
-kicker: POUR SUIVRE LE PROJET
-## Une version de travail n’est pas une release.
-summary: Les documents de ce site correspondent au code qui les a construits. Le changelog garde la distinction entre publié et Unreleased.
-source: <a href="reference/CHANGELOG.md">CHANGELOG.md</a> ; <a href="reference/DECISIONS.md">DECISIONS.md</a>.
+## Continuez à explorer. Partagez vos retours.
+summary: Explorez les sources, suivez le projet ou décrivez un problème rencontré.
 
-<div class="lwp-web-resource-list"><a href="build-info.json"><strong>Provenance de cette construction</strong><span>Version du moteur, statut et empreintes des sources.</span><b aria-hidden="true">↓</b></a><a href="reference/CHANGELOG.md"><strong>Changelog du dépôt</strong><span>Les changements annoncés, dans un seul document.</span><b aria-hidden="true">↓</b></a><a href="https://github.com/Fade78/lightwebpres/releases"><strong>Releases publiques</strong><span>Pour choisir une version publiée et sa documentation.</span><b aria-hidden="true">↗</b></a><a href="https://github.com/Fade78/lightwebpres/issues"><strong>Signaler un problème</strong><span>Décrivez la source, la version et ce que vous observez.</span><b aria-hidden="true">↗</b></a></div>
+<div class="lwp-web-actions"><a class="lwp-web-button" href="https://github.com/Fade78/lightwebpres">Ouvrir le dépôt →</a></div><div class="lwp-web-actions"><a class="lwp-web-button" href="https://github.com/Fade78/lightwebpres/issues">Signaler un problème →</a></div>
 
 ---
 

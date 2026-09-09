@@ -1,18 +1,50 @@
 <!-- lwp:meta -->
-page_title: Your first page — LightWebPres
-page_desc: Two commands to explore. A complete example to get started.
-card_title: Your first page
-card_desc: Two commands to explore. A complete example to get started.
-card_label: 02 / GET STARTED
-nav_title: Your first page
-nav_desc: Two commands to explore. A complete example to get started.
+page_title: Choose how to create — LightWebPres
+page_desc: Browser, external agent or editor and command line: choose the path that suits your task.
+card_title: Choose how to create
+card_desc: Browser, external agent or editor and command line: choose the path that suits your task.
+card_label: 03 / CREATE
+nav_title: Choose how to create
+nav_desc: Browser, external agent or editor and command line: choose the path that suits your task.
 ---
 
 <!-- lwp:slide:cover -->
 slug: ouverture
-kicker: 02 / GET STARTED
-# Two commands.<br>And something<br>to show.
-summary: Python 3.8 or later is enough for the command line. No additional Python packages are required.
+# Start where<br>you work.
+summary: Browser, external agent or editor and command line: choose the path that suits your task.
+
+
+
+---
+
+<!-- lwp:slide -->
+slug: navigateur
+## Build in your browser.
+summary: Start with a source project. Take away a folder of pages.
+
+Download the example project, open the browser builder and select its ZIP. Choose the output language and build. The generated archive contains the pages to open or publish. ZIP builds run in this tab; there is no source upload to a build service. This is a builder, not a WYSIWYG editor: to change the text, edit the source files before rebuilding.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="web/">Open the browser builder →</a></div><div class="lwp-web-actions"><a class="lwp-web-button" href="downloads/library-project.zip">Get the example sources →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: agent
+## Write yourself. Or work with an agent.
+summary: The same editable files connect all three authoring paths.
+
+You can write the article yourself, guide an external agent through revisions, or delegate a bounded task. Give the agent the format skill, allowed files and expected checks. Review its content and inspect the generated page before publishing. LightWebPres supplies the format and renderer, not the agent or its research.
+
+<div class="lwp-web-actions"><a class="lwp-web-button" href="ressources.html#skills">Open the agent resources →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: terminal
+## Your editor. Your automation.
+summary: The command line is there when it is the right tool.
+
+For local authoring, repeatable builds or integration with scripts, use the standalone Python executable. The following steps create a working starter; the writing and publishing chapters explain how to maintain it.
 
 ---
 
@@ -87,7 +119,7 @@ Keep the same language and rendering options for building and verification. Read
 ---
 
 <!-- lwp:slide -->
-slug: navigateur
+slug: navigateur-details
 kicker: THE OTHER WAY IN
 ## No terminal? Build in the tab.
 summary: The web builder runs the same Python engine under Pyodide. Drop the project ZIP, get a ZIP of its pages.

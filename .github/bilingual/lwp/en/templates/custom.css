@@ -26,3 +26,23 @@
   .lwp-web-cover { min-height: 0 !important; }
   .lwp-web-cover-content h1 { font-size: 44pt !important; }
 }
+
+.fs-reader-image-slot{aspect-ratio:1100/780;background:url(img/reader-preview.webp) center/contain no-repeat}
+
+/* Audience-first home, with the existing ink/lemon identity. */
+.lwp-presentation--lightwebpres-site .lwp-web-home-grid>.header h1{font-size:clamp(42px,5.2vw,76px)}
+.lwp-presentation--lightwebpres-site .fs-reader-showcase{grid-column:4/-1;grid-row:2/4;align-self:center;margin:0;border:1px solid var(--card-rule-fg);border-radius:12px;padding:18px;background:var(--card-bg)}
+.fs-reader-showcase a{display:block}.fs-reader-showcase img{display:block;width:100%;height:auto;border-radius:6px}.fs-reader-showcase figcaption{font-size:12px;line-height:1.6;margin-top:14px;color:var(--color-ink-quiet)}
+.lwp-presentation--lightwebpres-site .fs-audiences{grid-column:1/-1;grid-row:6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.fs-role-card{display:flex;flex-direction:column;gap:14px;padding:26px;border:1px solid var(--card-rule-fg);border-radius:8px;text-decoration:none;background:var(--card-bg);color:var(--page-fg);min-height:245px}
+.fs-role-card:hover{border-color:var(--color-mark);text-decoration:none}.fs-role-card .role-n{color:var(--color-mark);font:11px/1.4 var(--font-mono)}.fs-role-card h3{font-size:24px;line-height:1.15;margin:0;letter-spacing:-.03em}.fs-role-card p{font-size:14px;line-height:1.65;color:var(--color-ink-quiet);margin:0}.fs-role-card .role-link{margin-top:auto;font-size:13px;font-weight:650}
+.lwp-presentation--lightwebpres-site .fs-create{grid-column:1/-1;grid-row:7;display:grid;grid-template-columns:1fr 1.6fr;gap:40px;padding:52px 0;border-bottom:1px solid var(--slide-rule-fg)}
+.fs-create h2,.fs-doc-heading h2{font-size:clamp(30px,3.4vw,48px);line-height:1.08;letter-spacing:-.045em;margin:16px 0}.fs-create p,.fs-doc-heading p{font-size:15px;line-height:1.7;color:var(--color-ink-quiet)}
+.fs-create-ways{display:grid;gap:12px}.fs-create-ways a{display:flex;justify-content:space-between;gap:18px;padding:20px;border:1px solid var(--card-rule-fg);border-radius:6px;text-decoration:none;color:var(--page-fg)}.fs-create-ways span{display:block;font-size:13px;margin-top:7px;color:var(--color-ink-quiet)}
+.fs-doc-heading{grid-column:1/-1;grid-row:8;padding-top:20px}.fs-doc-heading p{max-width:62ch}
+@media(max-width:900px){.lwp-presentation--lightwebpres-site .fs-audiences{grid-template-columns:repeat(2,minmax(0,1fr))}.lwp-presentation--lightwebpres-site .fs-create{grid-template-columns:1fr;gap:16px}}
+@media(max-width:700px){.lwp-presentation--lightwebpres-site .fs-reader-showcase{grid-column:1/-1;grid-row:4;margin-top:10px}.lwp-presentation--lightwebpres-site .fs-audiences{grid-row:7;grid-template-columns:1fr}.lwp-presentation--lightwebpres-site .fs-create{grid-row:8}.lwp-presentation--lightwebpres-site .fs-doc-heading{grid-row:9}.lwp-presentation--lightwebpres-site .lwp-web-home-grid>.header h1{font-size:clamp(35px,10.5vw,58px)}.fs-role-card{min-height:0}.fs-role-card h3{font-size:25px}}
+
+.lwp-presentation--lightwebpres-site .lwp-web-home-grid>.intro,.lwp-presentation--lightwebpres-site .lwp-web-home-grid>.intro>p{display:contents!important}
+.fs-hero-actions{grid-column:1/4;grid-row:3}.fs-preview-caption{display:block;font-size:12px;line-height:1.6;margin-top:14px;color:var(--color-ink-quiet)}
+@media(max-width:700px){.fs-hero-actions{grid-column:1/-1;grid-row:3}}
