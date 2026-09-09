@@ -19,7 +19,7 @@ jobs:
           from pathlib import Path
           import os,shutil,subprocess
           out=Path(os.environ['RUNNER_TEMP'])/'reader-input';out.mkdir()
-          for name in ['.nojekyll','README.md','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','fr','.github/bilingual','.github/minisites','.github/restore-lightwebpres']:
+          for name in ['.nojekyll','README.md','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','fr','.github/bilingual','.github/minisites','.github/restore-lightwebpres','.github/reader-refresh','.github/workflows/check-live-reader-refresh.yml']:
               src=Path(name);dst=out/'website'/name
               if not src.exists():continue
               if src.is_symlink() or (src.is_dir() and any(p.is_symlink() for p in src.rglob('*'))):raise RuntimeError('Symlink in input')
