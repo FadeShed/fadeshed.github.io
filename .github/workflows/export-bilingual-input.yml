@@ -1,0 +1,36 @@
+name: Export bilingual publication input
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/export-bilingual-input.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Select public site files and build sources
+        run: |
+          python3 - <<'PY'
+          import pathlib, shutil, os
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'bilingual-input'
+          out.mkdir()
+          for name in ['.nojekyll','README.md','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','.github/minisites','.github/restore-lightwebpres']:
+              src=pathlib.Path(name); dest=out/name
+              if not src.exists(): continue
+              if src.is_symlink() or (src.is_dir() and any(p.is_symlink() for p in src.rglob('*'))): raise RuntimeError('Unexpected symlink')
+              dest.parent.mkdir(parents=True,exist_ok=True)
+              if src.is_dir(): shutil.copytree(src,dest)
+              else: shutil.copyfile(src,dest)
+          (out/'BASE_COMMIT').write_text(os.environ['GITHUB_SHA']+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bilingual-input
+          path: ${{ runner.temp }}/bilingual-input
+          include-hidden-files: true
+          retention-days: 3
