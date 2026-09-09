@@ -20,15 +20,22 @@ p.write_text(s.replace(old,new,1))
 p=root/'qa.py';s=p.read_text()
 old="            browser=p.chromium.launch(headless=True)"
 new=old+'''
-            diagnostic=browser.new_page()
+            diagnostic=browser.new_page(locale='fr-FR')
             diagnostic.add_init_script("""window.__routeTrace=[{event:'init',url:location.href}];for(const method of ['replaceState','pushState']){const original=history[method].bind(history);history[method]=function(...a){window.__routeTrace.push({event:method,from:location.href,to:a[2]});return original(...a)}};addEventListener('load',()=>window.__routeTrace.push({event:'load',url:location.href,entry:window.__fsEntryHash}));""")
+            diagnostic.goto(base+'fr/pasteberth/',wait_until='networkidle')
+            diagnostic.evaluate("localStorage.setItem('pb-lang','fr');localStorage.setItem('pasteberth-site-language-choice','fr');localStorage.setItem('fadeshed-language','fr')")
+            for route in routes:diagnostic.goto(base+route,wait_until='networkidle')
             diagnostic.goto(base+'lightwebpres/ecrire.html?lang=fr#notes-et-liens',wait_until='networkidle')
-            diagnostic.wait_for_timeout(1000)
-            state=diagnostic.evaluate("""({url:location.href,entry:window.__fsEntryHash,lang:document.documentElement.lang,trace:window.__routeTrace,ids:Array.from(document.querySelectorAll('section.slide')).map(e=>e.id),routing:document.querySelector('#fs-language-route')?.textContent,scripts:Array.from(document.scripts).map(s=>s.src).filter(Boolean)})""")
+            diagnostic.wait_for_timeout(1500)
+            state=diagnostic.evaluate("""({url:location.href,entry:window.__fsEntryHash,storage:Object.fromEntries(Object.entries(localStorage)),lang:document.documentElement.lang,trace:window.__routeTrace,ids:Array.from(document.querySelectorAll('section.slide')).map(e=>e.id),routing:document.querySelector('#fs-language-route')?.textContent,scripts:Array.from(document.scripts).map(s=>s.src).filter(Boolean)})""")
             (report/'locale-route.json').write_text(json.dumps(state,ensure_ascii=False,indent=2))
             diagnostic.screenshot(path=str(report/'locale-route.png'))
             check('Explicit French route preserves a requested section',state['url'].endswith('/fr/lightwebpres/ecrire.html#notes-et-liens') and state['lang']=='fr',state)
             diagnostic.close()
 '''
 if old not in s:raise RuntimeError('Browser launch hook changed')
-p.write_text(s.replace(old,new,1))
+s=s.replace(old,new,1)
+needle="page.goto(base+'lightwebpres/ecrire.html?lang=fr#notes-et-liens',wait_until='networkidle');page.wait_for_url"
+replacement="""page.goto(base+'lightwebpres/ecrire.html?lang=fr#notes-et-liens',wait_until='networkidle');(report/'actual-switch-route.json').write_text(json.dumps(page.evaluate(\"({url:location.href,entry:window.__fsEntryHash,lang:document.documentElement.lang,storage:Object.fromEntries(Object.entries(localStorage))})\"),ensure_ascii=False,indent=2));page.wait_for_url"""
+if needle not in s:raise RuntimeError('Final route check changed')
+p.write_text(s.replace(needle,replacement,1))
