@@ -1,0 +1,58 @@
+name: Verify and prepare complete minisites
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-minisites.yml'
+      - '.github/minisites/publication.bundle'
+permissions:
+  contents: write
+concurrency:
+  group: minisites-publication
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the exact website revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify and unpack publication sources
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma
+          from pathlib import Path
+          root=Path('.github/minisites')
+          packed=base64.b64decode((root/'publication.bundle').read_text().strip(),validate=True)
+          expected='9056c420d6987fb34f67e1285c8b91a868eca7fdb135941935e6aec30f5c2d81'
+          if hashlib.sha256(packed).hexdigest()!=expected: raise RuntimeError('Publication source checksum mismatch')
+          files=json.loads(lzma.decompress(packed))
+          if set(files)!={'harmonize.py','qa.py','prepare_commit.py'}: raise RuntimeError('Unexpected source files')
+          for name,content in files.items(): (root/name).write_text(content,encoding='utf-8')
+          PY
+      - name: Install isolated browser test tooling
+        run: |
+          python3 -m venv "$RUNNER_TEMP/minisites-venv"
+          "$RUNNER_TEMP/minisites-venv/bin/python" -m pip install beautifulsoup4 playwright
+          "$RUNNER_TEMP/minisites-venv/bin/python" -m playwright install --with-deps chromium
+      - name: Restore and harmonize public files
+        run: |
+          "$RUNNER_TEMP/minisites-venv/bin/python" .github/minisites/harmonize.py --root . --output "$RUNNER_TEMP/publication"
+      - name: Check links, downloads, responsive layouts, demo and browser builder
+        run: |
+          "$RUNNER_TEMP/minisites-venv/bin/python" .github/minisites/qa.py "$RUNNER_TEMP/publication" "$RUNNER_TEMP/qa"
+      - name: Prepare the verified Git commit without moving main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/minisites/prepare_commit.py
+      - name: Retain review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minisites-publication-qa
+          path: ${{ runner.temp }}/qa
+          if-no-files-found: warn
+          retention-days: 3
