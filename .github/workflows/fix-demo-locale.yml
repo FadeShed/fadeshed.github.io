@@ -19,7 +19,7 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/bilingual-venv"
           "$RUNNER_TEMP/bilingual-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
           "$RUNNER_TEMP/bilingual-venv/bin/python" -m playwright install --with-deps chromium
-      - name: Inline navigation resources without weakening the demo policy
+      - name: Inline navigation resources using reviewed build hooks
         run: |
           "$RUNNER_TEMP/bilingual-venv/bin/python" .github/bilingual/demo_chrome.py
       - name: Rerun bilingual routes, resources, demos and builder
