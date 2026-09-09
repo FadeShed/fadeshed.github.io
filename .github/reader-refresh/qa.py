@@ -97,7 +97,9 @@ def run(root,report,base=None):
                 # Touch interaction tests deliberately use taps, not keyboard shortcuts.
                 ctx=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,locale='fr-FR');page=ctx.new_page()
                 page.goto(base+prefix+'lightwebpres/demo/library.html',wait_until='networkidle')
-                expect(page.locator('.fs-reader-open')).to_be_visible();page.locator('.fs-reader-open').tap();expect(page.locator('#presenterMenu')).to_be_visible()
+                expect(page.locator('.fs-reader-open')).to_be_visible()
+                check('Touch entry does not overlap native navigation '+lang,page.evaluate("""()=>{const a=document.querySelector('.fs-reader-open').getBoundingClientRect(),b=document.querySelector('#navMenu').getBoundingClientRect();return !b.width||a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top}"""))
+                page.locator('.fs-reader-open').tap();expect(page.locator('#presenterMenu')).to_be_visible()
                 page.locator('[data-menu-action=zoom-in]').tap();expect(page.locator('#menuZoomValue')).to_have_text('110%')
                 check('Touch zoom increases '+lang,page.evaluate('parseFloat(document.documentElement.style.zoom)>1'))
                 page.screenshot(path=str(report/f'{lang}-touch-zoom.png'))
