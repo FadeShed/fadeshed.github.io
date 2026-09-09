@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/bilingual/payload-*.txt'
       - '.github/bilingual/refine.py'
+      - '.github/bilingual/finish.py'
       - '.github/workflows/publish-bilingual.yml'
   workflow_dispatch:
 permissions:
@@ -45,7 +46,8 @@ jobs:
               target.write_text(text,encoding='utf-8')
           print('Verified and unpacked 56 bilingual source files.')
           PY
-          if test -f .github/bilingual/refine.py; then python3 .github/bilingual/refine.py; fi
+          python3 .github/bilingual/refine.py
+          python3 .github/bilingual/finish.py
       - name: Install isolated browser test tooling
         run: |
           python3 -m venv "$RUNNER_TEMP/bilingual-venv"
