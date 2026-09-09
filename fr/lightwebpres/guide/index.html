@@ -16,15 +16,15 @@ if(target!==u.pathname||location.search.includes('lang=')){u.pathname=target;loc
    wins at equal specificity. Two rules when editing:
      - a declaration here must not also be driven by PROPERTY_REGISTRY,
        or a stale literal fights the engine across the cascade;
-     - no colour literal, and no var() but the two theme measures or the
-       runtime presentation-zoom factor — a colour here would survive theming,
+     - no colour literal, and no var() but the two theme measures
+       — a colour here would survive theming,
        the exact defect the registry kills.
    These comments ship: the sheet is inlined into every page. Keep them
    short, and never spell a markup tag out literally — anything scanning
    the output would read it as markup. */
 
-/* The skeleton consumes two engine-owned layout measures and one runtime
-   navigation variable. Every other variable comes from the engine. */
+/* The skeleton consumes two engine-owned layout measures.
+   Every other variable comes from the engine. */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -33,11 +33,10 @@ html.about-open, html.about-open body { overflow: hidden; }
 
 /* --- The slide frame --- */
 .slide {
-  /* `zoom` scales viewport units along with the content. Divide them by the
-     same runtime factor so a normal slide remains one visible viewport tall;
-     content that genuinely needs more space may still make it taller. */
-  min-height: calc(100vh / var(--lwp-presentation-zoom, 1));
-  min-height: calc(100svh / var(--lwp-presentation-zoom, 1));
+  /* Manual zoom changes content, not the responsive frame. Long content may
+     grow beyond this minimum without being clipped. */
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -790,9 +789,8 @@ body.fs-noselect {
 .presenter-menu, .theme-menu, .tag-menu, .help-overlay, .about-overlay,
 .share-popover, .share-qr-modal, .presenter-panel, .tag-empty-state {
   overscroll-behavior: contain;
-  /* Foreground controls retain their layout and chosen type sizes. Only deck
-     zoom is canceled; native browser pinch still magnifies these surfaces. */
-  zoom: calc(1 / var(--lwp-presentation-zoom, 1));
+  /* Manual content zoom leaves controls alone; native browser pinch still
+     magnifies the whole page. */
   overflow-wrap: anywhere;
 }
 .presenter-menu-card, .theme-menu-card {
@@ -1232,7 +1230,6 @@ button.share-action:focus-visible, .share-qr-close:focus-visible {
    their own content (not 100vh) so a short slide does not blank a page. */
 @media print {
   html, body { overflow: visible !important; height: auto !important; }
-  html { zoom: 1 !important; }
   .nav-buttons, .nav-dots, .nav-btn, .tag-menu, .slide-counter,
   .pause-overlay, .presenter-menu, .theme-menu, .help-overlay, .about-overlay,
   .presenter-panel, .share-popover, .share-qr-modal { display: none !important; }
@@ -2524,9 +2521,10 @@ button.share-action:hover:not(:disabled) {
 <button class="about-close" data-lwp-i18n="about_close" id="aboutClose" type="button">Fermer</button>
 </div>
 </div>
-<div aria-labelledby="presenterMenuTitle" aria-modal="true" class="presenter-menu" id="presenterMenu" role="dialog">
+<div aria-labelledby="readingMenuTitle" aria-modal="true" class="presenter-menu" id="readingMenu" role="dialog">
 <div class="presenter-menu-card">
-<div class="presenter-menu-title" data-lwp-i18n="menu_title" id="presenterMenuTitle">Menu du présentateur (touche M)</div>
+<div class="presenter-menu-title" data-lwp-i18n="menu_reading" id="readingMenuTitle">Taille et tableaux</div>
+<button class="presenter-menu-action" data-lwp-i18n="menu_reading_back" data-menu-action="reading-back" id="readingMenuBack" type="button">Retour au menu principal</button>
 <div class="reading-controls">
 <div data-lwp-i18n="menu_zoom" id="menuZoomLabel">Zoom de présentation</div>
 <div aria-describedby="menuZoomHint" aria-labelledby="menuZoomLabel" class="reading-zoom" role="group">
@@ -2554,7 +2552,15 @@ button.share-action:hover:not(:disabled) {
 <label><input data-reading-option="object_shrink" type="checkbox"/> <span data-lwp-i18n="menu_object_shrink">Réduire les images si nécessaire</span></label>
 <p aria-atomic="true" aria-live="polite" hidden="" id="menuReadingStatus"></p>
 </div>
+</div>
+</div>
+<div aria-labelledby="presenterMenuTitle" aria-modal="true" class="presenter-menu" id="presenterMenu" role="dialog">
+<div class="presenter-menu-card">
+<div class="presenter-menu-title" data-lwp-i18n="menu_title" id="presenterMenuTitle">Menu du présentateur (touche M)</div>
 <div class="presenter-menu-actions">
+<button aria-controls="readingMenu" aria-expanded="false" aria-haspopup="dialog" class="presenter-menu-action" data-menu-action="reading" id="menuReading" type="button">
+<svg aria-hidden="true" fill="none" height="1em" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em"><path d="M12 3a9 9 0 1 0 9 9c0-1.1-.9-2-2-2h-2a2 2 0 0 1-2-2V6a3 3 0 0 0-3-3z"></path><path d="M7.5 11.5h.01"></path><path d="M9.5 7.5h.01"></path><path d="M14.5 7.5h.01"></path></svg><span class="presenter-menu-label" data-lwp-i18n="menu_reading">Taille et tableaux</span>
+</button>
 <button aria-keyshortcuts="ArrowUp ArrowLeft PageUp Backspace" class="presenter-menu-action" data-menu-action="prev" id="menuPrev" type="button">
 <svg aria-hidden="true" fill="none" height="1em" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em"><path d="M12 20V5"></path><path d="M5 12l7-7 7 7"></path></svg><span class="presenter-menu-label" data-lwp-i18n="menu_prev">Planche précédente</span><kbd>Page Up</kbd>
 </button>
@@ -2690,9 +2696,9 @@ button.share-action:hover:not(:disabled) {
 </div>
 </div>
 </div>
-<script id="lwp-language-data" type="application/json">{"version": 1, "default": "fr", "auto": false, "packs": {"fr": {"name": "Français", "strings": {"nav_prev": "Planche précédente", "nav_next": "Planche suivante", "nav_dot_fallback": "Fiche", "series_nav_title": "Cette série", "series_read": "Lire l'article", "series_current_status": "En cours de lecture", "series_back_to_index": "Retour à l'index", "series_untitled_fallback": "Série d'articles", "draft_banner": "Brouillon", "full_article_kicker": "Article complet", "notes_section_title": "Notes", "note_back": "Revenir au texte", "source_label": "Source", "copy_link": "Copier le lien", "copy_link_done": "Lien copié !", "copy_prompt": "Copie ce lien :", "share_unavailable": "Le partage nécessite une page servie par une URL HTTP(S).", "share_action_qr": "Afficher le QR code", "share_scope_series": "Série", "share_scope_article": "Article", "share_scope_fiche": "Fiche", "qr_modal_title": "QR code du lien", "qr_modal_close": "Fermer", "qr_modal_error": "Impossible de générer un QR code pour ce lien.", "qr_modal_localhost": "Cette adresse locale peut être inaccessible depuis un téléphone. Utilisez une adresse réseau accessible.", "nav_fullscreen": "Plein écran (touche F)", "tags_menu": "Filtrer les slides", "tags_active": "Tag actif", "tags_preview": "Contenu affiché", "tags_articles": "fiches", "tags_slides": "slides", "tags_no_results": "Aucune fiche ou slide ne sera affichée avec ce tag.", "help_tags": "Filtrer par tag et mémoriser la sélection", "presenter_next": "Suivant :", "presenter_label": "Panneau du présentateur", "menu_title": "Menu du présentateur (touche M)", "menu_prev": "Planche précédente", "menu_home": "Retour à l'index", "menu_next": "Planche suivante", "menu_fullscreen": "Plein écran", "menu_theme": "Changer de thème", "menu_appearance": "Changer d’apparence", "menu_presenter": "Notes présentateur", "menu_tags": "Filtrer par tag", "menu_scroll": "Défilement", "menu_share": "Partager", "menu_help": "Aide", "menu_zoom": "Zoom de présentation", "menu_zoom_out": "Réduire le zoom de présentation", "menu_zoom_in": "Agrandir le zoom de présentation", "menu_zoom_reset": "Réinitialiser", "menu_zoom_hint": "Ces boutons règlent la présentation. Le pincement garde le zoom natif du navigateur.", "menu_table_mode": "Tableaux trop larges", "menu_table_clip": "Masquer ce qui dépasse", "menu_table_overflow": "Laisser dépasser", "menu_table_scroll": "Faire défiler dans le tableau", "menu_text_fit": "Taille du texte", "menu_text_fixed": "Conserver la taille choisie", "menu_text_uniform": "Réduire toutes les slides ensemble", "menu_text_per_slide": "Réduire chaque slide si nécessaire", "menu_table_shrink": "Réduire les tableaux si nécessaire", "menu_object_shrink": "Réduire les images si nécessaire", "menu_reading_status_one": "{count} slide nécessite encore de faire défiler.", "menu_reading_status_many": "{count} slides nécessitent encore de faire défiler.", "help_tables": "Tableaux trop larges : masquer, laisser dépasser ou faire défiler localement (O). Les flèches dans un tableau défilant restent dans ce tableau, même au bord.", "help_text_fit": "Texte : taille choisie, réduction commune ou réduction par slide (A). Le menu permet aussi de réduire les tableaux et les images séparément, dans les limites prévues par l'auteur.", "menu_pause_black": "Écran noir", "menu_pause_white": "Écran blanc", "menu_pause_theme": "Écran du thème", "theme_menu_title": "Choisir un thème", "appearance_menu_title": "Choisir une apparence", "appearance_menu_help": "Choisissez une identité, un preset et un thème.", "appearance_identity": "Identité", "appearance_presentation": "Preset", "appearance_theme": "Thème", "presentation_standard": "Standard", "presentation_standard_description": "Présentation native de LightWebPres.", "appearance_preset_default": "Suivre le preset", "theme_source": "Source des thèmes", "theme_source_applicable": "Applicables", "theme_source_identity": "Identité actuelle", "theme_source_all": "Tous", "theme_default": "Par défaut", "theme_custom": "Personnalisé", "theme_menu_help": "Le thème principal est sélectionné par défaut.", "theme_menu_filter": "Rechercher un thème", "theme_menu_close": "Échap pour fermer · Entrée pour appliquer", "help_title": "Raccourcis clavier", "help_mode_label": "Type d'aide", "help_mode_keyboard": "Clavier", "help_mode_touch": "Tactile", "help_mode_toggle": "Afficher l'aide tactile", "help_next": "Slide suivante", "help_prev": "Slide précédente", "help_home": "Début de la page", "help_index": "Retour à l'index de la série (sur l'index : début de page)", "help_edges": "Dernière slide du deck (sur l'index : dernière carte)", "help_zoom": "Zoom de présentation : + agrandir, - réduire, = réinitialiser, même dans le menu. Ctrl/Cmd garde les raccourcis du navigateur. Le pincement zoome dans le navigateur, sans changer de slide.", "help_fullscreen": "Plein écran (Échap pour quitter)", "help_scroll": "Basculer entre défilement fluide et instantané (touche I)", "help_menu": "Menu du présentateur", "help_theme": "Changer de thème pendant la présentation (touche C)", "help_appearance": "Changer d’apparence pendant la présentation (touche C)", "help_pause": "Écran de pause : noir (B), blanc (W), thème (T)", "help_speaker": "Panneau présentateur : notes + slide suivante", "help_share": "Partager le lien courant (touche S)", "help_jump_keys": "0&ndash;9 + Entr&eacute;e", "help_mouse_keys": "Souris / Molette", "help_jump": "Aller à la slide N (puis Entrée)", "help_mouse": "Clic : suivant · clic droit : précédent · clic pendant le défilement : saut · bouton du milieu : armer l'entrée (puis clic gauche) ou quitter le plein écran · molette : défiler", "help_touch_next": "Toucher / balayer vers la gauche", "help_touch_prev": "Balayer vers la droite", "help_touch_home": "", "help_touch_index": "Menu : Retour à l'index", "help_touch_edges": "", "help_touch_zoom": "Menu : Zoom de présentation", "help_touch_fullscreen": "Bouton Plein écran", "help_touch_scroll": "Faire défiler", "help_touch_menu": "Bouton Menu", "help_touch_theme": "Menu", "help_touch_pause": "Menu", "help_touch_speaker": "Menu", "help_touch_tags": "Menu", "help_touch_share": "Menu", "help_touch_jump": "", "help_touch_open": "Bouton Aide", "help_touch_keys": "Tactile", "help_touch": "Toucher : suivante · balayer vers la gauche : suivante · balayer vers la droite : précédente · toucher deux fois : afficher ou masquer la navigation", "help_open": "Ouvre la fenêtre d'aide", "help_stamp": "Compilé avec", "about_title": "À propos de LightWebPres", "about_description": "LightWebPres transforme des articles Markdown structurés en présentations HTML navigables et thémables.", "about_github": "Code source et projet :", "about_github_link": "GitHub", "about_license": "LightWebPres est distribué sous la GNU GPL version 3 ou ultérieure, avec la LightWebPres Output Exception, version 1.0. Cette exception permet de publier les présentations générées sous les conditions de votre choix.", "about_close": "Fermer"}}, "en": {"name": "English", "strings": {"nav_prev": "Previous slide", "nav_next": "Next slide", "nav_dot_fallback": "Slide", "series_nav_title": "This series", "series_read": "Read the article", "series_current_status": "Currently reading", "series_back_to_index": "Back to index", "series_untitled_fallback": "Article series", "draft_banner": "Draft", "full_article_kicker": "Full article", "notes_section_title": "Notes", "note_back": "Back to the text", "source_label": "Source", "copy_link": "Copy link", "copy_link_done": "Link copied!", "copy_prompt": "Copy this link:", "share_unavailable": "Sharing requires a page served from an HTTP(S) URL.", "share_action_qr": "Show QR code", "share_scope_series": "Series", "share_scope_article": "Article", "share_scope_fiche": "Slide", "qr_modal_title": "QR code for this link", "qr_modal_close": "Close", "qr_modal_error": "A QR code could not be generated for this link.", "qr_modal_localhost": "This local address may not be reachable from a phone. Use a reachable network address.", "nav_fullscreen": "Fullscreen (F key)", "tags_menu": "Filter slides", "tags_active": "Active tag", "tags_preview": "Displayed content", "tags_articles": "articles", "tags_slides": "slides", "tags_no_results": "No article or slide will be displayed with this tag.", "help_tags": "Filter by tag and remember the selection", "presenter_next": "Next:", "presenter_label": "Presenter panel", "menu_title": "Presenter menu (M key)", "menu_prev": "Previous slide", "menu_home": "Back to index", "menu_next": "Next slide", "menu_fullscreen": "Fullscreen", "menu_theme": "Change theme", "menu_appearance": "Change appearance", "menu_presenter": "Presenter notes", "menu_tags": "Filter by tag", "menu_scroll": "Scroll", "menu_share": "Share", "menu_help": "Help", "menu_zoom": "Presentation zoom", "menu_zoom_out": "Reduce presentation zoom", "menu_zoom_in": "Increase presentation zoom", "menu_zoom_reset": "Reset", "menu_zoom_hint": "These buttons resize the presentation. Pinching keeps the browser's native zoom.", "menu_table_mode": "Wide tables", "menu_table_clip": "Hide what does not fit", "menu_table_overflow": "Allow overflow", "menu_table_scroll": "Scroll inside the table", "menu_text_fit": "Text size", "menu_text_fixed": "Keep the chosen size", "menu_text_uniform": "Reduce all slides together", "menu_text_per_slide": "Reduce each slide as needed", "menu_table_shrink": "Reduce tables as needed", "menu_object_shrink": "Reduce images as needed", "menu_reading_status_one": "{count} slide still needs scrolling.", "menu_reading_status_many": "{count} slides still need scrolling.", "help_tables": "Wide tables: hide overflow, allow overflow or scroll locally (O). Arrow keys in a focused scrolling table stay inside it, even at its edges.", "help_text_fit": "Text: chosen size, shared reduction or per-slide reduction (A). The menu also reduces tables and images independently, within the author's limits.", "menu_pause_black": "Black screen", "menu_pause_white": "White screen", "menu_pause_theme": "Theme screen", "theme_menu_title": "Choose a theme", "appearance_menu_title": "Choose an appearance", "appearance_menu_help": "Choose an identity, a preset and a theme.", "appearance_identity": "Identity", "appearance_presentation": "Preset", "appearance_theme": "Theme", "presentation_standard": "Standard", "presentation_standard_description": "LightWebPres's native presentation.", "appearance_preset_default": "Follow preset", "theme_source": "Theme source", "theme_source_applicable": "Applicable", "theme_source_identity": "Current identity", "theme_source_all": "All", "theme_default": "Default", "theme_custom": "Custom", "theme_menu_help": "The primary theme is selected by default.", "theme_menu_filter": "Search themes", "theme_menu_close": "Escape to close · Enter to apply", "help_title": "Keyboard shortcuts", "help_mode_label": "Help type", "help_mode_keyboard": "Keyboard", "help_mode_touch": "Touch", "help_mode_toggle": "Show touch help", "help_next": "Next slide", "help_prev": "Previous slide", "help_home": "Beginning of the page", "help_index": "Back to the series index (on the index: top of the page)", "help_edges": "Last slide of the deck (on the index: last article card)", "help_zoom": "Presentation zoom: + enlarge, - reduce, = reset, including in the menu. Ctrl/Cmd keeps browser shortcuts. Pinching zooms in the browser without changing slides.", "help_fullscreen": "Fullscreen (Esc to exit)", "help_scroll": "Toggle smooth and instant scrolling (I key)", "help_menu": "Presenter menu", "help_theme": "Change theme during the presentation (C key)", "help_appearance": "Change appearance during the presentation (C key)", "help_pause": "Pause screen: black (B), white (W), theme (T)", "help_speaker": "Speaker panel: notes + next slide", "help_share": "Share the current link (S key)", "help_jump_keys": "0&ndash;9 + Enter", "help_mouse_keys": "Mouse / Wheel", "help_jump": "Jump to slide N (then Enter)", "help_mouse": "Click: next · right-click: back · click while gliding: jump · middle button: arm entry (then left-click) or exit fullscreen · wheel: scroll", "help_touch_next": "Tap / swipe left", "help_touch_prev": "Swipe right", "help_touch_home": "", "help_touch_index": "Menu: Back to index", "help_touch_edges": "", "help_touch_zoom": "Menu: Presentation zoom", "help_touch_fullscreen": "Fullscreen button", "help_touch_scroll": "Scroll", "help_touch_menu": "Menu button", "help_touch_theme": "Menu", "help_touch_pause": "Menu", "help_touch_speaker": "Menu", "help_touch_tags": "Menu", "help_touch_share": "Menu", "help_touch_jump": "", "help_touch_open": "Help button", "help_touch_keys": "Touch", "help_touch": "Tap: next · swipe left: next · swipe right: previous · double tap: show or hide navigation", "help_open": "Opens the help window", "help_stamp": "Compiled with", "about_title": "About LightWebPres", "about_description": "LightWebPres turns structured Markdown articles into navigable, themeable HTML presentations.", "about_github": "Source code and project:", "about_github_link": "GitHub", "about_license": "LightWebPres is distributed under the GNU General Public License version 3 or later, with the LightWebPres Output Exception, version 1.0. This exception allows generated presentations to be published under terms of your choice.", "about_close": "Close"}}}}</script>
+<script id="lwp-language-data" type="application/json">{"version": 1, "default": "fr", "auto": false, "packs": {"fr": {"name": "Français", "strings": {"nav_prev": "Planche précédente", "nav_next": "Planche suivante", "nav_dot_fallback": "Fiche", "series_nav_title": "Cette série", "series_read": "Lire l'article", "series_current_status": "En cours de lecture", "series_back_to_index": "Retour à l'index", "series_untitled_fallback": "Série d'articles", "draft_banner": "Brouillon", "full_article_kicker": "Article complet", "notes_section_title": "Notes", "note_back": "Revenir au texte", "source_label": "Source", "copy_link": "Copier le lien", "copy_link_done": "Lien copié !", "copy_prompt": "Copie ce lien :", "share_unavailable": "Le partage nécessite une page servie par une URL HTTP(S).", "share_action_qr": "Afficher le QR code", "share_scope_series": "Série", "share_scope_article": "Article", "share_scope_fiche": "Fiche", "qr_modal_title": "QR code du lien", "qr_modal_close": "Fermer", "qr_modal_error": "Impossible de générer un QR code pour ce lien.", "qr_modal_localhost": "Cette adresse locale peut être inaccessible depuis un téléphone. Utilisez une adresse réseau accessible.", "nav_fullscreen": "Plein écran (touche F)", "tags_menu": "Filtrer les slides", "tags_active": "Tag actif", "tags_preview": "Contenu affiché", "tags_articles": "fiches", "tags_slides": "slides", "tags_no_results": "Aucune fiche ou slide ne sera affichée avec ce tag.", "help_tags": "Filtrer par tag et mémoriser la sélection", "presenter_next": "Suivant :", "presenter_label": "Panneau du présentateur", "menu_title": "Menu du présentateur (touche M)", "menu_prev": "Planche précédente", "menu_home": "Retour à l'index", "menu_next": "Planche suivante", "menu_fullscreen": "Plein écran", "menu_theme": "Changer de thème", "menu_appearance": "Changer d’apparence", "menu_presenter": "Notes présentateur", "menu_tags": "Filtrer par tag", "menu_scroll": "Défilement", "menu_share": "Partager", "menu_help": "Aide", "menu_reading": "Taille et tableaux", "menu_reading_back": "Retour au menu principal", "menu_zoom": "Zoom de présentation", "menu_zoom_out": "Réduire le zoom de présentation", "menu_zoom_in": "Agrandir le zoom de présentation", "menu_zoom_reset": "Réinitialiser", "menu_zoom_hint": "Ces boutons règlent la présentation. Le pincement garde le zoom natif du navigateur.", "menu_table_mode": "Tableaux trop larges", "menu_table_clip": "Masquer ce qui dépasse", "menu_table_overflow": "Laisser dépasser", "menu_table_scroll": "Faire défiler dans le tableau", "menu_text_fit": "Taille du texte", "menu_text_fixed": "Conserver la taille choisie", "menu_text_uniform": "Réduire toutes les slides ensemble", "menu_text_per_slide": "Réduire chaque slide si nécessaire", "menu_table_shrink": "Réduire les tableaux si nécessaire", "menu_object_shrink": "Réduire les images si nécessaire", "menu_reading_status_one": "{count} slide nécessite encore de faire défiler.", "menu_reading_status_many": "{count} slides nécessitent encore de faire défiler.", "help_tables": "Tableaux trop larges : masquer, laisser dépasser ou faire défiler localement (O). Les flèches dans un tableau défilant restent dans ce tableau, même au bord.", "help_text_fit": "Texte : taille choisie, réduction commune ou réduction par slide (A). Le menu permet aussi de réduire les tableaux et les images séparément, dans les limites prévues par l'auteur.", "menu_pause_black": "Écran noir", "menu_pause_white": "Écran blanc", "menu_pause_theme": "Écran du thème", "theme_menu_title": "Choisir un thème", "appearance_menu_title": "Choisir une apparence", "appearance_menu_help": "Choisissez une identité, un preset et un thème.", "appearance_identity": "Identité", "appearance_presentation": "Preset", "appearance_theme": "Thème", "presentation_standard": "Standard", "presentation_standard_description": "Présentation native de LightWebPres.", "appearance_preset_default": "Suivre le preset", "theme_source": "Source des thèmes", "theme_source_applicable": "Applicables", "theme_source_identity": "Identité actuelle", "theme_source_all": "Tous", "theme_default": "Par défaut", "theme_custom": "Personnalisé", "theme_menu_help": "Le thème principal est sélectionné par défaut.", "theme_menu_filter": "Rechercher un thème", "theme_menu_close": "Échap pour fermer · Entrée pour appliquer", "help_title": "Raccourcis clavier", "help_mode_label": "Type d'aide", "help_mode_keyboard": "Clavier", "help_mode_touch": "Tactile", "help_mode_toggle": "Afficher l'aide tactile", "help_next": "Slide suivante", "help_prev": "Slide précédente", "help_home": "Début de la page", "help_index": "Retour à l'index de la série (sur l'index : début de page)", "help_edges": "Dernière slide du deck (sur l'index : dernière carte)", "help_zoom": "Zoom de présentation : + agrandir, - réduire, = réinitialiser, même dans le menu. Ctrl/Cmd garde les raccourcis du navigateur. Le pincement zoome dans le navigateur, sans changer de slide.", "help_fullscreen": "Plein écran (Échap pour quitter)", "help_scroll": "Basculer entre défilement fluide et instantané (touche I)", "help_menu": "Menu du présentateur", "help_theme": "Changer de thème pendant la présentation (touche C)", "help_appearance": "Changer d’apparence pendant la présentation (touche C)", "help_pause": "Écran de pause : noir (B), blanc (W), thème (T)", "help_speaker": "Panneau présentateur : notes + slide suivante", "help_share": "Partager le lien courant (touche S)", "help_jump_keys": "0&ndash;9 + Entr&eacute;e", "help_mouse_keys": "Souris / Molette", "help_jump": "Aller à la slide N (puis Entrée)", "help_mouse": "Clic : suivant · clic droit : précédent · clic pendant le défilement : saut · bouton du milieu : armer l'entrée (puis clic gauche) ou quitter le plein écran · molette : défiler", "help_touch_next": "Toucher / balayer vers la gauche", "help_touch_prev": "Balayer vers la droite", "help_touch_home": "", "help_touch_index": "Menu : Retour à l'index", "help_touch_edges": "", "help_touch_zoom": "Menu : Zoom de présentation", "help_touch_fullscreen": "Bouton Plein écran", "help_touch_scroll": "Faire défiler", "help_touch_menu": "Bouton Menu", "help_touch_theme": "Menu", "help_touch_pause": "Menu", "help_touch_speaker": "Menu", "help_touch_tags": "Menu", "help_touch_share": "Menu", "help_touch_jump": "", "help_touch_open": "Bouton Aide", "help_touch_keys": "Tactile", "help_touch": "Toucher : suivante · balayer vers la gauche : suivante · balayer vers la droite : précédente · toucher deux fois : afficher ou masquer la navigation", "help_open": "Ouvre la fenêtre d'aide", "help_stamp": "Compilé avec", "about_title": "À propos de LightWebPres", "about_description": "LightWebPres transforme des articles Markdown structurés en présentations HTML navigables et thémables.", "about_github": "Code source et projet :", "about_github_link": "GitHub", "about_license": "LightWebPres est distribué sous la GNU GPL version 3 ou ultérieure, avec la LightWebPres Output Exception, version 1.0. Cette exception permet de publier les présentations générées sous les conditions de votre choix.", "about_close": "Fermer"}}, "en": {"name": "English", "strings": {"nav_prev": "Previous slide", "nav_next": "Next slide", "nav_dot_fallback": "Slide", "series_nav_title": "This series", "series_read": "Read the article", "series_current_status": "Currently reading", "series_back_to_index": "Back to index", "series_untitled_fallback": "Article series", "draft_banner": "Draft", "full_article_kicker": "Full article", "notes_section_title": "Notes", "note_back": "Back to the text", "source_label": "Source", "copy_link": "Copy link", "copy_link_done": "Link copied!", "copy_prompt": "Copy this link:", "share_unavailable": "Sharing requires a page served from an HTTP(S) URL.", "share_action_qr": "Show QR code", "share_scope_series": "Series", "share_scope_article": "Article", "share_scope_fiche": "Slide", "qr_modal_title": "QR code for this link", "qr_modal_close": "Close", "qr_modal_error": "A QR code could not be generated for this link.", "qr_modal_localhost": "This local address may not be reachable from a phone. Use a reachable network address.", "nav_fullscreen": "Fullscreen (F key)", "tags_menu": "Filter slides", "tags_active": "Active tag", "tags_preview": "Displayed content", "tags_articles": "articles", "tags_slides": "slides", "tags_no_results": "No article or slide will be displayed with this tag.", "help_tags": "Filter by tag and remember the selection", "presenter_next": "Next:", "presenter_label": "Presenter panel", "menu_title": "Presenter menu (M key)", "menu_prev": "Previous slide", "menu_home": "Back to index", "menu_next": "Next slide", "menu_fullscreen": "Fullscreen", "menu_theme": "Change theme", "menu_appearance": "Change appearance", "menu_presenter": "Presenter notes", "menu_tags": "Filter by tag", "menu_scroll": "Scroll", "menu_share": "Share", "menu_help": "Help", "menu_reading": "Size and tables", "menu_reading_back": "Back to main menu", "menu_zoom": "Presentation zoom", "menu_zoom_out": "Reduce presentation zoom", "menu_zoom_in": "Increase presentation zoom", "menu_zoom_reset": "Reset", "menu_zoom_hint": "These buttons resize the presentation. Pinching keeps the browser's native zoom.", "menu_table_mode": "Wide tables", "menu_table_clip": "Hide what does not fit", "menu_table_overflow": "Allow overflow", "menu_table_scroll": "Scroll inside the table", "menu_text_fit": "Text size", "menu_text_fixed": "Keep the chosen size", "menu_text_uniform": "Reduce all slides together", "menu_text_per_slide": "Reduce each slide as needed", "menu_table_shrink": "Reduce tables as needed", "menu_object_shrink": "Reduce images as needed", "menu_reading_status_one": "{count} slide still needs scrolling.", "menu_reading_status_many": "{count} slides still need scrolling.", "help_tables": "Wide tables: hide overflow, allow overflow or scroll locally (O). Arrow keys in a focused scrolling table stay inside it, even at its edges.", "help_text_fit": "Text: chosen size, shared reduction or per-slide reduction (A). The menu also reduces tables and images independently, within the author's limits.", "menu_pause_black": "Black screen", "menu_pause_white": "White screen", "menu_pause_theme": "Theme screen", "theme_menu_title": "Choose a theme", "appearance_menu_title": "Choose an appearance", "appearance_menu_help": "Choose an identity, a preset and a theme.", "appearance_identity": "Identity", "appearance_presentation": "Preset", "appearance_theme": "Theme", "presentation_standard": "Standard", "presentation_standard_description": "LightWebPres's native presentation.", "appearance_preset_default": "Follow preset", "theme_source": "Theme source", "theme_source_applicable": "Applicable", "theme_source_identity": "Current identity", "theme_source_all": "All", "theme_default": "Default", "theme_custom": "Custom", "theme_menu_help": "The primary theme is selected by default.", "theme_menu_filter": "Search themes", "theme_menu_close": "Escape to close · Enter to apply", "help_title": "Keyboard shortcuts", "help_mode_label": "Help type", "help_mode_keyboard": "Keyboard", "help_mode_touch": "Touch", "help_mode_toggle": "Show touch help", "help_next": "Next slide", "help_prev": "Previous slide", "help_home": "Beginning of the page", "help_index": "Back to the series index (on the index: top of the page)", "help_edges": "Last slide of the deck (on the index: last article card)", "help_zoom": "Presentation zoom: + enlarge, - reduce, = reset, including in the menu. Ctrl/Cmd keeps browser shortcuts. Pinching zooms in the browser without changing slides.", "help_fullscreen": "Fullscreen (Esc to exit)", "help_scroll": "Toggle smooth and instant scrolling (I key)", "help_menu": "Presenter menu", "help_theme": "Change theme during the presentation (C key)", "help_appearance": "Change appearance during the presentation (C key)", "help_pause": "Pause screen: black (B), white (W), theme (T)", "help_speaker": "Speaker panel: notes + next slide", "help_share": "Share the current link (S key)", "help_jump_keys": "0&ndash;9 + Enter", "help_mouse_keys": "Mouse / Wheel", "help_jump": "Jump to slide N (then Enter)", "help_mouse": "Click: next · right-click: back · click while gliding: jump · middle button: arm entry (then left-click) or exit fullscreen · wheel: scroll", "help_touch_next": "Tap / swipe left", "help_touch_prev": "Swipe right", "help_touch_home": "", "help_touch_index": "Menu: Back to index", "help_touch_edges": "", "help_touch_zoom": "Menu: Presentation zoom", "help_touch_fullscreen": "Fullscreen button", "help_touch_scroll": "Scroll", "help_touch_menu": "Menu button", "help_touch_theme": "Menu", "help_touch_pause": "Menu", "help_touch_speaker": "Menu", "help_touch_tags": "Menu", "help_touch_share": "Menu", "help_touch_jump": "", "help_touch_open": "Help button", "help_touch_keys": "Touch", "help_touch": "Tap: next · swipe left: next · swipe right: previous · double tap: show or hide navigation", "help_open": "Opens the help window", "help_stamp": "Compiled with", "about_title": "About LightWebPres", "about_description": "LightWebPres turns structured Markdown articles into navigable, themeable HTML presentations.", "about_github": "Source code and project:", "about_github_link": "GitHub", "about_license": "LightWebPres is distributed under the GNU General Public License version 3 or later, with the LightWebPres Output Exception, version 1.0. This exception allows generated presentations to be published under terms of your choice.", "about_close": "Close"}}}}</script>
 <script id="lwp-theme-data" type="application/json">{"version":1,"primary":"kit:lightwebpres-docs@0.1.0/docs","vars":["--color-page","--color-ink","--color-ink-quiet","--color-mark","--color-call","--color-affirm","--color-nav","--font-text","--font-display","--font-ui","--font-mono","--page-font","--page-bg","--page-fg","--page-leading","--page-shadow-fg","--page-shadow-blur","--page-shadow-dx","--page-shadow-dy","--page-content-max","--page-block-max","--page-hyphens","--slide-rule-fg","--slide-rule-width","--slide-num-fg","--slide-num-font","--slide-num-size","--slide-num-tracking","--slide-num-shadow-fg","--slide-num-shadow-blur","--slide-num-shadow-dx","--slide-num-shadow-dy","--kicker-fg","--kicker-font","--kicker-size","--kicker-weight","--kicker-tracking","--kicker-transform","--kicker-shadow-fg","--kicker-shadow-blur","--kicker-shadow-dx","--kicker-shadow-dy","--title1-font","--title1-size","--title1-weight","--title1-leading","--title1-fg","--title1-shadow-fg","--title1-shadow-blur","--title1-shadow-dx","--title1-shadow-dy","--title1-align","--title2-font","--title2-size","--title2-weight","--title2-leading","--title2-align","--title2-shadow-fg","--title2-shadow-blur","--title2-shadow-dx","--title2-shadow-dy","--summary-fg","--summary-size","--summary-leading","--summary-align","--summary-shadow-fg","--summary-shadow-blur","--summary-shadow-dx","--summary-shadow-dy","--fact-bg","--fact-rule-fg","--fact-rule-width","--fact-fg","--fact-size","--fact-align","--fact-elevation-fg","--fact-elevation-blur","--fact-elevation-dx","--fact-elevation-dy","--fact-elevation-spread","--fact-label-fg","--fact-label-font","--fact-label-size","--fact-label-weight","--fact-label-tracking","--fact-label-transform","--fact-label-shadow-fg","--fact-label-shadow-blur","--fact-label-shadow-dx","--fact-label-shadow-dy","--fact-strong-weight","--fact-strong-style","--fact-strong-bg","--fact-strong-fg","--fact-strong-decoration","--fact-strong-decoration-color","--fact-strong-pad","--fact-strong-absorb-punct","--fact-strong-shadow-fg","--fact-strong-shadow-blur","--fact-strong-shadow-dx","--fact-strong-shadow-dy","--body-heading-fg","--body-heading-weight","--body-heading-leading","--body-heading-shadow-fg","--body-heading-shadow-blur","--body-heading-shadow-dx","--body-heading-shadow-dy","--source-fg","--source-font","--source-size","--source-shadow-fg","--source-shadow-blur","--source-shadow-dx","--source-shadow-dy","--footer-fg","--footer-font","--footer-size","--footer-rule-fg","--footer-rule-width","--cover-bg-from","--cover-bg-to","--cover-bg-angle","--cover-fg","--cover-align","--cover-summary-fg","--cover-summary-shadow-fg","--cover-summary-shadow-blur","--cover-summary-shadow-dx","--cover-summary-shadow-dy","--cover-kicker-fg","--cover-kicker-shadow-fg","--cover-kicker-shadow-blur","--cover-kicker-shadow-dx","--cover-kicker-shadow-dy","--cover-num-fg","--cover-num-shadow-fg","--cover-num-shadow-blur","--cover-num-shadow-dx","--cover-num-shadow-dy","--quote-fg","--quote-style","--quote-rule-fg","--quote-rule-width","--code-font","--code-size","--code-bg","--code-rule-fg","--code-rule-width","--code-leading","--footnote-call-fg","--footnote-call-size","--footnote-call-fg-marked","--footnote-call-fg-cover","--note-fg","--note-size","--note-leading","--note-weight","--note-style","--note-marker-fg","--note-back-fg","--note-local-size","--note-local-rule-fg","--note-local-rule-width","--note-page-bg","--note-page-rule-fg","--note-page-rule-width","--note-page-title-fg","--note-page-title-size","--note-page-title-font","--link-decoration-color","--table-size","--table-rule-fg","--table-rule-width","--table-cell-align","--table-head-bg","--table-head-fg","--table-head-rule-fg","--table-head-rule-width","--table-head-weight","--table-head-size","--table-head-tracking","--table-head-align","--table-head-shadow-fg","--table-head-shadow-blur","--table-head-shadow-dx","--table-head-shadow-dy","--verdict-yes-fg","--verdict-yes-weight","--verdict-yes-mark","--verdict-yes-shadow-fg","--verdict-yes-shadow-blur","--verdict-yes-shadow-dx","--verdict-yes-shadow-dy","--verdict-no-fg","--verdict-no-weight","--verdict-no-mark","--verdict-no-shadow-fg","--verdict-no-shadow-blur","--verdict-no-shadow-dx","--verdict-no-shadow-dy","--verdict-partial-fg","--verdict-partial-weight","--verdict-partial-mark","--verdict-partial-shadow-fg","--verdict-partial-shadow-blur","--verdict-partial-shadow-dx","--verdict-partial-shadow-dy","--table-col-signal-bg","--table-col-signal-weight","--table-col-snap-bg","--table-col-snap-rule-fg","--table-col-snap-rule-width","--caption-fg","--caption-size","--caption-align","--caption-shadow-fg","--caption-shadow-blur","--caption-shadow-dx","--caption-shadow-dy","--article-bg","--article-size","--article-leading","--article-align","--article-rule-fg","--article-rule-width","--refs-fg","--refs-size","--refs-leading","--refs-weight","--refs-style","--highlight-fg","--highlight-font","--highlight-size","--highlight-weight","--highlight-leading","--highlight-tracking","--highlight-numeric","--highlight-shadow-fg","--highlight-shadow-blur","--highlight-shadow-dx","--highlight-shadow-dy","--highlight-align","--highlight-caption-fg","--highlight-caption-size","--highlight-caption-shadow-fg","--highlight-caption-shadow-blur","--highlight-caption-shadow-dx","--highlight-caption-shadow-dy","--series-nav-current-bg","--series-nav-current-rule-fg","--series-nav-current-rule-width","--series-nav-link-bg","--series-nav-link-rule-fg","--series-nav-link-rule-width","--series-nav-link-ring","--series-nav-link-ring-width","--series-nav-link-elevation-fg","--series-nav-link-elevation-blur","--series-nav-link-elevation-dx","--series-nav-link-elevation-dy","--series-nav-link-elevation-spread","--series-nav-link-elevation-hover-fg","--series-nav-link-elevation-hover-blur","--series-nav-link-elevation-hover-dx","--series-nav-link-elevation-hover-dy","--series-nav-link-elevation-hover-spread","--series-nav-label-fg","--series-nav-label-font","--series-nav-label-size","--series-nav-label-weight","--series-nav-label-tracking","--series-nav-label-transform","--series-nav-label-shadow-fg","--series-nav-label-shadow-blur","--series-nav-label-shadow-dx","--series-nav-label-shadow-dy","--series-nav-title-size","--series-nav-title-weight","--series-nav-title-shadow-fg","--series-nav-title-shadow-blur","--series-nav-title-shadow-dx","--series-nav-title-shadow-dy","--series-nav-desc-fg","--series-nav-desc-size","--series-nav-desc-shadow-fg","--series-nav-desc-shadow-blur","--series-nav-desc-shadow-dx","--series-nav-desc-shadow-dy","--series-nav-status-size","--series-nav-status-weight","--series-nav-status-fg-current","--series-nav-status-fg-link","--series-nav-status-shadow-fg","--series-nav-status-shadow-blur","--series-nav-status-shadow-dx","--series-nav-status-shadow-dy","--nav-btn-bg","--nav-btn-bg-soft","--nav-btn-fg","--nav-btn-rule-fg","--nav-btn-rule-width","--nav-btn-size","--nav-btn-ring","--nav-btn-ring-width","--nav-btn-shadow-fg","--nav-btn-shadow-blur","--nav-btn-shadow-dx","--nav-btn-shadow-dy","--nav-btn-elevation-fg","--nav-btn-elevation-blur","--nav-btn-elevation-dx","--nav-btn-elevation-dy","--nav-btn-elevation-spread","--nav-btn-elevation-hover-fg","--nav-btn-elevation-hover-blur","--nav-btn-elevation-hover-dx","--nav-btn-elevation-hover-dy","--nav-btn-elevation-hover-spread","--nav-dot-bg","--nav-dot-bg-hover","--nav-dot-bg-active","--share-bg","--share-fg","--share-quiet-fg","--share-size","--share-rule-fg","--share-rule-width","--share-scrim","--share-rule-fg-hover","--share-bg-hover","--share-elevation-fg","--share-elevation-blur","--share-elevation-dx","--share-elevation-dy","--share-elevation-spread","--card-bg","--card-rule-fg","--card-rule-width","--card-rule-fg-hover","--card-ring","--card-ring-width","--card-elevation-fg","--card-elevation-blur","--card-elevation-dx","--card-elevation-dy","--card-elevation-spread","--card-elevation-hover-fg","--card-elevation-hover-blur","--card-elevation-hover-dx","--card-elevation-hover-dy","--card-elevation-hover-spread","--card-label-fg","--card-label-font","--card-label-size","--card-label-weight","--card-label-tracking","--card-label-transform","--card-label-shadow-fg","--card-label-shadow-blur","--card-label-shadow-dx","--card-label-shadow-dy","--card-title-size","--card-title-weight","--card-title-shadow-fg","--card-title-shadow-blur","--card-title-shadow-dx","--card-title-shadow-dy","--card-desc-fg","--card-desc-size","--card-desc-shadow-fg","--card-desc-shadow-blur","--card-desc-shadow-dx","--card-desc-shadow-dy","--card-cta-fg","--card-cta-size","--card-cta-weight","--card-cta-shadow-fg","--card-cta-shadow-blur","--card-cta-shadow-dx","--card-cta-shadow-dy","--header-rule-fg","--header-rule-width","--header-title-font","--header-title-size","--header-title-weight","--header-title-leading","--header-title-shadow-fg","--header-title-shadow-blur","--header-title-shadow-dx","--header-title-shadow-dy","--header-subtitle-fg","--header-subtitle-size","--header-subtitle-shadow-fg","--header-subtitle-shadow-blur","--header-subtitle-shadow-dx","--header-subtitle-shadow-dy","--version-tag-font","--version-tag-fg","--version-tag-bg","--version-tag-size","--version-tag-shadow-fg","--version-tag-shadow-blur","--version-tag-shadow-dx","--version-tag-shadow-dy","--intro-size","--intro-leading","--tag-menu-elevation-fg","--tag-menu-elevation-blur","--tag-menu-elevation-dx","--tag-menu-elevation-dy","--tag-menu-elevation-spread","--slide-counter-elevation-fg","--slide-counter-elevation-blur","--slide-counter-elevation-dx","--slide-counter-elevation-dy","--slide-counter-elevation-spread","--presenter-panel-elevation-fg","--presenter-panel-elevation-blur","--presenter-panel-elevation-dx","--presenter-panel-elevation-dy","--presenter-panel-elevation-spread","--help-card-elevation-fg","--help-card-elevation-blur","--help-card-elevation-dx","--help-card-elevation-dy","--help-card-elevation-spread","--share-qr-elevation-fg","--share-qr-elevation-blur","--share-qr-elevation-dx","--share-qr-elevation-dy","--share-qr-elevation-spread"],"themes":[{"slug":"kit:lightwebpres-docs@0.1.0/docs","label":"LightWebPres documentation","family":"desk","values":[],"preview":{"background":"#EEF2F7FF","gradient":{"angle":"180deg","from":"#0B2545FF","to":"#0B2545FF"},"foreground":"#EEF2F7FF"},"identity":"lightwebpres-docs@0.1.0","identity_label":"LightWebPres documentation","collection":"kit","origin":"series"},{"slug":"monochrome","label":"Monochrome","family":"desk","values":[[0,"#FAFAFAFF"],[1,"#111111FF"],[2,"#707070FF"],[3,"#D8D8D8FF"],[4,"#2B2B2BFF"],[5,"#000000FF"],[6,"#2B2B2BFF"],[7,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[8,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[9,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[11,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[12,"#FAFAFAFF"],[13,"#111111FF"],[24,"#707070FF"],[25,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[32,"#707070FF"],[33,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[36,"2px"],[42,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[46,"#FAFAFAFF"],[52,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[61,"#111111FF"],[70,"#D8D8D8FF"],[72,"#111111FF"],[80,"#707070FF"],[81,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[92,"#00000000"],[93,"#111111FF"],[94,"underline"],[95,"#111111FF"],[96,"0"],[102,"#111111FF"],[109,"#707070FF"],[110,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[116,"#707070FF"],[117,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[121,"#111111FF"],[122,"#111111FF"],[124,"#FAFAFAFF"],[126,"#FAFAFAC7"],[131,"#D8D8D8FF"],[141,"#707070FF"],[151,"#2B2B2BFF"],[153,"#111111FF"],[154,"#FAFAFAFF"],[155,"#656565FF"],[160,"#2B2B2BFF"],[161,"#656565FF"],[163,"#11111178"],[165,"#11111111"],[166,"#1111117B"],[168,"#111111FF"],[170,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[171,"#111111FF"],[177,"#111111FF"],[178,"#111111FF"],[188,"#000000FF"],[195,"#707070FF"],[202,"#2B2B2BFF"],[212,"#2B2B2BFF"],[214,"#707070FF"],[227,"#656565FF"],[232,"#111111FF"],[233,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[244,"#707070FF"],[254,"#2B2B2BFF"],[256,"#2B2B2BFF"],[268,"#707070FF"],[269,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[284,"#707070FF"],[292,"#707070FF"],[293,"#111111FF"],[300,"#111111FF"],[304,"#2B2B2BFF"],[321,"#707070FF"],[322,"#2B2B2BFF"],[323,"#FAFAFAFF"],[324,"#111111FF"],[325,"#707070FF"],[330,"#111111FF"],[340,"#D8D8D8FF"],[341,"#2B2B2BFF"],[353,"#707070FF"],[354,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[369,"#707070FF"],[375,"#111111FF"],[382,"#D8D8D8FF"],[384,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[392,"#707070FF"],[399,"#707070FF"]],"preview":{"background":"#FAFAFAFF","gradient":{"angle":"180deg","from":"#111111FF","to":"#111111FF"},"foreground":"#FAFAFAFF"},"identity":null,"collection":"Commons","origin":"embedded"},{"slug":"monochrome-night","label":"Monochrome Night","family":"desk","values":[[0,"#161616FF"],[1,"#F1F1F1FF"],[2,"#A0A0A0FF"],[3,"#C9C9C9FF"],[4,"#F1F1F1FF"],[5,"#D0D0D0FF"],[6,"#F1F1F1FF"],[7,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[8,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[9,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[11,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[12,"#161616FF"],[13,"#F1F1F1FF"],[22,"#FFFFFF24"],[24,"#A0A0A0FF"],[25,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[32,"#A0A0A0FF"],[33,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[36,"2px"],[42,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[46,"#F1F1F1FF"],[52,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[61,"#F1F1F1FF"],[69,"#FFFFFF0E"],[70,"#C9C9C9FF"],[72,"#F1F1F1FF"],[80,"#A0A0A0FF"],[81,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[92,"#00000000"],[93,"#F1F1F1FF"],[94,"underline"],[95,"#C9C9C9FF"],[96,"0"],[102,"#F1F1F1FF"],[109,"#A0A0A0FF"],[110,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[116,"#A0A0A0FF"],[117,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[119,"#FFFFFF24"],[121,"#00000073"],[122,"#00000073"],[124,"#F1F1F1FF"],[126,"#F1F1F1C7"],[131,"#C9C9C9FF"],[136,"#FFFFFF8F"],[141,"#A0A0A0FF"],[143,"#FFFFFF3D"],[147,"#0000004D"],[148,"#FFFFFF24"],[151,"#F1F1F1FF"],[153,"#F1F1F1FF"],[154,"#F1F1F1FF"],[155,"#F1F1F1FF"],[160,"#F1F1F1FF"],[161,"#F1F1F1FF"],[163,"#FFFFFF78"],[165,"#FFFFFF0E"],[166,"#FFFFFF7B"],[168,"#F1F1F1FF"],[170,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[171,"#F1F1F1FF"],[173,"#FFFFFF24"],[176,"#0000004D"],[177,"#F1F1F1FF"],[178,"#F1F1F1FF"],[188,"#D0D0D0FF"],[195,"#A0A0A0FF"],[202,"#F1F1F1FF"],[209,"#0000004D"],[211,"#0000004D"],[212,"#C9C9C9FF"],[214,"#A0A0A0FF"],[221,"#FFFFFF0E"],[225,"#FFFFFF24"],[227,"#F1F1F1FF"],[232,"#F1F1F1FF"],[233,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[244,"#A0A0A0FF"],[250,"#0000004D"],[251,"#FFFFFF3D"],[253,"#FFFFFF0E"],[254,"#F1F1F1FF"],[256,"#F1F1F1FF"],[268,"#A0A0A0FF"],[269,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[284,"#A0A0A0FF"],[292,"#A0A0A0FF"],[293,"#F1F1F1FF"],[298,"#FFFFFF21"],[299,"#FFFFFF17"],[300,"#F1F1F1FF"],[301,"#FFFFFF3D"],[304,"#F1F1F1FF"],[320,"#FFFFFF3D"],[321,"#A0A0A0FF"],[322,"#F1F1F1FF"],[323,"#161616FF"],[324,"#F1F1F1FF"],[325,"#A0A0A0FF"],[327,"#FFFFFF88"],[330,"#F1F1F1FF"],[331,"#FFFFFF21"],[337,"#FFFFFF0E"],[338,"#FFFFFF3D"],[340,"#C9C9C9FF"],[341,"#F1F1F1FF"],[353,"#A0A0A0FF"],[354,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[369,"#A0A0A0FF"],[375,"#F1F1F1FF"],[382,"#C9C9C9FF"],[384,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[392,"#A0A0A0FF"],[399,"#A0A0A0FF"],[400,"#0000004D"]],"preview":{"background":"#161616FF","gradient":{"angle":"180deg","from":"#00000073","to":"#00000073"},"foreground":"#F1F1F1FF"},"identity":null,"collection":"Commons","origin":"embedded"},{"slug":"print-ink","label":"Print Ink","family":"print","values":[[0,"#FFFFFFFF"],[1,"#000000FF"],[2,"#4B4B4BFF"],[3,"#FFE9A8FF"],[4,"#B71D1CFF"],[5,"#1B5E20FF"],[6,"#000000FF"],[7,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[8,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[9,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[11,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[12,"#FFFFFFFF"],[13,"#000000FF"],[24,"#4B4B4BFF"],[25,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[32,"#4B4B4BFF"],[33,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[36,"2px"],[42,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[46,"#000000FF"],[52,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[61,"#000000FF"],[69,"#FFFFFFFF"],[70,"#FFE9A8FF"],[72,"#000000FF"],[80,"#4B4B4BFF"],[81,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[92,"#00000000"],[93,"#000000FF"],[95,"#000000FF"],[96,"0"],[102,"#000000FF"],[109,"#4B4B4BFF"],[110,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[116,"#4B4B4BFF"],[117,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[121,"#FFFFFFFF"],[122,"#FFFFFFFF"],[124,"#000000FF"],[126,"#000000FF"],[131,"#000000FF"],[136,"#4B4B4BFF"],[141,"#4B4B4BFF"],[147,"#FFFFFFFF"],[151,"#000000FF"],[153,"#000000FF"],[154,"#000000FF"],[155,"#4B4B4BFF"],[160,"#000000FF"],[161,"#4B4B4BFF"],[163,"#0000007D"],[165,"#FFFFFFFF"],[166,"#00000082"],[168,"#000000FF"],[170,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[171,"#000000FF"],[176,"#F4F4F4FF"],[177,"#000000FF"],[178,"#000000FF"],[188,"#1B5E20FF"],[195,"#4B4B4BFF"],[202,"#B71D1CFF"],[209,"#FFFFFFFF"],[211,"#FFFFFFFF"],[212,"#B71D1CFF"],[214,"#4B4B4BFF"],[221,"#FFFFFFFF"],[227,"#4B4B4BFF"],[232,"#000000FF"],[233,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[244,"#4B4B4BFF"],[250,"#FFFFFFFF"],[253,"#FFFFFFFF"],[254,"#000000FF"],[256,"#000000FF"],[268,"#4B4B4BFF"],[269,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[284,"#4B4B4BFF"],[292,"#4B4B4BFF"],[293,"#000000FF"],[298,"#FFFFFFFF"],[299,"#FFFFFFFF"],[300,"#000000FF"],[304,"#000000FF"],[321,"#4B4B4BFF"],[322,"#000000FF"],[323,"#FFFFFFFF"],[324,"#000000FF"],[325,"#4B4B4BFF"],[330,"#000000FF"],[331,"#FFFFFFFF"],[337,"#FFFFFFFF"],[340,"#FFE9A8FF"],[341,"#000000FF"],[353,"#4B4B4BFF"],[354,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[369,"#4B4B4BFF"],[375,"#000000FF"],[382,"#FFE9A8FF"],[384,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[392,"#4B4B4BFF"],[399,"#4B4B4BFF"],[400,"#FFFFFFFF"]],"preview":{"background":"#FFFFFFFF","gradient":{"angle":"180deg","from":"#FFFFFFFF","to":"#FFFFFFFF"},"foreground":"#000000FF"},"identity":null,"collection":"Commons","origin":"embedded"},{"slug":"kit:builtin/light","label":"Light","family":"desk","values":[[0,"#F8F8F5FF"],[1,"#1A1A2EFF"],[2,"#6B6B7DFF"],[3,"#FFFC00FF"],[4,"#FF4757FF"],[5,"#3AA55CFF"],[6,"#3F4A5AFF"],[7,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[8,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[9,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[11,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[12,"#F8F8F5FF"],[13,"#1A1A2EFF"],[24,"#6B6B7DFF"],[25,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[32,"#6B6B7DFF"],[33,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[36,"2px"],[42,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[46,"#F8F8F5FF"],[52,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[61,"#1A1A2EFF"],[70,"#FFFC00FF"],[72,"#1A1A2EFF"],[80,"#6B6B7DFF"],[81,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[92,"#FFFC00FF"],[93,"#1A1A2EFF"],[95,"#1A1A2EFF"],[102,"#1A1A2EFF"],[109,"#6B6B7DFF"],[110,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[116,"#6B6B7DFF"],[117,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[121,"#1A1A2EFF"],[122,"#1A1A2EFF"],[124,"#F8F8F5FF"],[126,"#F8F8F5C7"],[131,"#FFFC00FF"],[141,"#6B6B7DFF"],[151,"#FF4757FF"],[153,"#1A1A2EFF"],[154,"#F8F8F5FF"],[155,"#1A1A2EFF"],[160,"#FF4757FF"],[161,"#1A1A2EFF"],[163,"#0000001A"],[165,"#FFFFFFB8"],[166,"#0000001A"],[168,"#1A1A2EFF"],[170,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[171,"#1A1A2EFF"],[177,"#1A1A2EFF"],[178,"#1A1A2EFF"],[188,"#3AA55CFF"],[195,"#6B6B7DFF"],[202,"#FF4757FF"],[212,"#FFFC00FF"],[214,"#6B6B7DFF"],[227,"#1A1A2EFF"],[232,"#1A1A2EFF"],[233,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[244,"#6B6B7DFF"],[254,"#3F4A5AFF"],[256,"#3F4A5AFF"],[268,"#6B6B7DFF"],[269,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[284,"#6B6B7DFF"],[292,"#6B6B7DFF"],[293,"#1A1A2EFF"],[300,"#1A1A2EFF"],[304,"#3F4A5AFF"],[321,"#6B6B7DFF"],[322,"#3F4A5AFF"],[323,"#F8F8F5FF"],[324,"#1A1A2EFF"],[325,"#6B6B7DFF"],[330,"#1A1A2EFF"],[340,"#FFFC00FF"],[341,"#3F4A5AFF"],[353,"#6B6B7DFF"],[354,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[369,"#6B6B7DFF"],[375,"#1A1A2EFF"],[382,"#FFFC00FF"],[384,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[392,"#6B6B7DFF"],[399,"#6B6B7DFF"]],"preview":{"background":"#F8F8F5FF","gradient":{"angle":"180deg","from":"#1A1A2EFF","to":"#1A1A2EFF"},"foreground":"#F8F8F5FF"},"identity":"builtin","identity_label":"LightWebPres","collection":"builtin","origin":"builtin"}],"catalog_digest":"55d91412cd9f8139aae5b22af83e884a47232e6619849fbe5c5482aa03411276","pinned":[]}</script>
-<script id="lwp-presentation-data" type="application/json">{"version":1,"primary":"lightwebpres-docs@0.1.0/docs","catalog_digest":"9bb89c36dd1c3c6b7a48d9f0cbe89548146707e3415602306ce7aa4b63e3064b","vars":["--color-page","--color-ink","--color-ink-quiet","--color-mark","--color-call","--color-affirm","--color-nav","--font-text","--font-display","--font-ui","--font-mono","--page-font","--page-bg","--page-fg","--page-leading","--page-shadow-fg","--page-shadow-blur","--page-shadow-dx","--page-shadow-dy","--page-content-max","--page-block-max","--page-hyphens","--slide-rule-fg","--slide-rule-width","--slide-num-fg","--slide-num-font","--slide-num-size","--slide-num-tracking","--slide-num-shadow-fg","--slide-num-shadow-blur","--slide-num-shadow-dx","--slide-num-shadow-dy","--kicker-fg","--kicker-font","--kicker-size","--kicker-weight","--kicker-tracking","--kicker-transform","--kicker-shadow-fg","--kicker-shadow-blur","--kicker-shadow-dx","--kicker-shadow-dy","--title1-font","--title1-size","--title1-weight","--title1-leading","--title1-fg","--title1-shadow-fg","--title1-shadow-blur","--title1-shadow-dx","--title1-shadow-dy","--title1-align","--title2-font","--title2-size","--title2-weight","--title2-leading","--title2-align","--title2-shadow-fg","--title2-shadow-blur","--title2-shadow-dx","--title2-shadow-dy","--summary-fg","--summary-size","--summary-leading","--summary-align","--summary-shadow-fg","--summary-shadow-blur","--summary-shadow-dx","--summary-shadow-dy","--fact-bg","--fact-rule-fg","--fact-rule-width","--fact-fg","--fact-size","--fact-align","--fact-elevation-fg","--fact-elevation-blur","--fact-elevation-dx","--fact-elevation-dy","--fact-elevation-spread","--fact-label-fg","--fact-label-font","--fact-label-size","--fact-label-weight","--fact-label-tracking","--fact-label-transform","--fact-label-shadow-fg","--fact-label-shadow-blur","--fact-label-shadow-dx","--fact-label-shadow-dy","--fact-strong-weight","--fact-strong-style","--fact-strong-bg","--fact-strong-fg","--fact-strong-decoration","--fact-strong-decoration-color","--fact-strong-pad","--fact-strong-absorb-punct","--fact-strong-shadow-fg","--fact-strong-shadow-blur","--fact-strong-shadow-dx","--fact-strong-shadow-dy","--body-heading-fg","--body-heading-weight","--body-heading-leading","--body-heading-shadow-fg","--body-heading-shadow-blur","--body-heading-shadow-dx","--body-heading-shadow-dy","--source-fg","--source-font","--source-size","--source-shadow-fg","--source-shadow-blur","--source-shadow-dx","--source-shadow-dy","--footer-fg","--footer-font","--footer-size","--footer-rule-fg","--footer-rule-width","--cover-bg-from","--cover-bg-to","--cover-bg-angle","--cover-fg","--cover-align","--cover-summary-fg","--cover-summary-shadow-fg","--cover-summary-shadow-blur","--cover-summary-shadow-dx","--cover-summary-shadow-dy","--cover-kicker-fg","--cover-kicker-shadow-fg","--cover-kicker-shadow-blur","--cover-kicker-shadow-dx","--cover-kicker-shadow-dy","--cover-num-fg","--cover-num-shadow-fg","--cover-num-shadow-blur","--cover-num-shadow-dx","--cover-num-shadow-dy","--quote-fg","--quote-style","--quote-rule-fg","--quote-rule-width","--code-font","--code-size","--code-bg","--code-rule-fg","--code-rule-width","--code-leading","--footnote-call-fg","--footnote-call-size","--footnote-call-fg-marked","--footnote-call-fg-cover","--note-fg","--note-size","--note-leading","--note-weight","--note-style","--note-marker-fg","--note-back-fg","--note-local-size","--note-local-rule-fg","--note-local-rule-width","--note-page-bg","--note-page-rule-fg","--note-page-rule-width","--note-page-title-fg","--note-page-title-size","--note-page-title-font","--link-decoration-color","--table-size","--table-rule-fg","--table-rule-width","--table-cell-align","--table-head-bg","--table-head-fg","--table-head-rule-fg","--table-head-rule-width","--table-head-weight","--table-head-size","--table-head-tracking","--table-head-align","--table-head-shadow-fg","--table-head-shadow-blur","--table-head-shadow-dx","--table-head-shadow-dy","--verdict-yes-fg","--verdict-yes-weight","--verdict-yes-mark","--verdict-yes-shadow-fg","--verdict-yes-shadow-blur","--verdict-yes-shadow-dx","--verdict-yes-shadow-dy","--verdict-no-fg","--verdict-no-weight","--verdict-no-mark","--verdict-no-shadow-fg","--verdict-no-shadow-blur","--verdict-no-shadow-dx","--verdict-no-shadow-dy","--verdict-partial-fg","--verdict-partial-weight","--verdict-partial-mark","--verdict-partial-shadow-fg","--verdict-partial-shadow-blur","--verdict-partial-shadow-dx","--verdict-partial-shadow-dy","--table-col-signal-bg","--table-col-signal-weight","--table-col-snap-bg","--table-col-snap-rule-fg","--table-col-snap-rule-width","--caption-fg","--caption-size","--caption-align","--caption-shadow-fg","--caption-shadow-blur","--caption-shadow-dx","--caption-shadow-dy","--article-bg","--article-size","--article-leading","--article-align","--article-rule-fg","--article-rule-width","--refs-fg","--refs-size","--refs-leading","--refs-weight","--refs-style","--highlight-fg","--highlight-font","--highlight-size","--highlight-weight","--highlight-leading","--highlight-tracking","--highlight-numeric","--highlight-shadow-fg","--highlight-shadow-blur","--highlight-shadow-dx","--highlight-shadow-dy","--highlight-align","--highlight-caption-fg","--highlight-caption-size","--highlight-caption-shadow-fg","--highlight-caption-shadow-blur","--highlight-caption-shadow-dx","--highlight-caption-shadow-dy","--series-nav-current-bg","--series-nav-current-rule-fg","--series-nav-current-rule-width","--series-nav-link-bg","--series-nav-link-rule-fg","--series-nav-link-rule-width","--series-nav-link-ring","--series-nav-link-ring-width","--series-nav-link-elevation-fg","--series-nav-link-elevation-blur","--series-nav-link-elevation-dx","--series-nav-link-elevation-dy","--series-nav-link-elevation-spread","--series-nav-link-elevation-hover-fg","--series-nav-link-elevation-hover-blur","--series-nav-link-elevation-hover-dx","--series-nav-link-elevation-hover-dy","--series-nav-link-elevation-hover-spread","--series-nav-label-fg","--series-nav-label-font","--series-nav-label-size","--series-nav-label-weight","--series-nav-label-tracking","--series-nav-label-transform","--series-nav-label-shadow-fg","--series-nav-label-shadow-blur","--series-nav-label-shadow-dx","--series-nav-label-shadow-dy","--series-nav-title-size","--series-nav-title-weight","--series-nav-title-shadow-fg","--series-nav-title-shadow-blur","--series-nav-title-shadow-dx","--series-nav-title-shadow-dy","--series-nav-desc-fg","--series-nav-desc-size","--series-nav-desc-shadow-fg","--series-nav-desc-shadow-blur","--series-nav-desc-shadow-dx","--series-nav-desc-shadow-dy","--series-nav-status-size","--series-nav-status-weight","--series-nav-status-fg-current","--series-nav-status-fg-link","--series-nav-status-shadow-fg","--series-nav-status-shadow-blur","--series-nav-status-shadow-dx","--series-nav-status-shadow-dy","--nav-btn-bg","--nav-btn-bg-soft","--nav-btn-fg","--nav-btn-rule-fg","--nav-btn-rule-width","--nav-btn-size","--nav-btn-ring","--nav-btn-ring-width","--nav-btn-shadow-fg","--nav-btn-shadow-blur","--nav-btn-shadow-dx","--nav-btn-shadow-dy","--nav-btn-elevation-fg","--nav-btn-elevation-blur","--nav-btn-elevation-dx","--nav-btn-elevation-dy","--nav-btn-elevation-spread","--nav-btn-elevation-hover-fg","--nav-btn-elevation-hover-blur","--nav-btn-elevation-hover-dx","--nav-btn-elevation-hover-dy","--nav-btn-elevation-hover-spread","--nav-dot-bg","--nav-dot-bg-hover","--nav-dot-bg-active","--share-bg","--share-fg","--share-quiet-fg","--share-size","--share-rule-fg","--share-rule-width","--share-scrim","--share-rule-fg-hover","--share-bg-hover","--share-elevation-fg","--share-elevation-blur","--share-elevation-dx","--share-elevation-dy","--share-elevation-spread","--card-bg","--card-rule-fg","--card-rule-width","--card-rule-fg-hover","--card-ring","--card-ring-width","--card-elevation-fg","--card-elevation-blur","--card-elevation-dx","--card-elevation-dy","--card-elevation-spread","--card-elevation-hover-fg","--card-elevation-hover-blur","--card-elevation-hover-dx","--card-elevation-hover-dy","--card-elevation-hover-spread","--card-label-fg","--card-label-font","--card-label-size","--card-label-weight","--card-label-tracking","--card-label-transform","--card-label-shadow-fg","--card-label-shadow-blur","--card-label-shadow-dx","--card-label-shadow-dy","--card-title-size","--card-title-weight","--card-title-shadow-fg","--card-title-shadow-blur","--card-title-shadow-dx","--card-title-shadow-dy","--card-desc-fg","--card-desc-size","--card-desc-shadow-fg","--card-desc-shadow-blur","--card-desc-shadow-dx","--card-desc-shadow-dy","--card-cta-fg","--card-cta-size","--card-cta-weight","--card-cta-shadow-fg","--card-cta-shadow-blur","--card-cta-shadow-dx","--card-cta-shadow-dy","--header-rule-fg","--header-rule-width","--header-title-font","--header-title-size","--header-title-weight","--header-title-leading","--header-title-shadow-fg","--header-title-shadow-blur","--header-title-shadow-dx","--header-title-shadow-dy","--header-subtitle-fg","--header-subtitle-size","--header-subtitle-shadow-fg","--header-subtitle-shadow-blur","--header-subtitle-shadow-dx","--header-subtitle-shadow-dy","--version-tag-font","--version-tag-fg","--version-tag-bg","--version-tag-size","--version-tag-shadow-fg","--version-tag-shadow-blur","--version-tag-shadow-dx","--version-tag-shadow-dy","--intro-size","--intro-leading","--tag-menu-elevation-fg","--tag-menu-elevation-blur","--tag-menu-elevation-dx","--tag-menu-elevation-dy","--tag-menu-elevation-spread","--slide-counter-elevation-fg","--slide-counter-elevation-blur","--slide-counter-elevation-dx","--slide-counter-elevation-dy","--slide-counter-elevation-spread","--presenter-panel-elevation-fg","--presenter-panel-elevation-blur","--presenter-panel-elevation-dx","--presenter-panel-elevation-dy","--presenter-panel-elevation-spread","--help-card-elevation-fg","--help-card-elevation-blur","--help-card-elevation-dx","--help-card-elevation-dy","--help-card-elevation-spread","--share-qr-elevation-fg","--share-qr-elevation-blur","--share-qr-elevation-dx","--share-qr-elevation-dy","--share-qr-elevation-spread"],"pinned":[],"presets":[{"selector":"lightwebpres-docs@0.1.0/docs","label":"LightWebPres documentation","description":"The structure, complete typed theme and starter used by the official guide.","family":"desk","identity":"lightwebpres-docs@0.1.0","identity_label":"LightWebPres documentation","collection":"kit","origin":"series","structure_css":".lwp-presentation--lightwebpres-docs .lwp-doc-frame {\n  position: relative;\n  width: 100%;\n  min-height: min(78vh, 860px);\n  padding: clamp(24px, 4vw, 58px);\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 22px;\n  background: var(--card-bg);\n  overflow: hidden;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame::after {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 34%;\n  height: 4px;\n  background: var(--color-nav);\n  content: '';\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-content {\n  position: relative;\n  z-index: 1;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame .slide-chrome-header {\n  position: relative;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  margin-bottom: clamp(28px, 5vh, 54px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame .slide-chrome-header img {\n  width: 28px;\n  height: 28px;\n  flex: 0 0 auto;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame .slide-chrome-footer {\n  position: relative;\n  z-index: 1;\n  margin-top: clamp(28px, 5vh, 52px);\n  padding-top: 14px;\n  border-top: 1px solid var(--footer-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-standard-grid {\n  display: grid;\n  grid-template-columns: minmax(32px, 8%) minmax(0, 1fr);\n  gap: clamp(18px, 4vw, 58px);\n  min-height: min(66vh, 710px);\n  align-items: stretch;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-column {\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-column .lwp-doc-content {\n  flex: 1 1 auto;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-rail {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 18px;\n  writing-mode: vertical-rl;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-rail i {\n  display: block;\n  width: 1px;\n  flex: 1 1 auto;\n  background: var(--slide-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-standard-frame .fact-box {\n  border-left-width: 3px;\n  border-left-color: var(--fact-rule-fg);\n  border-radius: 0 14px 14px 0;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-standard-frame .highlight {\n  margin-top: 0;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame {\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  border-color: var(--cover-bg-to);\n  background: var(--cover-bg-from);\n  color: var(--cover-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame::after {\n  width: 52%;\n  background: var(--color-mark);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame .lwp-doc-cover-grid {\n  position: absolute;\n  top: clamp(24px, 4vw, 58px);\n  right: clamp(24px, 4vw, 58px);\n  left: clamp(24px, 4vw, 58px);\n  display: grid;\n  grid-template-columns: auto 1fr auto;\n  gap: 12px;\n  align-items: center;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-rule {\n  height: 1px;\n  background: var(--slide-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame .lwp-doc-content {\n  max-width: 780px;\n  margin-top: clamp(34px, 8vh, 100px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-hero {\n  min-height: min(84vh, 900px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit {\n  position: absolute;\n  top: 14%;\n  right: 9%;\n  width: clamp(150px, 24vw, 330px);\n  aspect-ratio: 1;\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 50%;\n  transform: rotate(-24deg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit::before,\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit::after {\n  position: absolute;\n  inset: 14%;\n  border: 1px solid var(--color-mark);\n  border-radius: 50%;\n  content: '';\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit::after {\n  inset: 28%;\n  border-color: var(--color-nav);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-a,\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-b,\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-c {\n  position: absolute;\n  width: 8px;\n  height: 8px;\n  border-radius: 50%;\n  background: var(--color-mark);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-a {\n  top: 9%;\n  left: 35%;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-b {\n  right: 14%;\n  bottom: 32%;\n  background: var(--color-nav);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-c {\n  bottom: 6%;\n  left: 22%;\n  background: var(--cover-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-nav-frame {\n  min-height: min(64vh, 690px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-nav-frame .series-list {\n  display: grid;\n  gap: 12px;\n  max-width: 780px;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-nav-frame .series-item {\n  border: 1px solid var(--series-nav-link-rule-fg);\n  border-radius: 12px;\n  background: var(--series-nav-link-bg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-article-frame {\n  min-height: min(82vh, 980px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-article-frame .lwp-doc-content {\n  max-width: 860px;\n  margin: 26px auto 0;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame {\n  width: 100%;\n  max-width: 1160px;\n  margin: 0 auto;\n  padding: clamp(26px, 5vw, 72px);\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 22px;\n  background: var(--card-bg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-bar {\n  display: flex;\n  justify-content: space-between;\n  gap: 16px;\n  margin-bottom: clamp(30px, 6vh, 64px);\n  padding-bottom: 14px;\n  border-bottom: 1px solid var(--header-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .header {\n  margin-bottom: 30px;\n  padding-left: 22px;\n  border-left: 4px solid var(--color-mark);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .intro {\n  max-width: 720px;\n  margin-bottom: 34px;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .article-card {\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 14px;\n  background: var(--card-bg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .article-card:hover,\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .article-card:focus-visible {\n  border-color: var(--card-rule-fg-hover);\n}\n\n@media (max-width: 700px) {\n  .lwp-presentation--lightwebpres-docs .lwp-doc-frame {\n    min-height: 0;\n    padding: 24px;\n    border-radius: 16px;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-standard-grid {\n    display: block;\n    min-height: 0;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-rail {\n    display: none;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame .lwp-doc-cover-grid {\n    right: 24px;\n    left: 24px;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-index-frame {\n    padding: 24px;\n    border-radius: 16px;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-index-bar {\n    flex-direction: column;\n    gap: 6px;\n  }\n}\n","theme_values":[],"preview":{"background":"#EEF2F7FF","gradient":{"angle":"180deg","from":"#0B2545FF","to":"#0B2545FF"},"foreground":"#EEF2F7FF"}},{"selector":"builtin/standard","label":"Standard","description":"Pr\u00e9sentation native de LightWebPres.","family":"LightWebPres","identity":"builtin","identity_label":"LightWebPres","collection":"builtin","origin":"builtin","structure_css":"","theme_values":[[0,"#F8F8F5FF"],[1,"#1A1A2EFF"],[2,"#6B6B7DFF"],[3,"#FFFC00FF"],[4,"#FF4757FF"],[5,"#3AA55CFF"],[6,"#3F4A5AFF"],[7,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[8,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[9,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[11,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[12,"#F8F8F5FF"],[13,"#1A1A2EFF"],[24,"#6B6B7DFF"],[25,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[32,"#6B6B7DFF"],[33,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[36,"2px"],[42,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[46,"#F8F8F5FF"],[52,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[61,"#1A1A2EFF"],[70,"#FFFC00FF"],[72,"#1A1A2EFF"],[80,"#6B6B7DFF"],[81,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[92,"#FFFC00FF"],[93,"#1A1A2EFF"],[95,"#1A1A2EFF"],[102,"#1A1A2EFF"],[109,"#6B6B7DFF"],[110,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[116,"#6B6B7DFF"],[117,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[121,"#1A1A2EFF"],[122,"#1A1A2EFF"],[124,"#F8F8F5FF"],[126,"#F8F8F5C7"],[131,"#FFFC00FF"],[141,"#6B6B7DFF"],[151,"#FF4757FF"],[153,"#1A1A2EFF"],[154,"#F8F8F5FF"],[155,"#1A1A2EFF"],[160,"#FF4757FF"],[161,"#1A1A2EFF"],[163,"#0000001A"],[165,"#FFFFFFB8"],[166,"#0000001A"],[168,"#1A1A2EFF"],[170,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[171,"#1A1A2EFF"],[177,"#1A1A2EFF"],[178,"#1A1A2EFF"],[188,"#3AA55CFF"],[195,"#6B6B7DFF"],[202,"#FF4757FF"],[212,"#FFFC00FF"],[214,"#6B6B7DFF"],[227,"#1A1A2EFF"],[232,"#1A1A2EFF"],[233,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[244,"#6B6B7DFF"],[254,"#3F4A5AFF"],[256,"#3F4A5AFF"],[268,"#6B6B7DFF"],[269,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[284,"#6B6B7DFF"],[292,"#6B6B7DFF"],[293,"#1A1A2EFF"],[300,"#1A1A2EFF"],[304,"#3F4A5AFF"],[321,"#6B6B7DFF"],[322,"#3F4A5AFF"],[323,"#F8F8F5FF"],[324,"#1A1A2EFF"],[325,"#6B6B7DFF"],[330,"#1A1A2EFF"],[340,"#FFFC00FF"],[341,"#3F4A5AFF"],[353,"#6B6B7DFF"],[354,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[369,"#6B6B7DFF"],[375,"#1A1A2EFF"],[382,"#FFFC00FF"],[384,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[392,"#6B6B7DFF"],[399,"#6B6B7DFF"]],"preview":{"background":"#F8F8F5FF","gradient":{"angle":"180deg","from":"#1A1A2EFF","to":"#1A1A2EFF"},"foreground":"#F8F8F5FF"},"label_key":"presentation_standard","description_key":"presentation_standard_description"}],"identities":[{"selector":"lightwebpres-docs@0.1.0","label":"LightWebPres documentation","origin":"series"},{"selector":"builtin","label":"LightWebPres","origin":"builtin"}],"variants":{"lightwebpres-docs@0.1.0/docs":{"index":"\u003cdiv class=\"lwp-presentation--lightwebpres-docs\">\n\u003cdiv class=\"lwp-doc-index-frame\">\n\u003cdiv aria-hidden=\"true\" class=\"lwp-doc-index-bar\">\n\u003cspan>LIGHTWEBPRES\u003c/span>\n\u003cspan>DOCUMENTATION\u003c/span>\n\u003c/div>\n  \u003cdiv class=\"header\">\n  \u003ch1>LightWebPres\u003c/h1>\n  \u003cp class=\"subtitle\">Le guide\u003c/p>\n\u003c/div>\n\n\u003cdiv class=\"intro\">\n  \u003cp>\u003c/p>\n\u003c/div>\n\n\u003ca href=\"guide.html\" class=\"article-card\" data-lwp-article-card=\"true\" data-lwp-article-tags=\"\" data-lwp-slide-tags=\"default\">\n  \u003cdiv class=\"article-number\">GUIDE\u003c/div>\n  \u003cdiv class=\"article-title\">Guide de LightWebPres\u003c/div>\n  \u003cdiv class=\"article-desc\">Lire, cr\u00e9er et publier.\u003c/div>\n  \u003cdiv class=\"article-cta\">\u2192 \u003cspan data-lwp-i18n=\"series_read\">Lire l'article\u003c/span>\u003c/div>\n\u003c/a>\n\u003c/div>\n\n\u003c/div>"},"builtin/standard":{"index":"\u003cdiv class=\"header\">\n  \u003ch1>LightWebPres\u003c/h1>\n  \u003cp class=\"subtitle\">Le guide\u003c/p>\n\u003c/div>\n\n\u003cdiv class=\"intro\">\n  \u003cp>\u003c/p>\n\u003c/div>\n\n\u003ca href=\"guide.html\" class=\"article-card\" data-lwp-article-card=\"true\" data-lwp-article-tags=\"\" data-lwp-slide-tags=\"default\">\n  \u003cdiv class=\"article-number\">GUIDE\u003c/div>\n  \u003cdiv class=\"article-title\">Guide de LightWebPres\u003c/div>\n  \u003cdiv class=\"article-desc\">Lire, cr\u00e9er et publier.\u003c/div>\n  \u003cdiv class=\"article-cta\">\u2192 \u003cspan data-lwp-i18n=\"series_read\">Lire l'article\u003c/span>\u003c/div>\n\u003c/a>"}}}</script>
+<script id="lwp-presentation-data" type="application/json">{"version":1,"primary":"lightwebpres-docs@0.1.0/docs","catalog_digest":"9bb89c36dd1c3c6b7a48d9f0cbe89548146707e3415602306ce7aa4b63e3064b","vars":["--color-page","--color-ink","--color-ink-quiet","--color-mark","--color-call","--color-affirm","--color-nav","--font-text","--font-display","--font-ui","--font-mono","--page-font","--page-bg","--page-fg","--page-leading","--page-shadow-fg","--page-shadow-blur","--page-shadow-dx","--page-shadow-dy","--page-content-max","--page-block-max","--page-hyphens","--slide-rule-fg","--slide-rule-width","--slide-num-fg","--slide-num-font","--slide-num-size","--slide-num-tracking","--slide-num-shadow-fg","--slide-num-shadow-blur","--slide-num-shadow-dx","--slide-num-shadow-dy","--kicker-fg","--kicker-font","--kicker-size","--kicker-weight","--kicker-tracking","--kicker-transform","--kicker-shadow-fg","--kicker-shadow-blur","--kicker-shadow-dx","--kicker-shadow-dy","--title1-font","--title1-size","--title1-weight","--title1-leading","--title1-fg","--title1-shadow-fg","--title1-shadow-blur","--title1-shadow-dx","--title1-shadow-dy","--title1-align","--title2-font","--title2-size","--title2-weight","--title2-leading","--title2-align","--title2-shadow-fg","--title2-shadow-blur","--title2-shadow-dx","--title2-shadow-dy","--summary-fg","--summary-size","--summary-leading","--summary-align","--summary-shadow-fg","--summary-shadow-blur","--summary-shadow-dx","--summary-shadow-dy","--fact-bg","--fact-rule-fg","--fact-rule-width","--fact-fg","--fact-size","--fact-align","--fact-elevation-fg","--fact-elevation-blur","--fact-elevation-dx","--fact-elevation-dy","--fact-elevation-spread","--fact-label-fg","--fact-label-font","--fact-label-size","--fact-label-weight","--fact-label-tracking","--fact-label-transform","--fact-label-shadow-fg","--fact-label-shadow-blur","--fact-label-shadow-dx","--fact-label-shadow-dy","--fact-strong-weight","--fact-strong-style","--fact-strong-bg","--fact-strong-fg","--fact-strong-decoration","--fact-strong-decoration-color","--fact-strong-pad","--fact-strong-absorb-punct","--fact-strong-shadow-fg","--fact-strong-shadow-blur","--fact-strong-shadow-dx","--fact-strong-shadow-dy","--body-heading-fg","--body-heading-weight","--body-heading-leading","--body-heading-shadow-fg","--body-heading-shadow-blur","--body-heading-shadow-dx","--body-heading-shadow-dy","--source-fg","--source-font","--source-size","--source-shadow-fg","--source-shadow-blur","--source-shadow-dx","--source-shadow-dy","--footer-fg","--footer-font","--footer-size","--footer-rule-fg","--footer-rule-width","--cover-bg-from","--cover-bg-to","--cover-bg-angle","--cover-fg","--cover-align","--cover-summary-fg","--cover-summary-shadow-fg","--cover-summary-shadow-blur","--cover-summary-shadow-dx","--cover-summary-shadow-dy","--cover-kicker-fg","--cover-kicker-shadow-fg","--cover-kicker-shadow-blur","--cover-kicker-shadow-dx","--cover-kicker-shadow-dy","--cover-num-fg","--cover-num-shadow-fg","--cover-num-shadow-blur","--cover-num-shadow-dx","--cover-num-shadow-dy","--quote-fg","--quote-style","--quote-rule-fg","--quote-rule-width","--code-font","--code-size","--code-bg","--code-rule-fg","--code-rule-width","--code-leading","--footnote-call-fg","--footnote-call-size","--footnote-call-fg-marked","--footnote-call-fg-cover","--note-fg","--note-size","--note-leading","--note-weight","--note-style","--note-marker-fg","--note-back-fg","--note-local-size","--note-local-rule-fg","--note-local-rule-width","--note-page-bg","--note-page-rule-fg","--note-page-rule-width","--note-page-title-fg","--note-page-title-size","--note-page-title-font","--link-decoration-color","--table-size","--table-rule-fg","--table-rule-width","--table-cell-align","--table-head-bg","--table-head-fg","--table-head-rule-fg","--table-head-rule-width","--table-head-weight","--table-head-size","--table-head-tracking","--table-head-align","--table-head-shadow-fg","--table-head-shadow-blur","--table-head-shadow-dx","--table-head-shadow-dy","--verdict-yes-fg","--verdict-yes-weight","--verdict-yes-mark","--verdict-yes-shadow-fg","--verdict-yes-shadow-blur","--verdict-yes-shadow-dx","--verdict-yes-shadow-dy","--verdict-no-fg","--verdict-no-weight","--verdict-no-mark","--verdict-no-shadow-fg","--verdict-no-shadow-blur","--verdict-no-shadow-dx","--verdict-no-shadow-dy","--verdict-partial-fg","--verdict-partial-weight","--verdict-partial-mark","--verdict-partial-shadow-fg","--verdict-partial-shadow-blur","--verdict-partial-shadow-dx","--verdict-partial-shadow-dy","--table-col-signal-bg","--table-col-signal-weight","--table-col-snap-bg","--table-col-snap-rule-fg","--table-col-snap-rule-width","--caption-fg","--caption-size","--caption-align","--caption-shadow-fg","--caption-shadow-blur","--caption-shadow-dx","--caption-shadow-dy","--article-bg","--article-size","--article-leading","--article-align","--article-rule-fg","--article-rule-width","--refs-fg","--refs-size","--refs-leading","--refs-weight","--refs-style","--highlight-fg","--highlight-font","--highlight-size","--highlight-weight","--highlight-leading","--highlight-tracking","--highlight-numeric","--highlight-shadow-fg","--highlight-shadow-blur","--highlight-shadow-dx","--highlight-shadow-dy","--highlight-align","--highlight-caption-fg","--highlight-caption-size","--highlight-caption-shadow-fg","--highlight-caption-shadow-blur","--highlight-caption-shadow-dx","--highlight-caption-shadow-dy","--series-nav-current-bg","--series-nav-current-rule-fg","--series-nav-current-rule-width","--series-nav-link-bg","--series-nav-link-rule-fg","--series-nav-link-rule-width","--series-nav-link-ring","--series-nav-link-ring-width","--series-nav-link-elevation-fg","--series-nav-link-elevation-blur","--series-nav-link-elevation-dx","--series-nav-link-elevation-dy","--series-nav-link-elevation-spread","--series-nav-link-elevation-hover-fg","--series-nav-link-elevation-hover-blur","--series-nav-link-elevation-hover-dx","--series-nav-link-elevation-hover-dy","--series-nav-link-elevation-hover-spread","--series-nav-label-fg","--series-nav-label-font","--series-nav-label-size","--series-nav-label-weight","--series-nav-label-tracking","--series-nav-label-transform","--series-nav-label-shadow-fg","--series-nav-label-shadow-blur","--series-nav-label-shadow-dx","--series-nav-label-shadow-dy","--series-nav-title-size","--series-nav-title-weight","--series-nav-title-shadow-fg","--series-nav-title-shadow-blur","--series-nav-title-shadow-dx","--series-nav-title-shadow-dy","--series-nav-desc-fg","--series-nav-desc-size","--series-nav-desc-shadow-fg","--series-nav-desc-shadow-blur","--series-nav-desc-shadow-dx","--series-nav-desc-shadow-dy","--series-nav-status-size","--series-nav-status-weight","--series-nav-status-fg-current","--series-nav-status-fg-link","--series-nav-status-shadow-fg","--series-nav-status-shadow-blur","--series-nav-status-shadow-dx","--series-nav-status-shadow-dy","--nav-btn-bg","--nav-btn-bg-soft","--nav-btn-fg","--nav-btn-rule-fg","--nav-btn-rule-width","--nav-btn-size","--nav-btn-ring","--nav-btn-ring-width","--nav-btn-shadow-fg","--nav-btn-shadow-blur","--nav-btn-shadow-dx","--nav-btn-shadow-dy","--nav-btn-elevation-fg","--nav-btn-elevation-blur","--nav-btn-elevation-dx","--nav-btn-elevation-dy","--nav-btn-elevation-spread","--nav-btn-elevation-hover-fg","--nav-btn-elevation-hover-blur","--nav-btn-elevation-hover-dx","--nav-btn-elevation-hover-dy","--nav-btn-elevation-hover-spread","--nav-dot-bg","--nav-dot-bg-hover","--nav-dot-bg-active","--share-bg","--share-fg","--share-quiet-fg","--share-size","--share-rule-fg","--share-rule-width","--share-scrim","--share-rule-fg-hover","--share-bg-hover","--share-elevation-fg","--share-elevation-blur","--share-elevation-dx","--share-elevation-dy","--share-elevation-spread","--card-bg","--card-rule-fg","--card-rule-width","--card-rule-fg-hover","--card-ring","--card-ring-width","--card-elevation-fg","--card-elevation-blur","--card-elevation-dx","--card-elevation-dy","--card-elevation-spread","--card-elevation-hover-fg","--card-elevation-hover-blur","--card-elevation-hover-dx","--card-elevation-hover-dy","--card-elevation-hover-spread","--card-label-fg","--card-label-font","--card-label-size","--card-label-weight","--card-label-tracking","--card-label-transform","--card-label-shadow-fg","--card-label-shadow-blur","--card-label-shadow-dx","--card-label-shadow-dy","--card-title-size","--card-title-weight","--card-title-shadow-fg","--card-title-shadow-blur","--card-title-shadow-dx","--card-title-shadow-dy","--card-desc-fg","--card-desc-size","--card-desc-shadow-fg","--card-desc-shadow-blur","--card-desc-shadow-dx","--card-desc-shadow-dy","--card-cta-fg","--card-cta-size","--card-cta-weight","--card-cta-shadow-fg","--card-cta-shadow-blur","--card-cta-shadow-dx","--card-cta-shadow-dy","--header-rule-fg","--header-rule-width","--header-title-font","--header-title-size","--header-title-weight","--header-title-leading","--header-title-shadow-fg","--header-title-shadow-blur","--header-title-shadow-dx","--header-title-shadow-dy","--header-subtitle-fg","--header-subtitle-size","--header-subtitle-shadow-fg","--header-subtitle-shadow-blur","--header-subtitle-shadow-dx","--header-subtitle-shadow-dy","--version-tag-font","--version-tag-fg","--version-tag-bg","--version-tag-size","--version-tag-shadow-fg","--version-tag-shadow-blur","--version-tag-shadow-dx","--version-tag-shadow-dy","--intro-size","--intro-leading","--tag-menu-elevation-fg","--tag-menu-elevation-blur","--tag-menu-elevation-dx","--tag-menu-elevation-dy","--tag-menu-elevation-spread","--slide-counter-elevation-fg","--slide-counter-elevation-blur","--slide-counter-elevation-dx","--slide-counter-elevation-dy","--slide-counter-elevation-spread","--presenter-panel-elevation-fg","--presenter-panel-elevation-blur","--presenter-panel-elevation-dx","--presenter-panel-elevation-dy","--presenter-panel-elevation-spread","--help-card-elevation-fg","--help-card-elevation-blur","--help-card-elevation-dx","--help-card-elevation-dy","--help-card-elevation-spread","--share-qr-elevation-fg","--share-qr-elevation-blur","--share-qr-elevation-dx","--share-qr-elevation-dy","--share-qr-elevation-spread"],"pinned":[],"presets":[{"selector":"lightwebpres-docs@0.1.0/docs","label":"LightWebPres documentation","description":"The structure, complete typed theme and starter used by the official guide.","family":"desk","identity":"lightwebpres-docs@0.1.0","identity_label":"LightWebPres documentation","collection":"kit","origin":"series","structure_css":".lwp-presentation--lightwebpres-docs .lwp-doc-frame {\n  position: relative;\n  width: 100%;\n  min-height: min(78vh, 860px);\n  padding: clamp(24px, 4vw, 58px);\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 22px;\n  background: var(--card-bg);\n  overflow: hidden;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame::after {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 34%;\n  height: 4px;\n  background: var(--color-nav);\n  content: '';\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-content {\n  position: relative;\n  z-index: 1;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame .slide-chrome-header {\n  position: relative;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  margin-bottom: clamp(28px, 5vh, 54px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame .slide-chrome-header img {\n  width: 28px;\n  height: 28px;\n  flex: 0 0 auto;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-frame .slide-chrome-footer {\n  position: relative;\n  z-index: 1;\n  margin-top: clamp(28px, 5vh, 52px);\n  padding-top: 14px;\n  border-top: 1px solid var(--footer-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-standard-grid {\n  display: grid;\n  grid-template-columns: minmax(32px, 8%) minmax(0, 1fr);\n  gap: clamp(18px, 4vw, 58px);\n  min-height: min(66vh, 710px);\n  align-items: stretch;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-column {\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-column .lwp-doc-content {\n  flex: 1 1 auto;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-rail {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 18px;\n  writing-mode: vertical-rl;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-rail i {\n  display: block;\n  width: 1px;\n  flex: 1 1 auto;\n  background: var(--slide-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-standard-frame .fact-box {\n  border-left-width: 3px;\n  border-left-color: var(--fact-rule-fg);\n  border-radius: 0 14px 14px 0;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-standard-frame .highlight {\n  margin-top: 0;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame {\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  border-color: var(--cover-bg-to);\n  background: var(--cover-bg-from);\n  color: var(--cover-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame::after {\n  width: 52%;\n  background: var(--color-mark);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame .lwp-doc-cover-grid {\n  position: absolute;\n  top: clamp(24px, 4vw, 58px);\n  right: clamp(24px, 4vw, 58px);\n  left: clamp(24px, 4vw, 58px);\n  display: grid;\n  grid-template-columns: auto 1fr auto;\n  gap: 12px;\n  align-items: center;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-rule {\n  height: 1px;\n  background: var(--slide-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame .lwp-doc-content {\n  max-width: 780px;\n  margin-top: clamp(34px, 8vh, 100px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-cover-hero {\n  min-height: min(84vh, 900px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit {\n  position: absolute;\n  top: 14%;\n  right: 9%;\n  width: clamp(150px, 24vw, 330px);\n  aspect-ratio: 1;\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 50%;\n  transform: rotate(-24deg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit::before,\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit::after {\n  position: absolute;\n  inset: 14%;\n  border: 1px solid var(--color-mark);\n  border-radius: 50%;\n  content: '';\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-hero-orbit::after {\n  inset: 28%;\n  border-color: var(--color-nav);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-a,\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-b,\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-c {\n  position: absolute;\n  width: 8px;\n  height: 8px;\n  border-radius: 50%;\n  background: var(--color-mark);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-a {\n  top: 9%;\n  left: 35%;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-b {\n  right: 14%;\n  bottom: 32%;\n  background: var(--color-nav);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-orbit-c {\n  bottom: 6%;\n  left: 22%;\n  background: var(--cover-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-nav-frame {\n  min-height: min(64vh, 690px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-nav-frame .series-list {\n  display: grid;\n  gap: 12px;\n  max-width: 780px;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-nav-frame .series-item {\n  border: 1px solid var(--series-nav-link-rule-fg);\n  border-radius: 12px;\n  background: var(--series-nav-link-bg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-article-frame {\n  min-height: min(82vh, 980px);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-article-frame .lwp-doc-content {\n  max-width: 860px;\n  margin: 26px auto 0;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame {\n  width: 100%;\n  max-width: 1160px;\n  margin: 0 auto;\n  padding: clamp(26px, 5vw, 72px);\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 22px;\n  background: var(--card-bg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-bar {\n  display: flex;\n  justify-content: space-between;\n  gap: 16px;\n  margin-bottom: clamp(30px, 6vh, 64px);\n  padding-bottom: 14px;\n  border-bottom: 1px solid var(--header-rule-fg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .header {\n  margin-bottom: 30px;\n  padding-left: 22px;\n  border-left: 4px solid var(--color-mark);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .intro {\n  max-width: 720px;\n  margin-bottom: 34px;\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .article-card {\n  border: 1px solid var(--card-rule-fg);\n  border-radius: 14px;\n  background: var(--card-bg);\n}\n\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .article-card:hover,\n.lwp-presentation--lightwebpres-docs .lwp-doc-index-frame .article-card:focus-visible {\n  border-color: var(--card-rule-fg-hover);\n}\n\n@media (max-width: 700px) {\n  .lwp-presentation--lightwebpres-docs .lwp-doc-frame {\n    min-height: 0;\n    padding: 24px;\n    border-radius: 16px;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-standard-grid {\n    display: block;\n    min-height: 0;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-rail {\n    display: none;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-cover-frame .lwp-doc-cover-grid {\n    right: 24px;\n    left: 24px;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-index-frame {\n    padding: 24px;\n    border-radius: 16px;\n  }\n\n  .lwp-presentation--lightwebpres-docs .lwp-doc-index-bar {\n    flex-direction: column;\n    gap: 6px;\n  }\n}\n","theme_values":[],"preview":{"background":"#EEF2F7FF","gradient":{"angle":"180deg","from":"#0B2545FF","to":"#0B2545FF"},"foreground":"#EEF2F7FF"}},{"selector":"builtin/standard","label":"Standard","description":"Pr\u00e9sentation native de LightWebPres.","family":"LightWebPres","identity":"builtin","identity_label":"LightWebPres","collection":"builtin","origin":"builtin","structure_css":"","theme_values":[[0,"#F8F8F5FF"],[1,"#1A1A2EFF"],[2,"#6B6B7DFF"],[3,"#FFFC00FF"],[4,"#FF4757FF"],[5,"#3AA55CFF"],[6,"#3F4A5AFF"],[7,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[8,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[9,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[11,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[12,"#F8F8F5FF"],[13,"#1A1A2EFF"],[24,"#6B6B7DFF"],[25,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[32,"#6B6B7DFF"],[33,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[36,"2px"],[42,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[46,"#F8F8F5FF"],[52,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[61,"#1A1A2EFF"],[70,"#FFFC00FF"],[72,"#1A1A2EFF"],[80,"#6B6B7DFF"],[81,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[92,"#FFFC00FF"],[93,"#1A1A2EFF"],[95,"#1A1A2EFF"],[102,"#1A1A2EFF"],[109,"#6B6B7DFF"],[110,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[116,"#6B6B7DFF"],[117,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[121,"#1A1A2EFF"],[122,"#1A1A2EFF"],[124,"#F8F8F5FF"],[126,"#F8F8F5C7"],[131,"#FFFC00FF"],[141,"#6B6B7DFF"],[151,"#FF4757FF"],[153,"#1A1A2EFF"],[154,"#F8F8F5FF"],[155,"#1A1A2EFF"],[160,"#FF4757FF"],[161,"#1A1A2EFF"],[163,"#0000001A"],[165,"#FFFFFFB8"],[166,"#0000001A"],[168,"#1A1A2EFF"],[170,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[171,"#1A1A2EFF"],[177,"#1A1A2EFF"],[178,"#1A1A2EFF"],[188,"#3AA55CFF"],[195,"#6B6B7DFF"],[202,"#FF4757FF"],[212,"#FFFC00FF"],[214,"#6B6B7DFF"],[227,"#1A1A2EFF"],[232,"#1A1A2EFF"],[233,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[244,"#6B6B7DFF"],[254,"#3F4A5AFF"],[256,"#3F4A5AFF"],[268,"#6B6B7DFF"],[269,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[284,"#6B6B7DFF"],[292,"#6B6B7DFF"],[293,"#1A1A2EFF"],[300,"#1A1A2EFF"],[304,"#3F4A5AFF"],[321,"#6B6B7DFF"],[322,"#3F4A5AFF"],[323,"#F8F8F5FF"],[324,"#1A1A2EFF"],[325,"#6B6B7DFF"],[330,"#1A1A2EFF"],[340,"#FFFC00FF"],[341,"#3F4A5AFF"],[353,"#6B6B7DFF"],[354,"Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif"],[369,"#6B6B7DFF"],[375,"#1A1A2EFF"],[382,"#FFFC00FF"],[384,"Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif"],[392,"#6B6B7DFF"],[399,"#6B6B7DFF"]],"preview":{"background":"#F8F8F5FF","gradient":{"angle":"180deg","from":"#1A1A2EFF","to":"#1A1A2EFF"},"foreground":"#F8F8F5FF"},"label_key":"presentation_standard","description_key":"presentation_standard_description"}],"has_identity_kits":true,"identities":[{"selector":"lightwebpres-docs@0.1.0","label":"LightWebPres documentation","origin":"series"},{"selector":"builtin","label":"LightWebPres","origin":"builtin"}],"variants":{"lightwebpres-docs@0.1.0/docs":{"index":"\u003cdiv class=\"lwp-presentation--lightwebpres-docs\">\n\u003cdiv class=\"lwp-doc-index-frame\">\n\u003cdiv aria-hidden=\"true\" class=\"lwp-doc-index-bar\">\n\u003cspan>LIGHTWEBPRES\u003c/span>\n\u003cspan>DOCUMENTATION\u003c/span>\n\u003c/div>\n  \u003cdiv class=\"header\">\n  \u003ch1>LightWebPres\u003c/h1>\n  \u003cp class=\"subtitle\">Le guide\u003c/p>\n\u003c/div>\n\n\u003cdiv class=\"intro\">\n  \u003cp>\u003c/p>\n\u003c/div>\n\n\u003ca href=\"guide.html\" class=\"article-card\" data-lwp-article-card=\"true\" data-lwp-article-tags=\"\" data-lwp-slide-tags=\"default\">\n  \u003cdiv class=\"article-number\">GUIDE\u003c/div>\n  \u003cdiv class=\"article-title\">Guide de LightWebPres\u003c/div>\n  \u003cdiv class=\"article-desc\">Lire, cr\u00e9er et publier.\u003c/div>\n  \u003cdiv class=\"article-cta\">\u2192 \u003cspan data-lwp-i18n=\"series_read\">Lire l'article\u003c/span>\u003c/div>\n\u003c/a>\n\u003c/div>\n\n\u003c/div>"},"builtin/standard":{"index":"\u003cdiv class=\"header\">\n  \u003ch1>LightWebPres\u003c/h1>\n  \u003cp class=\"subtitle\">Le guide\u003c/p>\n\u003c/div>\n\n\u003cdiv class=\"intro\">\n  \u003cp>\u003c/p>\n\u003c/div>\n\n\u003ca href=\"guide.html\" class=\"article-card\" data-lwp-article-card=\"true\" data-lwp-article-tags=\"\" data-lwp-slide-tags=\"default\">\n  \u003cdiv class=\"article-number\">GUIDE\u003c/div>\n  \u003cdiv class=\"article-title\">Guide de LightWebPres\u003c/div>\n  \u003cdiv class=\"article-desc\">Lire, cr\u00e9er et publier.\u003c/div>\n  \u003cdiv class=\"article-cta\">\u2192 \u003cspan data-lwp-i18n=\"series_read\">Lire l'article\u003c/span>\u003c/div>\n\u003c/a>"}}}</script>
 <script id="lwp-reading-data" type="application/json">{"table_mode":"clip","text_fit":"fixed","table_shrink":false,"object_shrink":false,"min_text_scale":0.75,"min_table_scale":0.85,"min_object_scale":0.85}</script>
 <script defer="">
 /*!
@@ -3393,6 +3399,42 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {}
   }
 
+  // localStorage already isolates origins; the directory groups article and
+  // index pages, including distinct directories opened through file: URLs.
+  var readingPreferenceKey = 'lwp-reading:' + location.pathname.slice(
+    0, location.pathname.lastIndexOf('/') + 1);
+  try {
+    var savedReading = JSON.parse(window.localStorage.getItem(readingPreferenceKey));
+    if (savedReading && typeof savedReading === 'object' && !Array.isArray(savedReading)
+        && Object.keys(savedReading).sort().join(',')
+          === 'object_shrink,presentationZoom,table_mode,table_shrink,text_fit,v'
+        && savedReading.v === 1
+        && ['clip', 'overflow', 'scroll'].indexOf(savedReading.table_mode) !== -1
+        && ['fixed', 'uniform', 'per-slide'].indexOf(savedReading.text_fit) !== -1
+        && typeof savedReading.table_shrink === 'boolean'
+        && typeof savedReading.object_shrink === 'boolean'
+        && typeof savedReading.presentationZoom === 'number'
+        && isFinite(savedReading.presentationZoom)
+        && savedReading.presentationZoom >= PRESENTATION_ZOOM_MIN
+        && savedReading.presentationZoom <= PRESENTATION_ZOOM_MAX) {
+      ['table_mode', 'text_fit', 'table_shrink', 'object_shrink'].forEach(function (name) {
+        readingSettings[name] = savedReading[name];
+      });
+      presentationZoom = savedReading.presentationZoom;
+      document.documentElement.style.setProperty('--lwp-presentation-zoom', String(presentationZoom));
+    }
+  } catch (e) {}
+
+  function saveReadingPreferences() {
+    try {
+      window.localStorage.setItem(readingPreferenceKey, JSON.stringify({
+        v: 1, table_mode: readingSettings.table_mode, text_fit: readingSettings.text_fit,
+        table_shrink: readingSettings.table_shrink, object_shrink: readingSettings.object_shrink,
+        presentationZoom: presentationZoom
+      }));
+    } catch (e) {}
+  }
+
   function setReadingOption(name, value) {
     if (name === 'table_mode') {
       if (['clip', 'overflow', 'scroll'].indexOf(value) < 0) return false;
@@ -3402,6 +3444,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (typeof value !== 'boolean') return false;
     } else return false;
     readingSettings[name] = value;
+    saveReadingPreferences();
     scheduleReadingLayout('option');
     return true;
   }
@@ -3412,16 +3455,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var ready = false;
     var pendingPosition = null;
     var changed = [];
+    var originals = new WeakMap();
     var printStyles = [];
     var printPosition = null;
     var printScroll = [];
     var viewports = new WeakMap();
 
     function remember(node, property) {
+      var properties = originals.get(node);
+      if (!properties) { properties = new Map(); originals.set(node, properties); }
+      if (properties.has(property)) return properties.get(property);
       var item = {node: node, property: property,
         value: node.style.getPropertyValue(property),
         priority: node.style.getPropertyPriority(property)};
       changed.push(item);
+      properties.set(property, item);
       return item;
     }
     function restore(items) {
@@ -3474,170 +3522,209 @@ document.addEventListener('DOMContentLoaded', function() {
       pendingPosition = null;
       restore(changed);
       changed = [];
+      originals = new WeakMap();
       enhanceTables();
       allSlides.forEach(function (slide) {
         slide.removeAttribute('data-lwp-fit-overflow');
         slide.removeAttribute('data-lwp-text-scale');
       });
-      // Solve at 100%, not against the magnified viewport. Replacing only these
-      // two properties synchronously avoids turning explicit zoom into autofit.
-      var root = document.documentElement;
-      var zoom = {node: root, property: 'zoom', value: root.style.getPropertyValue('zoom'),
-        priority: root.style.getPropertyPriority('zoom')};
-      var frameZoom = {node: root, property: '--lwp-presentation-zoom',
-        value: root.style.getPropertyValue('--lwp-presentation-zoom'),
-        priority: root.style.getPropertyPriority('--lwp-presentation-zoom')};
-      root.style.setProperty('zoom', '1', 'important');
-      root.style.setProperty('--lwp-presentation-zoom', '1');
-      try {
-        var visible = allSlides.filter(function (slide) {
-          return !slide.hidden && getComputedStyle(slide).display !== 'none';
-        });
-        var height = document.documentElement.clientHeight;
-        var candidates = visible.map(function (slide) {
-          var cs = getComputedStyle(slide);
-          var text = [];
-          var textByNode = new Map();
-          // Snapshot every baseline before writing any size: absolute theme
-          // sizes and em descendants must keep their original hierarchy.
-          Array.prototype.forEach.call(slide.querySelectorAll('*'), function (node) {
-            if (node.closest('[hidden], script, style, table, svg, iframe, video, audio, object, embed, .slide-num, .build-stamp, .slide-chrome')) return;
-            var ranges = [];
-            Array.prototype.forEach.call(node.childNodes, function (child) {
-              if (child.nodeType !== 3 || !child.textContent.trim()) return;
-              var range = document.createRange();
-              range.selectNodeContents(child);
-              ranges.push(range);
-            });
-            if (!ranges.some(function (range) { return range.getClientRects().length; })
-                || getComputedStyle(node).visibility !== 'visible') return;
-            // Inline descendants share their container's line boxes. A p
-            // containing only strong/a still owns the line-height strut.
-            // Stop at that formatting container, not unrelated outer blocks.
-            var container = node;
-            while (container && container !== slide) {
-              var style = getComputedStyle(container);
-              var item = textByNode.get(container);
-              if (!item) {
-                item = {node: container, ranges: [], size: parseFloat(style.fontSize),
-                  line: style.lineHeight === 'normal' ? null : parseFloat(style.lineHeight)};
-                textByNode.set(container, item);
-                text.push(item);
-              }
-              if (container === node) item.ranges = ranges;
-              if (style.display.indexOf('inline') !== 0 && style.display !== 'contents') break;
-              container = container.parentElement;
+      // Restore authored styles first: autofit always solves at 100%, then
+      // explicit zoom scales its result without changing frame geometry.
+      document.documentElement.style.setProperty('--lwp-presentation-zoom', String(presentationZoom));
+      var contentRoots = isIndex ? Array.prototype.slice.call(
+        document.querySelectorAll('.header, .intro, .article-card')) : allSlides;
+      var visible = contentRoots.filter(function (slide) {
+        return !slide.hidden && getComputedStyle(slide).display !== 'none';
+      });
+      var height = document.documentElement.clientHeight;
+      var candidates = visible.map(function (slide) {
+        var cs = getComputedStyle(slide);
+        var text = [];
+        var textByNode = new Map();
+        // Snapshot every baseline before writing any size: absolute theme
+        // sizes and em descendants must keep their original hierarchy.
+        [slide].concat(Array.prototype.slice.call(slide.querySelectorAll('*'))).forEach(function (node) {
+          if (node.closest('[hidden], script, style, svg, iframe, video, audio, object, embed, button, input, select, textarea, .slide-num, .build-stamp, .slide-chrome')) return;
+          var ranges = [];
+          Array.prototype.forEach.call(node.childNodes, function (child) {
+            if (child.nodeType !== 3 || !child.textContent.trim()) return;
+            var range = document.createRange();
+            range.selectNodeContents(child);
+            ranges.push(range);
+          });
+          if (getComputedStyle(node).visibility !== 'visible') return;
+          if (!ranges.some(function (range) { return range.getClientRects().length; })) {
+            // Relative generated type (including verdict marks in empty cells)
+            // follows its host font; empty decorative pseudo-elements do not.
+            if (!node.getClientRects().length || !['::before', '::after'].some(function (pseudo) {
+              var content = getComputedStyle(node, pseudo).content;
+              return content && ['none', 'normal', '""', "''"].indexOf(content) < 0
+                && content.indexOf('url(') !== 0;
+            })) return;
+          }
+          // Inline descendants share their container's line boxes. A p
+          // containing only strong/a still owns the line-height strut.
+          // Stop at that formatting container, not unrelated outer blocks.
+          var container = node;
+          while (container) {
+            var style = getComputedStyle(container);
+            var item = textByNode.get(container);
+            if (!item) {
+              item = {node: container, ranges: [], table: !!container.closest('table'),
+                size: parseFloat(style.fontSize),
+                line: style.lineHeight === 'normal' ? null : parseFloat(style.lineHeight)};
+              textByNode.set(container, item);
+              text.push(item);
             }
-          });
-          if (readingSettings.text_fit !== 'fixed') {
-            text.forEach(function (item) {
-              remember(item.node, 'font-size');
-              if (item.line !== null) remember(item.node, 'line-height');
-            });
+            if (container === node) item.ranges = ranges;
+            if (container === slide || (style.display.indexOf('inline') !== 0
+                && style.display !== 'contents')) break;
+            container = container.parentElement;
           }
-          // Tables have a separate scale; never shrink embedded controls.
-          var objects = [];
-          if (readingSettings.table_shrink) {
-            Array.prototype.forEach.call(slide.querySelectorAll('table'), function (node) {
-              // Nested tables follow the outer table, not a second multiplier.
-              if (!node.parentElement.closest('table')) objects.push([node, readingSettings.min_table_scale]);
-            });
-          }
-          if (readingSettings.object_shrink) {
-            Array.prototype.forEach.call(slide.querySelectorAll('figure, .figure, img'), function (node) {
-              if (node.parentElement.closest('figure, .figure, table')
-                  || node.querySelector('iframe, video, audio, object, embed')) return;
-              objects.push([node, readingSettings.min_object_scale]);
-            });
-          }
-          var objectFloor = 1;
-          objects = objects.map(function (entry) {
-            var node = entry[0];
-            var rect = node.getBoundingClientRect();
-            var parent = node.parentElement;
-            var parentStyle = getComputedStyle(parent);
-            var width = parent.clientWidth - parseFloat(parentStyle.paddingLeft)
-              - parseFloat(parentStyle.paddingRight);
-            objectFloor = Math.min(objectFloor, entry[1]);
-            return {node: node, minimum: entry[1],
-              maximum: Math.max(entry[1], Math.min(1, width / Math.max(1, rect.width))),
-              zoom: parseFloat(getComputedStyle(node).zoom) || 1,
-              original: remember(node, 'zoom')};
-          });
-          return {slide: slide, text: text, objects: objects, objectFloor: objectFloor,
-            left: parseFloat(cs.paddingLeft), right: parseFloat(cs.paddingRight)};
         });
+        if (!isIndex && readingSettings.text_fit !== 'fixed') {
+          text.forEach(function (item) {
+            if (item.table) return;
+            remember(item.node, 'font-size');
+            if (item.line !== null) remember(item.node, 'line-height');
+          });
+        }
+        // Tables have a separate scale; never shrink embedded controls.
+        var objects = [];
+        if (!isIndex && readingSettings.table_shrink) {
+          Array.prototype.forEach.call(slide.querySelectorAll('table'), function (node) {
+            // Nested tables follow the outer table, not a second multiplier.
+            if (!node.parentElement.closest('table')) objects.push([node, readingSettings.min_table_scale]);
+          });
+        }
+        if (!isIndex && readingSettings.object_shrink) {
+          Array.prototype.forEach.call(slide.querySelectorAll('figure, .figure, img'), function (node) {
+            if (node.parentElement.closest('figure, .figure, table')
+                || node.querySelector('iframe, video, audio, object, embed')) return;
+            objects.push([node, readingSettings.min_object_scale]);
+          });
+        }
+        var objectFloor = 1;
+        objects = objects.map(function (entry) {
+          var node = entry[0];
+          var rect = node.getBoundingClientRect();
+          var parent = node.parentElement;
+          var parentStyle = getComputedStyle(parent);
+          var width = parent.clientWidth - parseFloat(parentStyle.paddingLeft)
+            - parseFloat(parentStyle.paddingRight);
+          objectFloor = Math.min(objectFloor, entry[1]);
+          return {node: node, minimum: entry[1],
+            maximum: Math.max(entry[1], Math.min(1, width / Math.max(1, rect.width))),
+            zoom: parseFloat(getComputedStyle(node).zoom) || 1,
+            original: remember(node, 'zoom')};
+        });
+        return {slide: slide, text: text, objects: objects, objectFloor: objectFloor,
+          left: parseFloat(cs.paddingLeft), right: parseFloat(cs.paddingRight)};
+      });
 
-        function apply(candidate, scale) {
-          candidate.slide.setAttribute('data-lwp-text-scale', String(scale));
-          candidate.text.forEach(function (item) {
-            // Do not enlarge an authored size below 12px. Larger text keeps
-            // at least 12px even when the configured factor permits less.
-            var size = Math.max(Math.min(12, item.size), item.size * scale);
-            item.node.style.setProperty('font-size', size + 'px', 'important');
-            if (item.line !== null) item.node.style.setProperty(
-              'line-height', (item.line * size / item.size) + 'px', 'important');
-          });
-        }
-        function applyObjects(candidate, scale) {
-          candidate.objects.forEach(function (item) {
-            var factor = Math.max(item.minimum, Math.min(item.maximum, scale));
-            if (factor === 1) restore([item.original]);
-            else item.node.style.setProperty('zoom', String(item.zoom * factor), 'important');
-          });
-        }
-        function fits(candidate) {
-          var slide = candidate.slide;
-          var rect = slide.getBoundingClientRect();
-          if (rect.height > height + 1 || slide.scrollHeight > height + 1) return false;
-          // The slide's scrollWidth also includes intentionally overflowing
-          // tables. Measure text runs instead, including unbreakable tokens.
-          return candidate.text.every(function (item) {
-            return item.ranges.every(function (range) {
-              return Array.prototype.every.call(range.getClientRects(), function (run) {
-                return run.left >= rect.left + candidate.left - 1
-                  && run.right <= rect.right - candidate.right + 1;
-              });
+      function apply(candidate, scale) {
+        candidate.slide.setAttribute('data-lwp-text-scale', String(scale));
+        candidate.text.forEach(function (item) {
+          if (item.table) return;
+          // Do not enlarge an authored size below 12px. Larger text keeps
+          // at least 12px even when the configured factor permits less.
+          var size = Math.max(Math.min(12, item.size), item.size * scale);
+          item.node.style.setProperty('font-size', size + 'px', 'important');
+          if (item.line !== null) item.node.style.setProperty(
+            'line-height', (item.line * size / item.size) + 'px', 'important');
+        });
+      }
+      function applyObjects(candidate, scale) {
+        candidate.objects.forEach(function (item) {
+          var factor = Math.max(item.minimum, Math.min(item.maximum, scale));
+          if (factor === 1) restore([item.original]);
+          else item.node.style.setProperty('zoom', String(item.zoom * factor), 'important');
+        });
+      }
+      function fits(candidate) {
+        var slide = candidate.slide;
+        var rect = slide.getBoundingClientRect();
+        if (rect.height > height + 1 || slide.scrollHeight > height + 1) return false;
+        // The slide's scrollWidth also includes intentionally overflowing
+        // tables. Measure text runs instead, including unbreakable tokens.
+        return candidate.text.every(function (item) {
+          if (item.table) return true;
+          return item.ranges.every(function (range) {
+            return Array.prototype.every.call(range.getClientRects(), function (run) {
+              return run.left >= rect.left + candidate.left - 1
+                && run.right <= rect.right - candidate.right + 1;
             });
           });
-        }
-        function solve(group, low, applyScale) {
-          function test(scale) {
-            group.forEach(function (candidate) { applyScale(candidate, scale); });
-            return group.every(fits);
-          }
-          if (test(1)) return;
-          var high = 1;
-          if (!test(low)) return;
-          // Nine bisections bound the factor error below 0.001. Failed
-          // floor candidates remain readable and scroll, never disappear.
-          for (var i = 0; i < 9; i++) {
-            var mid = (low + high) / 2;
-            if (test(mid)) low = mid;
-            else high = mid;
-          }
-          test(low);
-        }
-        // Object bounds are individual; the shared factor is searched against
-        // the entire slide, so several individually small images can fit too.
-        // Spend the permitted object reduction before reducing any text.
-        candidates.forEach(function (candidate) {
-          if (candidate.objects.length) solve([candidate], candidate.objectFloor, applyObjects);
         });
-        if (readingSettings.text_fit === 'uniform') solve(candidates, readingSettings.min_text_scale, apply);
-        else if (readingSettings.text_fit === 'per-slide') {
-          candidates.forEach(function (candidate) { solve([candidate], readingSettings.min_text_scale, apply); });
+      }
+      function solve(group, low, applyScale) {
+        function test(scale) {
+          group.forEach(function (candidate) { applyScale(candidate, scale); });
+          return group.every(fits);
         }
+        if (test(1)) return;
+        var high = 1;
+        if (!test(low)) return;
+        // Nine bisections bound the factor error below 0.001. Failed
+        // floor candidates remain readable and scroll, never disappear.
+        for (var i = 0; i < 9; i++) {
+          var mid = (low + high) / 2;
+          if (test(mid)) low = mid;
+          else high = mid;
+        }
+        test(low);
+      }
+      // Object bounds are individual; the shared factor is searched against
+      // the entire slide, so several individually small images can fit too.
+      // Spend the permitted object reduction before reducing any text.
+      candidates.forEach(function (candidate) {
+        if (candidate.objects.length) solve([candidate], candidate.objectFloor, applyObjects);
+      });
+      if (!isIndex && readingSettings.text_fit === 'uniform') solve(candidates, readingSettings.min_text_scale, apply);
+      else if (!isIndex && readingSettings.text_fit === 'per-slide') {
+        candidates.forEach(function (candidate) { solve([candidate], readingSettings.min_text_scale, apply); });
+      }
+      candidates.forEach(function (candidate) {
+        // A uniform text factor may be constrained by another slide. Give
+        // objects their space back wherever that factor makes it available.
+        if (readingSettings.text_fit !== 'fixed' && candidate.objects.length) {
+          solve([candidate], candidate.objectFloor, applyObjects);
+        }
+        if (!isIndex && !fits(candidate)) candidate.slide.setAttribute('data-lwp-fit-overflow', 'true');
+      });
+      if (presentationZoom !== 1) {
+        // Snapshot the fitted sizes before writing any manual size: inherited
+        // inline line boxes and relative descendants must scale exactly once.
+        var manualText = [];
+        var manualImages = [];
         candidates.forEach(function (candidate) {
-          // A uniform text factor may be constrained by another slide. Give
-          // objects their space back wherever that factor makes it available.
-          if (readingSettings.text_fit !== 'fixed' && candidate.objects.length) {
-            solve([candidate], candidate.objectFloor, applyObjects);
-          }
-          if (!fits(candidate)) candidate.slide.setAttribute('data-lwp-fit-overflow', 'true');
+          candidate.text.forEach(function (item) {
+            var style = getComputedStyle(item.node);
+            manualText.push({node: item.node, size: parseFloat(style.fontSize),
+              line: style.lineHeight === 'normal' ? null : parseFloat(style.lineHeight)});
+          });
+          Array.prototype.forEach.call(candidate.slide.querySelectorAll('img'), function (node) {
+            if (node.closest('[hidden], svg, object, button, .slide-chrome')) return;
+            var style = getComputedStyle(node);
+            manualImages.push({node: node, font: style.fontSize, zoom: parseFloat(style.zoom) || 1});
+          });
         });
-      } finally {
-        restore([zoom, frameZoom]);
+        manualText.forEach(function (item) {
+          remember(item.node, 'font-size');
+          item.node.style.setProperty('font-size', (item.size * presentationZoom) + 'px', 'important');
+          if (item.line !== null) {
+            remember(item.node, 'line-height');
+            item.node.style.setProperty('line-height', (item.line * presentationZoom) + 'px', 'important');
+          }
+        });
+        manualImages.forEach(function (item) {
+          // Keep em/ex/ch dimensions in their fitted font context: the image's
+          // own zoom applies the manual factor, not its parent's resized font.
+          remember(item.node, 'font-size');
+          item.node.style.setProperty('font-size', item.font, 'important');
+          remember(item.node, 'zoom');
+          item.node.style.setProperty('zoom', String(item.zoom * presentationZoom), 'important');
+        });
       }
       if (position && !position.slide.hidden) reanchorPresentation(position);
       ready = true;
@@ -3702,12 +3789,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     presentationZoom = Math.max(PRESENTATION_ZOOM_MIN,
       Math.min(PRESENTATION_ZOOM_MAX, Math.round(value * 10) / 10));
-    // CSS zoom scales viewport units too. Keep the slide frame at one
-    // viewport while letting its content grow, so navigation measures the
-    // same frame the reader sees.
+    if (typeof saveReadingPreferences === 'function') saveReadingPreferences();
+    // State only: the reading runtime scales content after automatic fitting.
     document.documentElement.style.setProperty(
       '--lwp-presentation-zoom', String(presentationZoom));
-    document.documentElement.style.zoom = String(presentationZoom);
     updateReadingMenu();
     scheduleReadingLayout('zoom');
     schedulePresentationReanchor(position);
@@ -3841,7 +3926,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function presentationAlternatives() {
-    return !!(presentationData && presentationData.presets
+    // Theme-only decks retain preset metadata, not a hidden preset selection.
+    return !!(presentationData && presentationData.has_identity_kits
+      && presentationData.presets
       && presentationData.presets.length > 1);
   }
 
@@ -3886,7 +3973,8 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       var stored = window.sessionStorage.getItem(themeStorageKey);
       if (!themeBySlug(stored)) return false;
-      return presentationData ? true : stored !== themeData.primary;
+      return presentationData && presentationData.has_identity_kits
+        ? true : stored !== themeData.primary;
     } catch (e) {
       return false;
     }
@@ -4048,7 +4136,8 @@ document.addEventListener('DOMContentLoaded', function() {
     scheduleReadingLayout('theme');
     clearRuntimeVariables();
     themeExplicit = explicit === undefined
-      ? (presentationData ? true : slug !== themeData.primary)
+      ? (!!(presentationData && presentationData.has_identity_kits)
+        || slug !== themeData.primary)
       : explicit;
     themeCurrent = theme.slug;
     if (themeExplicit) {
@@ -4483,6 +4572,9 @@ document.addEventListener('DOMContentLoaded', function() {
   var aboutOverlay    = document.getElementById('aboutOverlay');
   var aboutClose      = document.getElementById('aboutClose');
   var presenterMenu   = document.getElementById('presenterMenu');
+  var readingMenu = document.getElementById('readingMenu');
+  var menuReadingAction = document.getElementById('menuReading');
+  var readingReturnFocus = null;
   var menuThemeAction = presenterMenu
     ? presenterMenu.querySelector('[data-menu-action="theme"]') : null;
   var menuThemeLabel = menuThemeAction
@@ -4565,7 +4657,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var active = presetDefault
         ? !themeExplicit
         : !!themeExplicit && button.getAttribute('data-theme') === themeCurrent;
-      if (!presentationData && !presetDefault) {
+      if ((!presentationData || !presentationData.has_identity_kits) && !presetDefault) {
         active = button.getAttribute('data-theme') === themeCurrent;
       }
       button.classList.toggle('active', active);
@@ -4586,7 +4678,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function updateAppearanceLabels() {
-    var multiple = !!presentationData;
+    var multiple = !!(presentationData && presentationData.has_identity_kits);
     if (menuThemeLabel) {
       var menuKey = multiple ? 'menu_appearance' : 'menu_theme';
       menuThemeLabel.setAttribute('data-lwp-i18n', menuKey);
@@ -4690,7 +4782,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderThemeOptions() {
     if (!themeOptionsBox) return;
     themeOptionsBox.innerHTML = '';
-    if (presentationData) {
+    if (presentationData && presentationData.has_identity_kits) {
       var presetDefault = document.createElement('button');
       presetDefault.type = 'button';
       presetDefault.className = 'theme-option';
@@ -4712,7 +4804,8 @@ document.addEventListener('DOMContentLoaded', function() {
     themeData.themes.forEach(function (theme) {
       // Every published typed theme is applicable; this is not brand approval.
       if (themeSource && themeSource.value === 'identity'
-          && (!selected || theme.identity !== selected.identity)) return;
+          && (!selected || (theme.identity !== selected.identity
+            && !(selected.identity === 'builtin' && theme.identity === null)))) return;
       var haystack = (theme.slug + ' ' + themeText(theme) + ' ' + (theme.family || '')).toLowerCase();
       if (query && haystack.indexOf(query) === -1) return;
       var button = document.createElement('button');
@@ -4916,6 +5009,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function openPresenterMenu() {
     if (!presenterMenu) return;
+    closeReadingMenu(false);
     updateAppearanceLabels();
     menuReturnFocus = document.activeElement === document.body
       ? btnMenu : document.activeElement;
@@ -4945,6 +5039,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (action === 'zoom-in') { changePresentationZoom(PRESENTATION_ZOOM_STEP); return; }
     if (action === 'zoom-out') { changePresentationZoom(-PRESENTATION_ZOOM_STEP); return; }
     if (action === 'zoom-reset') { setPresentationZoom(1); return; }
+    if (action === 'reading') { openReadingMenu(); return; }
+    if (action === 'reading-back') { returnFromReadingMenu(); return; }
+    closeReadingMenu(false);
     closePresenterMenu(false);
     if (action === 'prev' && btnPrev) btnPrev.click();
     else if (action === 'home') goHome();
@@ -4976,16 +5073,42 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
 
+  function closeReadingMenu(restoreFocus) {
+    var wasOpen = readingMenu && readingMenu.classList.contains('open');
+    if (readingMenu) readingMenu.classList.remove('open');
+    if (menuReadingAction) menuReadingAction.setAttribute('aria-expanded', 'false');
+    if (wasOpen && restoreFocus !== false) focusIfVisible(readingReturnFocus);
+    readingReturnFocus = null;
+  }
+
+  function openReadingMenu() {
+    if (!readingMenu) return;
+    readingReturnFocus = menuReturnFocus || btnMenu;
+    closePresenterMenu(false);
+    updateReadingMenu();
+    readingMenu.classList.add('open');
+    if (menuReadingAction) menuReadingAction.setAttribute('aria-expanded', 'true');
+    var controls = focusablesWithin(readingMenu);
+    if (controls.length) controls[0].focus();
+  }
+
+  function returnFromReadingMenu() {
+    var returnFocus = readingReturnFocus;
+    openPresenterMenu();
+    menuReturnFocus = returnFocus;
+    focusIfVisible(menuReadingAction);
+  }
+
   function updateReadingMenu() {
-    if (!presenterMenu) return;
+    if (!readingMenu) return;
     var zoom = document.getElementById('menuZoomValue');
-    var zoomOut = presenterMenu.querySelector('[data-menu-action="zoom-out"]');
-    var zoomIn = presenterMenu.querySelector('[data-menu-action="zoom-in"]');
+    var zoomOut = readingMenu.querySelector('[data-menu-action="zoom-out"]');
+    var zoomIn = readingMenu.querySelector('[data-menu-action="zoom-in"]');
     if (zoom) zoom.textContent = Math.round(presentationZoom * 100) + '%';
     if (zoomOut) zoomOut.disabled = presentationZoom <= PRESENTATION_ZOOM_MIN;
     if (zoomIn) zoomIn.disabled = presentationZoom >= PRESENTATION_ZOOM_MAX;
     if (!readingSettings) return;
-    Array.prototype.forEach.call(presenterMenu.querySelectorAll('[data-reading-option]'),
+    Array.prototype.forEach.call(readingMenu.querySelectorAll('[data-reading-option]'),
       function (control) {
         var value = readingSettings[control.getAttribute('data-reading-option')];
         if (control.type === 'checkbox') control.checked = !!value;
@@ -5024,8 +5147,9 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
 
-  if (presenterMenu) {
-    Array.prototype.forEach.call(presenterMenu.querySelectorAll('[data-reading-option]'),
+  [presenterMenu, readingMenu].forEach(function (menu) {
+    if (!menu) return;
+    Array.prototype.forEach.call(menu.querySelectorAll('[data-reading-option]'),
       function (control) {
         control.addEventListener('change', function () {
           setReadingOption(control.getAttribute('data-reading-option'),
@@ -5034,7 +5158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
     Array.prototype.forEach.call(
-      presenterMenu.querySelectorAll('[data-menu-action]'), function (button) {
+      menu.querySelectorAll('[data-menu-action]'), function (button) {
         button.addEventListener('click', function (e) {
           // The document click handler closes an open help modal. Keep the
           // intentional menu-to-help transition from bubbling into it.
@@ -5043,10 +5167,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
     );
-    presenterMenu.addEventListener('click', function (e) {
-      if (e.target === presenterMenu) closePresenterMenu();
+    menu.addEventListener('click', function (e) {
+      if (e.target !== menu) return;
+      if (menu === readingMenu) closeReadingMenu();
+      else closePresenterMenu();
     });
-  }
+  });
   if (themeMenu) {
     themeMenu.addEventListener('click', function (e) {
       if (e.target === themeMenu) closeThemeMenu();
@@ -5504,7 +5630,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (focusedCard >= 0) { indexCards[focusedCard].blur(); focusedCard = -1; }
   }
 
-  // .slide sets a presentation-zoom-compensated viewport min-height
+  // .slide keeps a viewport min-height independent of manual content zoom
   // (specifications.md §9), so a slide's real height only exceeds the
   // viewport when its own content demands it — a long full-article slide
   // being the common case. This only ever looks at actual layout, never a
@@ -5868,6 +5994,30 @@ document.addEventListener('DOMContentLoaded', function() {
        }
        return;
      }
+      if (readingMenu && readingMenu.classList.contains('open')) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          returnFromReadingMenu();
+        } else if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault();
+          closeReadingMenu();
+        } else if (e.key === 'Tab') {
+          var readingFocus = focusablesWithin(readingMenu);
+          if (readingFocus.length) {
+            e.preventDefault();
+            var readingAt = readingFocus.indexOf(document.activeElement);
+            var readingStep = e.shiftKey ? -1 : 1;
+            readingFocus[(readingAt + readingStep + readingFocus.length)
+              % readingFocus.length].focus();
+          }
+        } else if (e.target.tagName === 'SELECT'
+                   && ['+', '-', '=', 'o', 'O', 'a', 'A'].indexOf(e.key) === -1) {
+          return;
+        } else if (runMenuShortcut(e.key === '=' && e.shiftKey ? '+' : e.key)) {
+          e.preventDefault();
+        }
+        return;
+      }
       if (presenterMenu && presenterMenu.classList.contains('open')) {
        if (e.key === 'Escape' || e.key === 'm' || e.key === 'M') {
          e.preventDefault();

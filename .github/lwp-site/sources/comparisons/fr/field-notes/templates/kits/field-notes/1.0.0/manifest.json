@@ -1,0 +1,55 @@
+{
+  "schema": "lightwebpres.identity-kit/1",
+  "id": "field-notes",
+  "version": "1.0.0",
+  "label": "Field Notes",
+  "default_preset": "brief",
+  "layouts": {
+    "cover": {
+      "default": "layouts/notebook.html"
+    },
+    "standard": {
+      "default": "layouts/notebook.html"
+    },
+    "series-nav": {
+      "default": "builtin:standard"
+    },
+    "full-article": {
+      "default": "builtin:standard"
+    },
+    "index": "builtin:standard"
+  },
+  "structure_css": "structure.css",
+  "chrome": "chrome.json",
+  "assets": {
+    "compass": {
+      "path": "assets/compass.svg",
+      "kind": "icon"
+    }
+  },
+  "themes": {
+    "paper": "themes/paper.conf"
+  },
+  "presets": {
+    "brief": {
+      "label": "Field Notes Brief",
+      "description": "A monochrome field notebook: ruled frames, a compass masthead and typewriter typography.",
+      "theme": "paper",
+      "slide_layouts": {
+        "cover": "default",
+        "standard": "default",
+        "series-nav": "default",
+        "full-article": "default"
+      },
+      "slide_chrome": {
+        "all": {
+          "header": {
+            "model": "masthead",
+            "text": "FIELD NOTES"
+          },
+          "footer": "OBSERVER / NOTER / PARTAGER"
+        }
+      }
+    }
+  }
+}

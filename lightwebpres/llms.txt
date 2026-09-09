@@ -20,3 +20,15 @@ Readers use their browser. The web builder and CLI share the same engine; author
 - [GUIDE.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GUIDE.md)
 - [GLOSSARY.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GLOSSARY.md)
 - [agent/skills/lightwebpres/SKILL.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/agent/skills/lightwebpres/SKILL.md)
+
+## Identities and authoring
+
+- [Original](https://fadeshed.github.io/lightwebpres/concepts/native/first-page.html): The same article under a different identity.
+- [Documentation](https://fadeshed.github.io/lightwebpres/concepts/docs/first-page.html): The same article under a different identity.
+- [Field Notes](https://fadeshed.github.io/lightwebpres/concepts/field-notes/first-page.html): The same article under a different identity.
+
+## Identities and authoring
+
+- [Original](https://fadeshed.github.io/lightwebpres/concepts/native/first-page.html): The same article under a different identity.
+- [Documentation](https://fadeshed.github.io/lightwebpres/concepts/docs/first-page.html): The same article under a different identity.
+- [Field Notes](https://fadeshed.github.io/lightwebpres/concepts/field-notes/first-page.html): The same article under a different identity.

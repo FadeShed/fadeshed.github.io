@@ -1,38 +1,31 @@
 # LightWebPres
 
-> Documents to read, present and share. Editable sources to write, organize, design and automate.
+> One document. Read. Present. Publish.
 
-Status: **Beta**.
+A course, a research brief, a project update. Keep the main ideas, the sources and the full story together — in pages your audience can open in a browser.
 
-## Read and present
+## Read & present
 
-A briefing before a meeting, a course during a session, a reference afterwards. Your audience opens the same pages in a browser: they do not need the generator or a presentation-service account. On a phone they scroll; on a larger screen they can follow the cards. Long content stays available instead of being cut to fit a slide.
+A briefing to read before the meeting, follow during it and consult afterwards.
 
-## Write and explain
+## Write & explain
 
-Prepare a course, a research brief or a project update without maintaining a disconnected slide deck and handout. Write the main ideas as cards and keep the explanation, references and longer text in the same article project. You decide the argument and the level of detail; LightWebPres renders the structure you provide.
+Keep your key ideas, references and longer explanation in one editable article.
 
 ## Organize knowledge
 
-A course has modules. Documentation has topics. A briefing selects only what its audience needs. LightWebPres lets a series select and order articles while the source of each article remains reusable. The same canonical text can belong to a short briefing and to a larger reading collection, with context-specific titles and descriptions.
+Reuse the same article in a short briefing and a larger collection. Change the journey, not the canonical text.
 
 ## Design an identity
 
-Choose colors and typography with a theme. Use a preset to select an arrangement of appearance choices. When you need layouts, marks, headers and footers together, create an Identity Kit that another author can reuse. A composed kit is self-contained: its recipients need the delivered kit, not a chain of its source kits.
+Give documents their own typography, layouts and signature — then share that identity with other authors.
 
 ## Automate a workflow
 
-Generate recurring project reports, update a documentation collection or give an agent a precise publishing task. The command line works with ordinary source files and structured reports. Build the pages, inspect source warnings and compare the output with a fresh render before handing it over. Generation, checking and publication remain distinct steps.
+Turn recurring source updates into documents you can build, check and hand over.
 
-## Publish and keep
+## Publish & keep
 
-Deliver a folder of pages and resources, publish it on static hosting or include it in an existing website. Readers use their browser; the source project stays with you for future edits and backups. Each article carries its own CSS and JavaScript. Referenced images and kit assets must travel with the output directory.
+Deliver pages and their assets. Keep the source project for the next edit, migration or backup.
 
-## Start here
-
-- [LightWebPres](index.html)
-- [Use cases](usages.html)
-- [Interactive briefing](demo/library.html)
-- [Create](demarrer.html)
-- [Guide](guide/guide.html)
-- [Browser builder](web/)
+LightWebPres builds the document. Your authoring agent is external.

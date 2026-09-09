@@ -1,0 +1,11 @@
+{
+  "models": {
+    "masthead": {
+      "slot": "header",
+      "items": [
+        {"kind": "icon", "asset": "presentation:compass", "label": "Rose des vents"},
+        {"kind": "text", "slot": "text"}
+      ]
+    }
+  }
+}

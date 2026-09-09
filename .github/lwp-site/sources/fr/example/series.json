@@ -1,0 +1,23 @@
+{
+  "series_meta": {
+    "title": "La bibliothèque de quartier",
+    "subtitle": "Un exemple de dossier avec sa note de travail complète.",
+    "scroll_duration": 0,
+    "reading": {
+      "table_mode": "scroll"
+    }
+  },
+  "articles": [
+    {
+      "page_source": "library.md"
+    },
+    {
+      "page_source": "ma-page.md"
+    }
+  ],
+  "themes": [
+    "nebula",
+    "essential",
+    "pop-lemon"
+  ]
+}

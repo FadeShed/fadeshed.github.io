@@ -20,3 +20,9 @@ Le lecteur utilise son navigateur. Le constructeur web et le CLI utilisent le m�
 - [GUIDE.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GUIDE.md)
 - [GLOSSARY.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GLOSSARY.md)
 - [agent/skills/lightwebpres/SKILL.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/agent/skills/lightwebpres/SKILL.md)
+
+## Identités et création
+
+- [Original](https://fadeshed.github.io/fr/lightwebpres/concepts/native/first-page.html): Le même article sous une autre identité.
+- [Documentation](https://fadeshed.github.io/fr/lightwebpres/concepts/docs/first-page.html): Le même article sous une autre identité.
+- [Field Notes](https://fadeshed.github.io/fr/lightwebpres/concepts/field-notes/first-page.html): Le même article sous une autre identité.

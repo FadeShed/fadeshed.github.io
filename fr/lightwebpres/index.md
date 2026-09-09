@@ -1,38 +1,31 @@
 # LightWebPres
 
-> Des documents à lire, à présenter et à partager. Des sources modifiables pour créer, organiser, concevoir et automatiser.
+> Un même contenu. À lire, à présenter et à publier.
 
-Statut : **Bêta**.
+Un cours, une synthèse de recherche, un point de projet. Gardez les idées principales, les sources et le récit complet ensemble — dans des pages que chacun ouvre avec son navigateur.
 
 ## Lire et présenter
 
-Un dossier avant une réunion, un cours pendant une séance, une référence après. Votre public ouvre les mêmes pages dans son navigateur, sans installer le générateur ni créer de compte sur un service de présentation. Sur téléphone, on fait défiler ; sur grand écran, on suit les fiches. Les contenus longs restent accessibles au lieu d’être coupés pour tenir sur une diapositive.
+Un dossier à lire avant une réunion, à suivre pendant et à consulter après.
 
 ## Écrire et expliquer
 
-Préparez un cours, une synthèse de recherche ou un point de projet sans entretenir deux documents déconnectés : les diapositives d’un côté, le support de lecture de l’autre. Écrivez les idées principales sous forme de fiches et conservez explications, références et texte long dans le même projet d’article. Vous choisissez le propos et le niveau de détail ; LightWebPres met en forme cette structure.
+Réunissez les idées clés, les références et les explications dans un article modifiable.
 
 ## Organiser les connaissances
 
-Un cours a ses modules ; une documentation, ses sujets ; un dossier, sa sélection pour un public donné. Une série LightWebPres choisit et ordonne des articles dont les sources restent réutilisables. Le même texte canonique peut servir à un exposé court et à une collection plus vaste, avec des titres et descriptions adaptés au contexte.
+Réutilisez le même article dans un dossier court et une collection plus vaste. Changez le parcours, pas le texte de référence.
 
 ## Concevoir une identité
 
-Choisissez couleurs et typographie avec un thème. Un preset sélectionne un ensemble de choix d’apparence. Pour réunir dispositions, signes visuels, en-têtes et pieds de page, créez un Identity Kit réutilisable par d’autres auteurs. Un kit composé est autonome : ses destinataires ont besoin du résultat livré, pas d’une chaîne de kits sources.
+Donnez aux documents leur typographie, leur mise en page et leur signature. Transmettez ensuite cette identité à d’autres auteurs.
 
 ## Automatiser une production
 
-Générez des rapports récurrents, actualisez une collection documentaire ou confiez une tâche de publication précise à un agent. La ligne de commande utilise des fichiers sources ordinaires et des rapports structurés. Construisez les pages, examinez les avertissements et comparez la sortie à un rendu neuf avant la livraison. Génération, contrôle et publication restent des étapes distinctes.
+Transformez des mises à jour récurrentes en documents à construire, à vérifier et à transmettre.
 
 ## Publier et conserver
 
-Livrez un dossier de pages et de ressources, publiez-le sur un hébergement statique ou intégrez-le à un site existant. Les lecteurs utilisent leur navigateur ; vous conservez le projet source pour les modifications et les sauvegardes. Chaque article emporte son CSS et son JavaScript. Les images référencées et les ressources des kits doivent accompagner le dossier de sortie.
+Livrez les pages et leurs ressources. Gardez le projet source pour la prochaine révision, migration ou sauvegarde.
 
-## Pour commencer
-
-- [LightWebPres](index.html)
-- [Usages](usages.html)
-- [Dossier interactif](demo/library.html)
-- [Créer](demarrer.html)
-- [Guide](guide/guide.html)
-- [Constructeur navigateur](web/)
+LightWebPres construit le document. L’agent de rédaction reste externe.
