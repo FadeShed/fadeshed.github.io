@@ -25,3 +25,30 @@ s=s.replace("if overflow:page.screenshot(path=str(report/f'overflow-{locale}-{ro
                             page.screenshot(path=str(report/f'overflow-{locale}-{route.strip("/") or "home"}-{width}.png'),full_page=True)
                             (report/'overflow.json').write_text(json.dumps(page.evaluate("""Array.from(document.querySelectorAll('body *')).filter(e=>{let r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1}).map(e=>({tag:e.tagName,class:e.className,width:e.getBoundingClientRect().width,text:e.textContent.slice(0,120)})).slice(0,30)"""),ensure_ascii=False,indent=2))''')
 p.write_text(s)
+# Preserve the entry fragment through the bundled reader's initial index update.
+p=ROOT/'build.py';s=p.read_text()
+s=s.replace("const u=new URL(location.href), q=u.searchParams.get('lang');", "const u=new URL(location.href), q=u.searchParams.get('lang');window.__fsEntryHash=u.hash;")
+p.write_text(s)
+p=ROOT/'language.js';s=p.read_text()
+old="if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();"
+new="""function ready(){
+ enhance();
+ const entry=window.__fsEntryHash;
+ if(entry&&document.querySelector('section.slide')&&!new URL(location.href).searchParams.has('lang')){
+  requestAnimationFrame(()=>{
+   const target=document.getElementById(decodeURIComponent(entry.slice(1)));
+   if(!target)return;
+   if(location.hash!==entry)history.replaceState(history.state,'',location.pathname+location.search+entry);
+   target.scrollIntoView({behavior:'instant',block:'start'});
+   window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+ }
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();"""
+if old not in s:raise RuntimeError('Language readiness hook changed')
+p.write_text(s.replace(old,new,1))
+p=ROOT/'language.css';p.write_text(p.read_text()+'''
+/* Keep the edition control reachable without scrolling away from the current card. */
+body:not(.lwp-index) .lwp-web-nav>.fs-language{position:fixed;top:16px;right:24px;z-index:35;background:#14171b;--fs-ink:#edf1f4}
+@media(max-width:750px){body:not(.lwp-index) .lwp-web-nav>.fs-language{top:10px;right:12px}}
+''')
