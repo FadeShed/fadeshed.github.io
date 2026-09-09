@@ -5,21 +5,52 @@ on:
     paths: ['.github/workflows/resume-approved-publication.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: approved-lwp-publication
+  cancel-in-progress: false
 jobs:
-  snapshot:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Export tracked files only
-        run: |
-          mkdir -p "$RUNNER_TEMP/resume-evidence"
-          git archive --format=tar.gz --output="$RUNNER_TEMP/resume-evidence/repository.tar.gz" HEAD
-          git rev-parse HEAD > "$RUNNER_TEMP/resume-evidence/commit.txt"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          name: publication-resume-snapshot
-          path: ${{ runner.temp }}/resume-evidence
+          repository: FadeShed/fadeshed.github.io
+          ref: 75f146e3c0c6bdf74818c71afc4b9a84e35d1545
+          path: work/source-site
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: Fade78/lightwebpres
+          ref: a5350feee396cafed54bb1328d460659e8e7df69
+          path: work/source-upstream
+          persist-credentials: false
+      - name: Install browser verification tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0 pillow
+          "$RUNNER_TEMP/venv/bin/python" -m playwright install --with-deps chromium
+      - name: Recover the approved bytes and render comparison illustrations
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" .github/lwp-publication/resume.py . work/source-site work/source-upstream "$RUNNER_TEMP/approved-lwp"
+      - name: Exercise complete portal, both languages, comparisons and browser builds
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" .github/lwp-publication/qa.py "$RUNNER_TEMP/approved-lwp/publication" "$RUNNER_TEMP/qa"
+      - name: Prepare one verified Git commit without moving main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/lwp-publication/prepare.py
+      - name: Retain verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: approved-lwp-publication
+          path: |
+            ${{ runner.temp }}/qa
+            ${{ runner.temp }}/approved-lwp/publication-proof.json
           retention-days: 3
+          if-no-files-found: warn
