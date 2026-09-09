@@ -61,7 +61,9 @@ def run(root,report,base):
                     for choice in ['native','docs','field-notes']:
                         page.locator('[data-choice="'+choice+'"]').click()
                         panel=page.locator('[data-panel="'+choice+'"]');expect(panel).to_be_visible()
-                        check(f'Identity illustration {lang} {width} {choice}',panel.locator('img').evaluate_all('ns=>ns.length>0&&ns.every(e=>e.complete&&e.naturalWidth>0)'))
+                        panel.locator('img').first.scroll_into_view_if_needed()
+                        decoded=panel.locator('img').evaluate_all('async ns=>{await Promise.all(ns.map(e=>e.decode()));return ns.length>0&&ns.every(e=>e.complete&&e.naturalWidth>0)}')
+                        check(f'Identity illustration {lang} {width} {choice}',decoded)
                         check(f'Comparator selection {lang} {width} {choice}',page.locator('[data-choice="'+choice+'"]').get_attribute('aria-pressed')=='true')
                     page.locator('[data-choice=native]').focus();page.keyboard.press('ArrowRight')
                     check(f'Keyboard comparator {lang} {width}',page.locator('[data-choice=docs]').get_attribute('aria-pressed')=='true')

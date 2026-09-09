@@ -2,7 +2,9 @@ name: Resume approved publication
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/resume-approved-publication.yml']
+    paths:
+      - '.github/workflows/resume-approved-publication.yml'
+      - '.github/lwp-publication/qa.py'
   workflow_dispatch:
 permissions:
   contents: write
