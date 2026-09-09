@@ -158,7 +158,6 @@ def main(root,upstream,output):
             s=clean_html(b.decorate(s,rel,locale),locale)
             if s.select_one('section.slide'):
                 css=s.new_tag('link',attrs={'rel':'stylesheet','href':'/assets/reader-site.css'});s.head.append(css)
-                js=s.new_tag('script',src='/assets/reader-site.js',defer=True);s.body.append(js)
             page.write_text(str(s))
         info={'renderer_commit':LWP_REV,'renderer_sha256':ENGINE_SHA,'language':locale,'editorial_source':'.github/reader-refresh','native_portal_strict_audit':True,'native_demo_warnings':['intentional scrollable comparison table width estimate'],'guide_regenerated':True}
         writejson(dest/'build-info.json',info);native_results.append(info)

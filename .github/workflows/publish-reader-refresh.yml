@@ -1,10 +1,5 @@
 name: Build and verify reader refresh
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/publish-reader-refresh.yml'
-      - '.github/reader-refresh/refine.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -19,20 +14,6 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Verify reviewed build sources
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import base64,hashlib,json,lzma
-          root=Path('.github/reader-refresh')
-          encoded=''.join((root/('payload-%02d.txt'%i)).read_text().strip() for i in range(1,4))
-          packed=base64.b64decode(encoded,validate=True)
-          if hashlib.sha256(packed).hexdigest()!='82c595e4f6c300a8d66594e5d6ab003df2a9fbc8b19ecd942dacdc46deb3b5e8':raise RuntimeError('Source checksum mismatch')
-          data=json.loads(lzma.decompress(packed))
-          if set(data)!={'build.py','editorial.py','evergreen.py','reader-site.css','reader-site.js','capture.py','qa.py','prepare_commit.py'}:raise RuntimeError('Unexpected source set')
-          for name,text in data.items():(root/name).write_text(text,encoding='utf-8')
-          PY
-          if test -f .github/reader-refresh/refine.py; then python3 .github/reader-refresh/refine.py; fi
       - name: Pull the current LightWebPres main
         run: |
           git clone --depth=1 --branch main https://github.com/Fade78/lightwebpres.git "$RUNNER_TEMP/upstream"

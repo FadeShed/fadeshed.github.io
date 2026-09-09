@@ -17,7 +17,7 @@ def run(output,root):
                 for width,height,anchor in [(1280,800,'opening'),(390,844,'purpose')]:
                     ctx=b.new_context(viewport={'width':width,'height':height},has_touch=True)
                     page=ctx.new_page();page.goto(base+prefix+'lightwebpres/demo/library.html#'+anchor,wait_until='networkidle')
-                    page.add_style_tag(content='.fs-utility,.fs-reader-open,.nav-controls{visibility:hidden!important}html{scroll-behavior:auto!important}')
+                    page.add_style_tag(content='.fs-utility,.nav-controls{visibility:hidden!important}html{scroll-behavior:auto!important}')
                     page.evaluate('(id)=>{let e=document.getElementById(id);window.scrollTo(0,Math.ceil(e.getBoundingClientRect().top+scrollY)+2)}',anchor)
                     page.wait_for_timeout(250);shots.append(Image.open(io.BytesIO(page.screenshot())).convert('RGB'));ctx.close()
                 canvas=Image.new('RGB',(1100,780),'#10161f');draw=ImageDraw.Draw(canvas)

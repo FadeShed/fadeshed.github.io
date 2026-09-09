@@ -70,7 +70,8 @@ def run(root,report,base=None):
                     expect(page.locator('.fs-language').first).to_be_visible()
                     if page.locator('section.slide').count():
                         check('Native zoom controls '+lang+rel,page.locator('#presenterMenu [data-menu-action=zoom-in]').count()==1)
-                        page.locator('.fs-reader-open').click();expect(page.locator('#presenterMenu')).to_be_visible();page.locator('#presenterMenu').click(position={'x':4,'y':4});expect(page.locator('#presenterMenu')).not_to_be_visible()
+                        check('No redundant reader control '+lang+rel,page.locator('.fs-reader-open').count()==0)
+                        page.locator('#navMenu').click();expect(page.locator('#presenterMenu')).to_be_visible();page.locator('#presenterMenu').click(position={'x':4,'y':4});expect(page.locator('#presenterMenu')).not_to_be_visible()
                 # Existing Pasteberth sandbox: keep operations and resolve the blocked chrome.
                 page.goto(base+prefix+'pasteberth/',wait_until='networkidle');page.locator('#launch-demo').click()
                 frame=page.frame_locator('#demo-frame');expect(frame.locator('.zone').first).to_be_visible(timeout=15000)
@@ -97,9 +98,9 @@ def run(root,report,base=None):
                 # Touch interaction tests deliberately use taps, not keyboard shortcuts.
                 ctx=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,locale='fr-FR');page=ctx.new_page()
                 page.goto(base+prefix+'lightwebpres/demo/library.html',wait_until='networkidle')
-                expect(page.locator('.fs-reader-open')).to_be_visible()
-                check('Touch entry does not overlap native navigation '+lang,page.evaluate("""()=>{const a=document.querySelector('.fs-reader-open').getBoundingClientRect(),b=document.querySelector('#navMenu').getBoundingClientRect();return !b.width||a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top}"""))
-                page.locator('.fs-reader-open').tap();expect(page.locator('#presenterMenu')).to_be_visible()
+                check('No redundant touch reader control '+lang,page.locator('.fs-reader-open').count()==0)
+                expect(page.locator('#navMenu')).to_be_visible()
+                page.locator('#navMenu').tap();expect(page.locator('#presenterMenu')).to_be_visible()
                 page.locator('[data-menu-action=zoom-in]').tap();expect(page.locator('#menuZoomValue')).to_have_text('110%')
                 check('Touch zoom increases '+lang,page.evaluate('parseFloat(document.documentElement.style.zoom)>1'))
                 page.screenshot(path=str(report/f'{lang}-touch-zoom.png'))
