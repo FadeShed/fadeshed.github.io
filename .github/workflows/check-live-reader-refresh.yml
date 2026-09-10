@@ -5,6 +5,12 @@ on:
     paths:
       - 'lightwebpres/**'
       - 'fr/lightwebpres/**'
+      - 'assets/bilingual-manifest.json'
+      - 'assets/minisites.*'
+      - 'fr/assets/minisites.*'
+      - '.github/lwp-publication/qa.py'
+      - '.github/reader-refresh/qa.py'
+      - '.github/workflows/check-live-reader-refresh.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,6 +31,7 @@ jobs:
           "$RUNNER_TEMP/venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
           "$RUNNER_TEMP/venv/bin/python" -m playwright install --with-deps chromium
       - name: Verify that Pages serves the committed publication
+        id: served
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -52,13 +59,34 @@ jobs:
           else:raise RuntimeError('Publication has not propagated')
           PY
       - name: Exercise both public editions, identity comparisons and browser builds
+        id: browser
         run: |
           "$RUNNER_TEMP/venv/bin/python" .github/lwp-publication/qa.py . "$RUNNER_TEMP/qa" --base-url https://fadeshed.github.io/
+      - name: Record exact verification state
+        if: always()
+        env:
+          SERVED_OUTCOME: ${{ steps.served.outcome }}
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+        run: |
+          python3 - <<'PY'
+          from datetime import datetime,timezone
+          from pathlib import Path
+          import hashlib,json,os,subprocess
+          out=Path(os.environ['RUNNER_TEMP'])/'qa';out.mkdir(exist_ok=True)
+          served=json.loads((out/'deployed-bytes.json').read_text()) if (out/'deployed-bytes.json').exists() else []
+          tests=json.loads((out/'report.json').read_text()) if (out/'report.json').exists() else {}
+          complete=os.environ['SERVED_OUTCOME']=='success' and os.environ['BROWSER_OUTCOME']=='success'
+          proof={'repository':os.environ['GITHUB_REPOSITORY'],'commit':os.environ['GITHUB_SHA'],'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'run_id':os.environ['GITHUB_RUN_ID'],'run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checked_at':datetime.now(timezone.utc).isoformat(),'base_url':'https://fadeshed.github.io/','status':'verified' if complete else 'incomplete','served_outcome':os.environ['SERVED_OUTCOME'],'browser_outcome':os.environ['BROWSER_OUTCOME'],'served_files':len(served),'served_matches':sum(bool(v.get('match')) for v in served),'checks':tests.get('checks'),'passed':tests.get('passed'),'scope':'Committed bytes and live Chromium journeys in both languages, including identity comparison and browser ZIP builds. Mobile emulation, not physical Android or iOS devices.','evidence_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [out/'report.json',out/'deployed-bytes.json'] if p.exists()}}
+          (out/'verification-state.json').write_text(json.dumps(proof,ensure_ascii=False,indent=2)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as summary:
+              summary.write('## Publication verification\n\n```json\n'+json.dumps(proof,indent=2)+'\n```\n')
+          print(json.dumps(proof,indent=2))
+          PY
       - name: Retain live verification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: approved-lwp-live-qa
           path: ${{ runner.temp }}/qa
-          retention-days: 3
+          retention-days: 14
           if-no-files-found: warn
