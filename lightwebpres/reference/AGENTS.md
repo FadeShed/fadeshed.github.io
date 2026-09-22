@@ -94,6 +94,19 @@ Write newly authored documentation in English. Translate existing passages
 when revising them, but do not expand a targeted correction into a wholesale
 translation of the French specification.
 
+### Active Model Redesign
+
+Before changing logical-unit vocabulary, selectors, cascade resolution or the
+combined-HTML CLI, read **DECISIONS.md, B67**. Its first increment is implemented:
+`--single-html [FILE]`, logical selection scopes and unit indexes. The owner
+authorized the physical-output rename in this first lot and explicitly ruled
+out legacy handling; preserve that decision, with no alias or migration handler.
+`specifications.md` and `GLOSSARY.md` describe the current contract. Persisted
+`articles[]`, `page_source`, `page_dest` and related fields remain canonical,
+not aliases. Broader wire vocabulary and publication-filter replacement remain
+open in B67. Keep its delivery checklist synchronized and disposable probes
+under `work/tmp/`; never infer that a proposed follow-up is already available.
+
 ### Relevés datés (hors arborescence active)
 - Les audits datés et autres relevés sont conservés localement, hors de
   l'arborescence active et de la repo publique, avec leurs mesures et leurs
@@ -142,8 +155,9 @@ pas reproductible à l'octet, à refaire à la main quand la galerie change.
   `test_the_committed_gallery_is_byte_identical_to_a_fresh_one`).
 - `generated/themes-featured.png`: `TMPDIR="$PWD/work/tmp" node
   tools/screenshot-gallery.cjs --featured` captures three actual landscape
-  themes. Use the supplied Node/Playwright environment; do not search external
-  installations when it is unavailable. No byte-identity guard applies.
+  themes, each with its cover and standard card. Use the supplied
+  Node/Playwright environment; do not search external installations when it is
+  unavailable. No byte-identity guard applies.
 - `generated/themes-gallery.png`: `TMPDIR="$PWD/work/tmp" node
   tools/screenshot-gallery.cjs` generates the compact theme contact sheet.
 - `generated/guide/` — `python3 tools/build_guide.py`, y compris les assets
@@ -198,10 +212,12 @@ holding directory or mistake a historical measurement for a current guarantee
 
 ## Conventions
 
-- **Identity / Preset / Theme** : l'identité est déduite de l'unique référence
-  `series_meta.presentation_preset` (`builtin/standard`, `commons/id` ou
-  `id@version/preset`). Le label d'identité est fixe ; le défaut désigne une
-  sélection, pas une identité. Les kits autonomes suivent
+- **Identity / Preset / Theme** : l'identité est déduite de chaque référence de
+  `appearance.presets` (`builtin/standard`, `commons/id` ou
+  `id@version/preset`). Le premier item est le choix initial et les suivants
+  sont des alternatives explicites ; le label d'identité est fixe et le défaut
+  désigne une sélection, pas une identité. `appearance.themes` porte la
+  politique de thème initiale et ses alternatives. Les kits autonomes suivent
   `lightwebpres.identity-kit/1`, sous `kits/` ou `templates/kits/`, avec
   `LWP_IDENTITY_KITS_DIR`. Commons garde les thèmes dans `themes/`
   (`LWP_THEMES_DIR`) et les presets dans `commons/presets/` (`LWP_COMMONS_DIR`).

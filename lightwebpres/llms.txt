@@ -21,14 +21,22 @@ Readers use their browser. The web builder and CLI share the same engine; author
 - [GLOSSARY.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GLOSSARY.md)
 - [agent/skills/lightwebpres/SKILL.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/agent/skills/lightwebpres/SKILL.md)
 
-## Identities and authoring
+## Website languages
 
-- [Original](https://fadeshed.github.io/lightwebpres/concepts/native/first-page.html): The same article under a different identity.
-- [Documentation](https://fadeshed.github.io/lightwebpres/concepts/docs/first-page.html): The same article under a different identity.
-- [Field Notes](https://fadeshed.github.io/lightwebpres/concepts/field-notes/first-page.html): The same article under a different identity.
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
 
-## Identities and authoring
+## Website languages
 
-- [Original](https://fadeshed.github.io/lightwebpres/concepts/native/first-page.html): The same article under a different identity.
-- [Documentation](https://fadeshed.github.io/lightwebpres/concepts/docs/first-page.html): The same article under a different identity.
-- [Field Notes](https://fadeshed.github.io/lightwebpres/concepts/field-notes/first-page.html): The same article under a different identity.
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.

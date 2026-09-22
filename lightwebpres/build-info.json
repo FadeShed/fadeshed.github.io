@@ -1,6 +1,17 @@
 {
-  "renderer_sha256": "bdbb84bc6fee5e27927ddc3d65bcd1d963adcff6350b0c1b16fdc36a9771b974",
-  "source_archive": "lightwebpres-main.tar.gz",
+  "renderer_commit": "b9ef3fac9d8eea465bc5eeb3303bec1db35d4109",
+  "renderer_sha256": "b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962",
   "language": "en",
-  "scope": "Local proposal"
+  "editorial_source": ".github/reader-refresh",
+  "native_portal_strict_audit": true,
+  "native_demo_warnings": [
+    "intentional scrollable comparison table width estimate"
+  ],
+  "guide_regenerated": true,
+  "edition": "static-bilingual",
+  "translation_sources": ".github/bilingual",
+  "checks": {
+    "articles_build_audit_verify": true,
+    "example_build_audit_verify": true
+  }
 }

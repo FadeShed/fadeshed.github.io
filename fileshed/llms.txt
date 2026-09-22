@@ -24,3 +24,8 @@ The documented workflow combines `shed_exec`, SQLite, CSV export, ZIP creation a
 
 - [English presentation](https://fadeshed.github.io/fileshed/): canonical English edition, also used when no language is specified.
 - [Présentation française](https://fadeshed.github.io/fr/fileshed/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/fileshed/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/fileshed/): édition française explicite ; la navigation conserve cette langue.

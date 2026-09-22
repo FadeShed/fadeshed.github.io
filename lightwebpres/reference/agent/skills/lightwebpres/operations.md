@@ -24,7 +24,7 @@ The author owns `sources/`, `series.json`, pinned values in
 `templates/settings.conf`, `templates/custom.css` and deliberate overrides.
 The engine normally supplies navigation and built-in language packs from
 its executable. Generated `public/`, the series README, `.lwp-*` manifests
-and `.lwp-cache/nav.json` are derived output/state, not hand-editing targets.
+and `.lwp-cache/` state are derived output, not hand-editing targets.
 Review existing output ownership before building: regenerating a directory
 can overwrite files, and ownership of a source does not establish ownership
 of every destination. Use an agreed scratch series for a contained preview.
@@ -58,17 +58,21 @@ neither a successful render nor a status value proves a claim true.
 
 ## Select Or Compose Appearance
 
-Inspect `preset list`, `preset show`, `series preset`, `theme show` or
-`series theme` before changing a choice. Catalogue reports and series reports
+Inspect `kit list`, `kit show`, `preset list`, `preset show`, `series preset`,
+`theme show` or `series theme` before changing a choice. Catalogue reports and series reports
 answer different questions: the latter include the series' effective resources
 and settings. Use `resolve` for a property whose winning layer is unclear.
+`kit list` is the complete global kit inventory; `kit show` can inspect one
+native or versioned kit without reading a series. Use `series preset` when the
+question is which vendored kit a series actually resolves.
 
 Choose the smallest layer that meets the brief. `series theme set` changes
-the theme selection while preserving settings pins. `init --preset` may apply
-a kit's starter; `series preset set` selects/vendors without applying that
-starter. Inspect contextual help for the theme-preservation choice before
-changing an existing preset. Do not overwrite a shared theme or kit version
-merely because the series needs a local variation.
+`appearance.themes` while preserving settings pins. `init --preset` may apply
+a kit's starter; `series preset set` changes `appearance.presets` and
+selects/vendors without applying that starter, while preserving the theme
+selection, pins and custom CSS. There is no theme-preservation option on that
+command. Do not overwrite a shared theme or kit version merely because the
+series needs a local variation.
 
 For composition, obtain source kit roots, the final identity/version, target
 manifest, desired files and authorized output catalogue. Read
@@ -101,6 +105,9 @@ Plain `audit` exits zero even for reported render failures. Read the findings;
 Reports include unused/missing rendered images, malformed metadata or notes,
 symlinks leaving logical roots and unreadable resolved styles. If rendering
 fails, image usage can be unavailable rather than known to be unused.
+The presentation section also prints the resolved filesystem path of each
+selected identity kit once; the native identity is reported as embedded in
+the executable. Use these paths to identify which kit tree the audit checked.
 Do not infer success from plain audit's exit status.
 
 Wide Markdown-table warnings are **ESTIMATE** findings before reader scaling
@@ -124,11 +131,11 @@ alternatives. Read warnings even when build exits zero.
 
 `verify` needs the same supported rendering flags and environment as the
 build, including language, themes, presentation alternatives, typography,
-draft inclusion, navigation and scroll duration where applicable. Consult
-`verify --help`: not every build option is accepted. In particular,
-`verify` cannot reproduce `--inline-images`; keep a separate non-inline
-output for that CI check. Build-stamp differences and surrounding whitespace
-are ignored, not arbitrary body differences. Audit has its own smaller option
+draft inclusion, navigation, scroll duration, `--single-html [FILE]` and
+`--inline-images` where applicable. Both image embedding and combined-HTML output
+are reproducible by `verify`; consult `verify --help` for its accepted options.
+Build-stamp differences and surrounding whitespace are ignored, not arbitrary
+body differences. Audit has its own smaller option
 set; do not pass build-only switches to it.
 
 Use `verify` **before** rebuilding when the question is whether an existing
@@ -136,30 +143,80 @@ publication has drifted; rebuilding first destroys that comparison. After
 an intended source change, build then verify to check the regenerated output.
 If no engine or browser is available, report the missing check explicitly.
 
+### Use Targeted Builds In Automation
+
+When a build system knows that one article changed, it may invoke the public
+CLI with either its source or destination name:
+
+```bash
+lightwebpres build my-series --lang en --incremental article.md
+```
+
+`--incremental` is a safe optimization, not a second publication contract.
+The executable checks the navigation cache, shared rendering inputs, output
+manifest and retained files before rendering only the selected article and
+the cheap derived outputs. Any unsafe condition falls back to a full build.
+Callers should use the executable boundary rather than importing internal
+rendering helpers; a normal `build` remains correct when no target is known.
+
 ## Read, Present And Share
 
 Inspect a local build before any authorized distribution. `watch --serve`
 can rebuild and serve on `127.0.0.1`; launching it is an explicit local preview,
 not public hosting. The page's presenter menu and built-in help document
-controls. **C** selects appearance, **L** selects tags when available,
+controls. **C** opens Appearance when a real kit is published, otherwise Theme
+when theme alternatives are available; **L** selects tags when available,
 **N** toggles the speaker panel and **I** toggles scrolling duration.
 Check the active tag and browser-persisted choices when reproducing a view.
 
-**Menu** also offers presentation zoom **-**, **+**, **Reset**, wide-table
-handling, text fitting and independent table/image shrink switches. **O** cycles
+**Menu > Display settings** (**Affichage** in French) opens the
+`readingMenu` submenu with presentation zoom **-**, **+**, **Reset**, wide-table
+handling, text fitting and independent table/image shrink switches. Back or
+Escape returns to the main menu's Display settings item with focus restored;
+an outside click closes the submenu. **D** opens or closes this submenu
+directly. **O** cycles
 `clip`, `overflow`, `scroll`; **A** cycles `fixed`, `uniform`, `per-slide`.
-Use local table scrolling to reach clipped columns without navigating the
-deck. `fixed` keeps responsive theme sizes without content fitting; uniform
-reduction measures all currently visible slides, including long-form content,
-while per-slide reduction measures each independently. Author limits live in
-`series_meta.reading`; use [Series and Appearance](series-and-appearance.md)
+Drag to scroll a table and reach clipped columns without navigating the deck.
+A brief tap or left click on plain cells instead follows bounded reading steps
+through the tall slide before entering the next one; links, controls and text
+selection stay native. `fixed` keeps responsive theme sizes without content fitting; uniform
+reduction measures all tag-visible slides in the current article by default.
+Series-wide measurement supports static content. Executable HTML, media, frames
+or custom widgets in an eligible article return the control to article scope
+with an explanation. Inactive measurement must not disturb active selection,
+focus or media. Shell-dependent author CSS may not measure identically in the
+isolated measurement documents.
+
+In combined-HTML output only, **Uniform fit scope** appears while `uniform` is
+selected: choose **Current article** or **Entire series**. Series scope uses
+the smallest measured factor across all tag-eligible article slides, respecting
+each article's styles, preset and settings pins. Long-form and series-navigation
+slides participate even if they remain too large at the minimum. Per-slide
+reduction measures each slide independently without propagating its factor.
+Author limits live in `series_meta.reading`; use
+[Series and Appearance](series-and-appearance.md)
 for exact keys, defaults and validation. Content that still does not fit at
 the floor stays available to scroll rather than being removed.
 
-Record these reading choices separately: unlike Appearance choices, they and
-presentation zoom remain only in the loaded page, including after Menu closes
-and reopens. Zoom is independent magnification and can cause overflow; pinch
-remains native browser zoom. Check resize, tags, theme/preset changes and late
+Record reading preferences separately from Appearance's unchanged session
+choices. Reading uses `localStorage` per output directory path on the same
+origin, across articles, the index and reloads. It saves table/text modes,
+table/image shrink switches and presentation zoom, not authored minimum limits;
+it never writes `series.json`. Invalid or inaccessible stored data falls back
+to author defaults and 100% zoom; controls remain usable if saving is blocked.
+Check storage availability, and distinguish `file:` URLs from HTTP(S): browser
+policies can prevent persistence or sharing between pages.
+
+Combined-HTML uniform scope is saved separately at
+`readingPreferenceKey + ':fit-scope'`, with `article` as the fallback for
+missing/invalid values or blocked reads. Blocked saving leaves the control
+usable. It is not an author reading field and does not affect multipage output.
+
+Zoom scales content fonts, line heights and images, not frame widths, padding,
+borders, minimum heights or controls; it does not use root CSS zoom. Native
+responsive sizing remains at 100%. Fitting is solved at 100% before manual
+magnification, which can still make long content grow or scroll. Pinch remains
+native browser zoom. Check resize, tags, theme/preset changes and late
 font/image loading. Browser touch emulation is not a physical-device check;
 report the actual test environment without claiming device verification.
 
@@ -173,9 +230,86 @@ Confirm the intended public base URL before distributing those links.
 
 Normal output includes separate images and kit assets: distribute the whole
 intended output tree, not a lone HTML file assumed to contain every asset.
-`--inline-images` is a distinct build mode with validation of supported local
-image references, not a reason to skip checks. See the
+`--inline-images` on `build`, `verify` and `watch` embeds supported local
+Markdown and kit images, including SVG as an `<img>` data URI with original
+vector bytes, not interactive SVG DOM. Raw HTML `<img>` is not auto-inlined;
+remaining relative image paths fail inline validation. SVG-as-image blocks
+nested resources even online. Read its warning summary; `--verbose` adds
+source, line and remediation, `--quiet` retains warnings, and `audit --strict`
+may fail on them. The engine neither fetches nor rewrites these resources.
+CSS, fonts, scripts and media are not a complete portable bundle. See the
 [sharing walkthrough](https://github.com/Fade78/lightwebpres/blob/main/GUIDE.md#4-read-present-and-share).
+
+### Publish A Series In One HTML File
+
+```bash
+lightwebpres build my-series --single-html --inline-images
+lightwebpres verify my-series --single-html --inline-images
+lightwebpres build my-series --single-html collection.html --inline-images
+lightwebpres verify my-series --single-html collection.html --inline-images
+```
+
+`--unit-index on|off`, `--unit-index-max-columns N` and
+`--unit-index-selector expression` are supported by `build`, `verify` and
+`watch`, including combined HTML. Match them when verifying output. Unit
+metadata wins over CLI, then series defaults; explicit indexes suppress
+automatic insertion even when excluded. See [Article Format](article-format.md#unit-contents)
+and [Series and Appearance](series-and-appearance.md#scoped-selectors).
+
+`--single-html [FILE]` accepts an optional filename on `build`, `verify` and
+`watch`; `--output` remains a directory. Without a filename, it derives one
+from `series_meta.title`: strip HTML, decode entities, lowercase, fold accents
+and replace punctuation with hyphens, retaining Unicode letters. An empty
+result falls back to the series directory name, then `series`, not a translated
+"untitled" label. Automatic stems are bounded to 100 characters and 200 UTF-8
+bytes, reserved Windows names receive `series-`, and `.html` is appended.
+Set `build.single_html` in the root `series.json` object to choose the default
+combined filename for the series; an explicit CLI filename takes precedence.
+
+An explicit bare `.html` or `.htm` filename always wins; paths, URLs and empty
+values are invalid. `--single-html=collection.html` also works. Before the
+positional series directory, a next separate value is a filename only when it
+ends in `.html` or `.htm`; otherwise it remains the directory. For a directory
+that looks like a filename, use `build --single-html -- archive.html`. After
+the positional directory, any next non-option value is an explicit filename
+and is validated. Match the automatic or explicit choice in `verify`. `watch`
+rederives automatic names after title changes; use an explicit name for a
+stable published address.
+
+Without `--inline-images`, distribute copied images and presentation assets
+too. Default output remains
+multipage. Only the active contents/article view is mounted; switching articles
+is deliberate, not continuous scrolling. Article styles, notes and IDs remain
+local, and one root runtime preserves fullscreen across switches. Print uses
+the active tag-filtered article; the contents view prints only series contents.
+
+Combined HTML opens on series contents by default. Add `--no-index` to omit
+that view and start at the first published unit, whether there is one unit or
+several. An empty published collection fails before writes. Other units remain
+reachable through `series-nav` and authored links; generated back-to-index
+links are omitted. `Home` starts the current unit; `Ctrl+Home` and **Start of
+series** start the first unit. Source and automatic `unit-index` slides are
+unaffected. Match `--no-index` in `verify`.
+
+Combined-HTML mode requires any `templates/nav.js` override to match the built-in
+runtime and rejects nonempty `templates/index_extra.html` only when contents
+are included. With `--no-index` this unused extension is ignored. Arbitrary widget
+script lifecycles are unsupported; keep multipage output for those extensions.
+`--drafts-only` remains refused; `--include-drafts`, `--no-nav`
+and `--no-readme` are supported. `build --incremental` validates its article target
+but rebuilds the entire combined file.
+
+Source `page_dest` values do not change. Generated README links use
+`collection.html#lwp/a/<encoded page_dest>`; local targets append
+`/<encoded local id>`, and series contents use `collection.html#lwp/index`.
+With `--no-index`, series sharing uses the physical URL without a hash to
+follow future first-unit order. An incoming `#lwp/index` opens the first unit
+and becomes its qualified route, never a hidden contents view.
+Encode each component separately. The build manifest records the physical
+combined file and copied images/assets unless inlined, not virtual article
+files. Changing modes or the combined filename, including after a title change,
+leaves old files recorded for cleanup; review `clean` explicitly before
+authorized removal.
 
 ## Publish And Maintain
 
@@ -208,7 +342,7 @@ placement. Do not copy a static CLI schema from this skill. A client should
 consume `contract` and its schema/version rather than infer fields from
 rendered HTML. JSON is available on relevant read-only reports: `contract`,
 `status`, `series tags`, `series slug`, `resolve`, `theme show`, `series theme`,
-`preset list`, `preset show` and `series preset`. It is not a universal
+`preset list`, `preset show`, `kit list`, `kit show` and `series preset`. It is not a universal
 `--format json` switch for build, audit, verify or mutations.
 
 Pass explicit paths and capture UTF-8 output, diagnostics and exit codes.

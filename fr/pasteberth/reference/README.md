@@ -32,6 +32,16 @@ retrieved without Pasteberth interpreting their formats. Preview and clipboard
 actions depend on the content and browser. Storage persists on disk, but zone
 retention can remove older items: this is a working area, not a backup service.
 
+**Since 2.1.22:** downloads use already published zones without waiting for
+discovery. Once files are acquired, even long ZIP transfers release zone locks
+so managed writes can continue. Acquisition can still wait on storage or a writer;
+see the [download contract](docs/reference/api.md#downloads).
+New external consumers can use the generic `items` API, stored SHA-256, and
+`If-Match` to request a listed payload and verify its bytes before local
+publication. Legacy routes remain supported throughout 2.x; see the
+[external-consumer recipe](docs/recipes/external-consumer.md) and
+[compatibility policy](docs/reference/api.md#compatibility).
+
 ## Make It Yours
 
 | Your situation | A useful starting point |
@@ -70,7 +80,7 @@ the data and sidecar stay together.
 | Web paste, drop, or file picker | You want to deposit content from a browser. |
 | `pasteberth drop` | You want the daemon to publish source files under its policies. It always contacts the daemon, even with direct local staging. |
 | `pasteberth register FILE` | A completed file is already in place. It creates or refreshes only the sidecar, without contacting the daemon or rewriting data. |
-| HTTP API | A client needs publication or other documented Web operations. |
+| HTTP API | A client needs publication, authenticated retrieval, or other documented Web operations. |
 | MCP `drop` | A trusted MCP host publishes local paths, UTF-8 content, or base64 content to a known zone. |
 
 For example, with a running service, an existing zone, and an unused target
@@ -83,7 +93,9 @@ pasteberth drop --server https://pasteberth.example.internal \
 
 Adapt the URL and zone ID. The file is local to the CLI process; the zone is
 on the server. Use `PASTEBERTH_PASSWORD` or `--password-stdin` for unattended
-authentication. Existing managed names require explicit `--replace`.
+password authentication, or `PASTEBERTH_TOKEN` / `--token-stdin` for a scoped
+bearer credential. Existing managed names require explicit `--replace`, and a
+bearer grant must also allow named replacement.
 
 Registration uses local validation, not the running daemon's retention or
 per-zone free-space policy. See [which interface to use](docs/integrations.md),
@@ -104,10 +116,16 @@ configuration edit or daemon restart is needed after the rule is loaded.
 Groups can present all projects or focused views of the same zones, without
 duplicating their files.
 
-Discovery scans are triggered by service reads, with background scans for Web
-overviews. A visible browser polls every 10 seconds and shows new zones after
-a scan completes; this is not an instantaneous filesystem watcher. Candidates
-must meet the collection's path, ID, permission, and leaf-directory rules.
+Discovery is request-triggered, with background scans for Web overviews. A
+visible browser polls every 10 seconds and shows new zones after a scan
+completes; this is not an instantaneous filesystem watcher. **Since 2.1.22:**
+overview polls reuse the completed registry during a cooldown of the greater
+of 10 seconds or the last full refresh duration, measured from completion.
+The next eligible poll can start one background job; mutations and explicit
+legacy `/images` history reads still refresh or wait for an in-flight scan.
+Downloads and generic `/items` listings neither start nor join scans, so new
+zones stay unknown until published. Candidates must
+meet the collection's path, ID, permission, and leaf-directory rules.
 Discovery neither creates projects nor registers the files inside them.
 
 Start with [project zones](docs/recipes/project-zones.md), or follow
@@ -115,9 +133,15 @@ Start with [project zones](docs/recipes/project-zones.md), or follow
 
 ## Quick Start
 
-The documented runtime is **2.1.21**, officially supported on **Linux** with
+The documented runtime is **2.1.26**, officially supported on **Linux** with
 **Python 3.11+** and a supported local filesystem. It has no third-party Python
 runtime dependency.
+
+Changes labelled **Unreleased** describe the working tree after the `2.1.26`
+release. Generic item routes and conditional downloads, streamed downloads,
+archive budgets, discovery optimizations, and dates alongside the time for
+items older than 24 elapsed hours in the selected-item panel were shipped in
+`2.1.22`; see the [changelog](CHANGELOG.md#2122---2026-09-11).
 
 For an instance already installed, go straight to
 [Using Pasteberth](docs/using-pasteberth.md). To explore without starting a
@@ -127,7 +151,7 @@ memory adapter, not production authentication or storage.
 For a first local runtime trial:
 
 ```sh
-git clone --branch v2.1.21 --depth 1 https://github.com/Fade78/pasteberth.git
+git clone --branch v2.1.26 --depth 1 https://github.com/Fade78/pasteberth.git
 cd pasteberth
 ./PasteBerth/pasteberth
 ```
@@ -146,14 +170,14 @@ directory is independent of the documentation and development tooling.
 
 ## Boundaries And Support
 
-- **Trusted participants:** one shared service password, not individual Web accounts. Groups are views, not per-zone ACLs.
+- **Trusted participants:** one shared service password plus optional scoped bearer tokens; there are no individual Web accounts. Groups are views, not per-zone ACLs.
 - **References are paths:** a copied reference is not a public URL. Its consumer must see the server-side path and have filesystem access.
 - **Explicit publication:** MCP currently exposes only `drop`, not zone exploration or artifact retrieval.
 - **Storage coordination:** managed operations coordinate cooperating Pasteberth processes, not arbitrary external editors or writers. Multi-file operations can partially succeed.
 - **Retention, not archiving:** history covers currently managed files; a stable filename is not versioning or permanent retention.
 - **Clipboard limits:** supported content can be copied; normal HTML copying is sanitized, but explicit raw-HTML copying and downloads preserve original content.
 
-| Area | 2.1.21 support |
+| Area | 2.1.26 support |
 |---|---|
 | Server | Linux, Python 3.11 or newer |
 | Storage | Local filesystem with required backend capabilities |

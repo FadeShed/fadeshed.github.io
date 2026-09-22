@@ -1,8 +1,12 @@
 {
   "series_meta": {
     "title": "My first series",
-    "presentation_preset": "builtin/standard",
     "scroll_duration": 0
+  },
+  "appearance": {
+    "presets": [
+      "builtin/standard"
+    ]
   },
   "articles": [
     {

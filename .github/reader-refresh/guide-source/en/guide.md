@@ -55,11 +55,11 @@ kicker: Start
 <!-- lwp:slide -->
 slug: anatomie
 kicker: Anatomy
-## Four slide types, one source file
+## Five slide types, one source file
 
  
 
-<div class="highlight"><span class="highlight-figure">4</span><span class="highlight-caption">cover, standard, series-nav and full-article</span></div>
+<div class="highlight"><span class="highlight-figure">5</span><span class="highlight-caption">cover, standard, series-nav, full-article and unit-index</span></div>
 <div class="fact-box">
 <div class="fact-label">Fields first, body after</div>
 <div class="fact-content"> <p>A cover supplies the title. A standard slide accepts text, images, tables, notes and optional named components. A series-nav slide generates links; a full-article slide includes a separate plain Markdown file.</p>
@@ -99,8 +99,8 @@ kicker: Identity
 
 <div class="fact-box">
 <div class="fact-label">Inner structure, not a replacement runtime</div>
-<div class="fact-content"> <p>A self-contained Identity Kit supplies layouts, chrome, assets and typed themes. LWP keeps the page shell, navigation and script. Select a preset through <code>series_meta.presentation_preset</code>: <code>builtin/standard</code>, <code>commons/id</code>, or <code>id@version/preset</code>. Omission selects native Standard with minimal Light; Commons presets bind global themes to native layouts. Identity is inferred from the reference, and its label stays fixed when the selection changes.</p>
-<p>Keep alternatives at the root of <code>series.json</code> with <code>presentation_presets</code>, or pass <code>--presentation-presets</code> to <code>build</code>, <code>verify</code> or <code>watch</code>. A kit or Commons primary also adds compatible <code>builtin/standard</code> after those choices; a kit-only slide layout or chrome override makes that implicit candidate unavailable and is reported as a warning. The primary stays first; <strong>C</strong> opens Identity, Preset and Theme choices and switches the whole deck without changing its sources. The session choice is scoped to that deck as well as its catalogue. Applicable / Current identity / All filter published choices by typed compatibility or ownership, not brand. Follow preset resets an explicit runtime theme choice.</p>
+<div class="fact-content"> <p>A self-contained Identity Kit supplies layouts, chrome, assets and typed themes. LWP keeps the page shell, navigation and script. Select a preset through root <code>appearance.presets</code>: <code>builtin/standard</code>, <code>commons/id</code>, or <code>id@version/preset</code>. Omission selects native Standard with minimal Light; <code>appearance.themes</code> controls the initial theme and its alternatives. Identity is inferred from the reference, and its label stays fixed when the selection changes.</p>
+<p>Keep the ordered alternatives in <code>appearance.presets</code> and theme choices in <code>appearance.themes</code>, or pass <code>--presentation-presets</code> to <code>build</code>, <code>verify</code> or <code>watch</code>. The first preset stays primary; no preset is added implicitly. A kit-only layout or chrome override can make an explicit native request fail validation. <strong>C</strong> opens Identity, Preset and Theme choices when those resources are published and switches the whole deck without changing its sources. The session choice is scoped to that deck as well as its catalogue. Applicable / Current identity / All filter published choices by typed compatibility or ownership, not brand. Follow preset resets an explicit runtime theme choice.</p>
 <p>Use <code>preset list</code>, <code>preset show</code> and <code>series preset set</code> to inspect or change the choice. <code>init --preset</code> can also apply the kit's starter. <code>kit compose</code> builds an autonomous kit from explicit files and a complete final manifest. Per-slide <code>slide-layout</code>, <code>slide-header</code> and <code>slide-footer</code> override defaults.</p></div>
 </div>
 <p class="source">Source : Guide, chapter 5</p>

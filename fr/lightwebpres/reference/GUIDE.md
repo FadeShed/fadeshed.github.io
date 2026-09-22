@@ -149,6 +149,10 @@ For a series containing **only** your article, this is a complete alternative
 ```json
 {
   "series_meta": {"title": "My first series"},
+  "appearance": {
+    "presets": ["builtin/standard"],
+    "themes": ["nebula"]
+  },
   "articles": [{"page_source": "first-page.md"}]
 }
 ```
@@ -190,25 +194,30 @@ build result. **Refresh the browser yourself: there is no automatic browser
 reload.** Stop with Ctrl+C. Serving is opt-in on `127.0.0.1`; change `--port`
 if 8000 is occupied. This is an author preview, not a public deployment server.
 
-### Understand page anatomy
+### Understand content-unit anatomy
 
-A page is a sequence of **slides**, separated by `---`, preceded by one
-metadata block. There are four slide types, and inside a standard slide a
+A **content unit** is a sequence of slides, separated by `---`, preceded by one
+metadata block, with optional supporting long-form texts. It is not an HTML
+page: `--single-html [FILE]` can combine several units without merging their
+ownership. The source format still calls a unit an article and uses canonical
+`articles[]`, `page_source` and `page_dest` fields, not new aliases.
+There are five slide types, and inside a standard slide a
 small set of named components. This section names them and says how you
 reach each one; `agent/skills/lightwebpres/SKILL.md` carries the exact
 syntax and every edge case.
 
-**The four slide types.**
+**The five slide types.**
 
 | Type | Carries | How many |
 |---|---|---|
 | `cover` | `slug`, `kicker`, `tags:`, `# Title`, `summary`, `slide-layout`, `slide-header`, `slide-footer`, `comment`, `note` | any number, anywhere — it is a look, not a structural marker |
 | standard *(the default)* | `slug`, `kicker`, `tags:`, `## Title`, `summary`, `highlight`, `highlight-caption`, `fact-label`, `fact-variant`, `source`, `slide-layout`, `slide-header`, `slide-footer`, `comment`, `note`, then free Markdown | as many as you want |
 | `series-nav` | `slug`, `tags:`, `slide-layout`, `slide-header`, `slide-footer`, `comment:` — the navigation itself is generated from `series.json` | 0 or 1 per article |
-| `full-article` | `slug`, `article: filename.md`, `tags:`, `slide-layout`, `slide-header`, `slide-footer` and `comment:` | any number, each with its own file |
+| `full-article` | `slug`, `kicker`, `article: filename.md`, `tags:`, `slide-layout`, `slide-header`, `slide-footer` and `comment:` | any number, each with its own file |
+| `unit-index` | `slug`, optional `## Title`, `kicker`, `summary`, `tags`, `note`, `comment`, `index-max-columns`, `index-selector`, `slide-layout`, `slide-header`, `slide-footer`; no free body | any number, anywhere |
 
-Four, and only four. Mistype one — `<!-- lwp:slide:covre -->` — and the
-build stops and tells you which slide, what you wrote, and what the four
+Five, and only five. Mistype one, such as `<!-- lwp:slide:covre -->`, and the
+build stops and tells you which slide, what you wrote, and what the five
 names are. You will not find out from the page.
 
 **The components inside a standard slide.**
@@ -312,16 +321,17 @@ Register every article that should appear in navigation in
 
 `comment:` is a source-only review field, accepted on every slide and in
 article/series metadata. It is never published, not even in the HTML source.
-`note:` is different: on a cover or standard slide it is embedded in the HTML
+`note:` is different: on a cover, standard or unit-index slide it is embedded in the HTML
 for the speaker panel (route 4). Both support indented continuation lines.
 
 For editor or agent integrations, `lightwebpres contract --format text`
-describes the versioned `lightwebpres.slide-draft/1` contract: accepted and
+describes the versioned `lightwebpres.slide-draft/2` contract for all five types: accepted and
 required fields, cardinalities, source order, empty-value rules, reserved IDs
 and parseable skeletons. JSON is the default. `--article first-page.md` avoids
 slugs already declared in that source. It writes nothing.
 
-A `full-article` slide needs `article: filename.md`, pointing to a separate
+A `full-article` slide accepts an optional `kicker:` label such as `Glossary`
+or `Appendices`, then needs `article: filename.md`, pointing to a separate
 plain Markdown file under `sources/`, with no LWP metadata or slide markers.
 Omitting `article:` is fatal; an explicitly empty `article:` warns and omits
 that unfinished slide. A non-empty reference to a missing file is fatal.
@@ -537,6 +547,119 @@ refers to `typography/<name>.json`, or to the legacy
 change this typography choice. `audit` reports invalid tags and missing packs
 without blocking, while `build` rejects malformed declarations.
 
+### Add a unit index
+
+The automatic settings can also be inspected with `resolve`, for example
+`lightwebpres resolve my-series unit_index_max_columns --article brief.md`.
+The report uses the same field policy as the build, without a CLI override.
+
+Use a `unit-index` slide when readers need a linked overview inside one unit.
+It is distinct from the series index, which links different articles. Add this
+block between `---` separators, normally after the cover:
+
+```markdown
+<!-- lwp:slide:unit-index -->
+slug: contents
+## Choose a section
+kicker: Reading guide
+summary: Follow a link or continue through the deck.
+index-max-columns: 2
+index-selector: -type:unit-index
+```
+
+Only `slug` is required. There is no free body. Without a title, the interface
+supplies Contents; without the two index fields, the defaults are one column
+and `*`. A column count is a responsive maximum, not a forced desktop grid on
+a phone. Long titles wrap, long lists remain complete, and print keeps the
+source-ordered list. Existing kits can use their standard layout with chrome;
+no manifest rewrite is required.
+
+**Choose the entries explicitly.** `*` means every published slide in this
+unit, including the index itself, other indexes, covers, long-form slides and
+generated page-end notes. `-type:unit-index` omits indexes. Several explicit
+indexes may use different selectors; none changes publication membership.
+
+Compact selectors combine literal tags and fields:
+
+```text
+index-selector: expert-en -type:unit-index
+index-selector: (expert-en | expert-fr) -type:cover -type:unit-index
+index-selector: series:author:"Editorial team" slide:title:/^Evidence/
+```
+
+Space is AND, `|` is OR, `-` is NOT; parentheses group and quotes preserve
+spaces or punctuation. `expert-en` is exactly `tag:expert-en`, not an engine
+language category. Unlike the reader filter, it does not include shared
+`default` slides unless they carry that literal tag. Unqualified fields read
+the effective value; `series:`, `unit:` and `slide:` read only that scope.
+The JSON entry and Markdown metadata both own unit values, with entry authority
+for supported fields. `status:draft` tests effective status;
+`unit:status:draft` requires a declared unit value. Implicit `active` is not
+invented in the scoped view.
+
+For typed comparisons or array membership, use the **JSONPath filter profile**:
+
+```text
+index-selector: $[? @.slide.type == "standard" && @.slide.tags[? @ == "expert-en"]]
+index-selector: $[? search(@.slide.title, "Evidence")]
+```
+
+Each line above is an alternative, not several fields to stack: repeated
+fields keep only the last value. The profile supports `$[*]`, `$[? ...]`,
+scalar comparisons, `&&`, `||`, `!`, scoped paths, existence, nested array
+filter existence, and `match`/`search`. A missing operand makes even `!=`
+false; false/null/empty fields still exist. It is not full RFC 9535 or
+I-Regexp. Regexes are case-sensitive and bounded: no groups, alternation,
+shorthand classes, lookarounds, backreferences or flags. Queries use parsed
+source values; computed `title` is plain text, not HTML or display typography.
+The exact grammar and hard budgets are in specifications.md §3.4.
+
+Name reusable queries in `series.json`, merging these settings into the
+existing object rather than replacing the rest of the series:
+
+```json
+{
+  "series_meta": {
+    "selectors": {
+      "evidence": "type:standard -type:unit-index",
+      "english": "$[? @.slide.tags[? @ == \"expert-en\"]]",
+      "english-evidence": "selector:evidence selector:english"
+    }
+  },
+  "articles": [{"page_source": "brief.md"}]
+}
+```
+
+Then write `index-selector: selector:english-evidence`. References compose
+expressions, not text. Reachable unknown names, cycles, unsupported syntax
+and exceeded budgets stop the build; unused definitions are shape-checked
+but their expressions are not compiled.
+
+**Prefer automatic insertion when the default position is enough.** Set
+`unit_index: on` in the unit's meta block, or `"unit_index": true` in
+`series_meta`, or use:
+
+```bash
+./lightwebpres build my-series --unit-index on --unit-index-max-columns 2 --unit-index-selector '-type:unit-index'
+./lightwebpres verify my-series --unit-index on --unit-index-max-columns 2 --unit-index-selector '-type:unit-index'
+./lightwebpres watch my-series --unit-index on --unit-index-max-columns 2 --unit-index-selector '-type:unit-index' --serve --open
+```
+
+The settings `unit_index`, `unit_index_max_columns`, `unit_index_selector`
+resolve independently: unit meta > CLI > `series_meta` > `off` / `1` / `*`.
+They do not go in an `articles[]` entry. Insertion is after the first
+non-excluded cover, or at the start. Any explicit index, even excluded,
+suppresses automatic insertion. Its generated `lwp-index` slug takes the
+normal prefix and collides fatally rather than being renamed. No source is
+written. Explicit indexes keep their own column and selector fields.
+
+The entry list is fixed at build time, not refiltered when a reader changes
+tags. Following a link may select an available tag to reveal the target using
+the existing anchor policy; arrows and mouse-remote controls retain their
+ordinary navigation. There is no new journey mode and no global `build --select`.
+Try the [complete source-only example](examples/unit-index/README.md), including
+an automatic second unit, named queries, long-form text and an empty result.
+
 ### Register articles and inspect resolved metadata
 
 `series.json` lists the articles and holds series-wide metadata:
@@ -550,7 +673,10 @@ without blocking, while `build` rejects malformed declarations.
     "scroll_duration": 200,
     "lang_tags": {"fr": "fr", "en": "en"}
   },
-  "themes": ["essential", "family:terrain"],
+  "appearance": {
+    "presets": ["builtin/standard"],
+    "themes": ["essential", "family:terrain"]
+  },
   "articles": [
     {"page_source": "apple-pie.md"}
   ]
@@ -648,7 +774,7 @@ among already-published choices without changing sources; an author selects
 the initial preset and available alternatives; a designer creates reusable
 themes or a complete Identity Kit.
 
-![The same first article rendered with native LightWebPres, the documentation identity and the composed Field Notes identity](generated/appearance-choices.png "Three actual Chromium views of the same article with different presentation choices, not photographs of devices.")
+![The same first article rendered with the native Built-in identity, the documentation identity and the composed Field Notes identity](generated/appearance-choices.png "Three actual Chromium views of the same article with different presentation choices, not photographs of devices.")
 
 ### Choose a design task
 
@@ -664,10 +790,10 @@ themes or a complete Identity Kit.
 
 ### Set initial reading choices
 
-Readers can change table handling and text fitting in **Menu**, alongside
-presentation zoom. Set their starting choices in `series.json`, not in a theme
-or article style. This complete `series_meta` fragment shows the defaults;
-merge it into the existing object rather than replacing other metadata:
+Readers can change table handling and text fitting in **Menu > Display settings**,
+alongside presentation zoom. Set their starting choices in `series.json`, not
+in a theme or article style. This complete `series_meta` fragment shows the
+defaults; merge it into the existing object rather than replacing other metadata:
 
 ```json
 {
@@ -675,7 +801,8 @@ merge it into the existing object rather than replacing other metadata:
     "table_mode": "clip",
     "text_fit": "fixed",
     "table_shrink": false,
-    "object_shrink": false,
+    "object_shrink_horizontal": true,
+    "object_shrink_vertical": true,
     "min_text_scale": 0.75,
     "min_table_scale": 0.85,
     "min_object_scale": 0.85
@@ -692,16 +819,21 @@ The other table modes are `clip` and `overflow`; the other text modes are
 [reader controls](#adjust-zoom-tables-and-text) explain each choice.
 
 `fixed` retains the theme's native responsive sizes; it disables content-based
-text fitting, not responsiveness. `uniform` measures all slides currently
-visible under the active tag, including a visible long-form article, and uses
-one shared reduction factor. `per-slide` solves each visible slide separately.
+text fitting, not responsiveness. `uniform` measures all tag-visible slides in
+the current article, including long-form and series-navigation slides, and uses
+one shared reduction factor. In combined-HTML output, readers can extend that
+scope to all articles in Display settings. `per-slide` solves each visible
+slide separately without propagating its factor to other slides or articles.
 Fitting measures actual browser layout at the current viewport and repeats
 after resize, theme/preset or tag changes, font loading and image loading.
 It never enlarges content above its chosen baseline.
 
-The two booleans independently enable shrinking tables and supported
-images/figures. They do not turn fitting into a general resizer for iframes,
-media players or buttons. Each minimum scale must be a finite JSON number from
+The two image booleans independently enable bounded horizontal and vertical
+shrinking of supported images/figures; both start enabled. Horizontal fitting
+uses the available content width, while vertical fitting uses one viewport
+height. Their smaller factor wins without changing the image ratio. Surrounding
+prose may still span several screens. They do not turn fitting into a general
+resizer for iframes, media players or buttons. Each minimum scale must be a finite JSON number from
 `0.5` to `1`, inclusive; text reduction also stops at 12 CSS pixels for text
 originally at least that large. Smaller authored text is not enlarged.
 Unknown keys, wrong types and invalid values are errors. A floor can leave a
@@ -752,13 +884,13 @@ layout fit, and do not treat a contrast report as a blanket accessibility grade.
 
 ### Identities, presets and themes
 
-**Identity** groups presentation choices. The native identity, **LightWebPres**, provides
+**Identity** groups presentation choices. The native identity, **Built-in**, provides
 `builtin/standard` and the minimal **Light** theme. **Commons** contains the
 global theme catalogue and presets that bind those themes to native layouts.
 An **Identity Kit** is a self-contained versioned collection of layouts,
 headers, footers, assets, typed themes and constrained structural CSS.
-**Preset** selects a layout/chrome configuration and a base **Theme**; it does
-not generate every possible combination of those resources.
+**Preset** selects a layout/chrome configuration, chrome placement and a base
+**Theme**; it does not generate every possible combination of those resources.
 
 LWP owns the page shell, navigation and JavaScript. Kit fragments have
 `{{content}}`, `{{slide_header}}` and `{{slide_footer}}` slots; the index
@@ -768,35 +900,59 @@ inside a kit keeps that kit's chrome. Kits cannot depend on Commons or other
 kits, extend them, or declare provenance, parentage or authenticity. Resource
 origins are computed by the loaders.
 
-The only persisted selection is `series_meta.presentation_preset`:
-`builtin/standard`, `commons/<id>` or `id@MAJOR.MINOR.PATCH/preset`.
-The identity is inferred from this reference. The selection belongs neither
-in article metadata nor in an `articles[]` entry. Omission selects
-`builtin/standard` implicitly. `init --preset builtin/standard` and
-`series preset set --preset builtin/standard` persist that explicit reference;
-plain `init` leaves the field absent. Neither native choice vendors resources.
+The persisted appearance declaration is the root `appearance` object. Its
+`presets` list uses `builtin/standard`, `commons/<id>` or
+`id@<version>/preset`. For an Identity Kit, `<version>` may be `X`, `X.Y`,
+`X.Y.Z` or `latest`: partial and `latest` selectors resolve the highest
+available matching version, while `X.Y.Z` stays pinned. The first item is the
+initial presentation and later items are explicit alternatives. The identity
+is inferred from each reference. Omission uses `builtin/standard`; `init --preset` and
+`series preset set` write the selected reference as the first item. The
+`themes` list controls the initial theme and its alternatives. Neither native
+choice vendors resources.
 
 ```json
 {
-  "series_meta": {
-    "presentation_preset": "corporate@1.0.0/brief"
+  "appearance": {
+    "presets": ["corporate@1.0.0/brief"],
+    "themes": ["preset", "essential"]
   }
 }
 ```
 
 The kit manifest's `label` names the identity, not whichever preset happens
 to be initial. Its optional `default_preset` names a local preset, otherwise
-the first preset in manifest order is used. `slide_layouts` and `slide_chrome`
-declare preset defaults in that manifest only.
+the first preset in manifest order is used. `slide_layouts`, `slide_chrome` and
+`slide_chrome_placement` declare preset defaults in that manifest only.
 
-`slide-layout`, `slide-header` and `slide-footer` work on all four slide types.
-They override the selected preset's defaults for one slide, not through an
-author JSON cascade. The preset's theme supplies the typed base unless
-`settings.conf` explicitly selects another theme. Precedence is: base theme
+For example, the tracked guide kit is labelled `LightWebPres`, while its
+`docs` preset is labelled `LightWebPres documentation`. The two labels name
+different controls in the Appearance picker.
+
+`slide-layout`, `slide-header` and `slide-footer` work on all five slide types.
+Existing kits may omit a dedicated `unit-index` layout and use standard with chrome.
+`slide-layout` overrides the selected preset's layout for one slide. For chrome,
+the optional root `series.json.chrome` layer
+comes after the preset, article `lwp:meta` values come after the series, and
+slide fields remain strongest. Textual chrome works with `builtin/standard`;
+named models and assets must be supplied by every selected Identity Kit. The
+preset's theme supplies the typed base unless
+`appearance.themes` selects another theme. Precedence is: base theme
 < `settings.conf` pins < article `style.*` < instance styles;
 `templates/custom.css` remains the final advanced CSS layer. Assets are
 published under `public/assets/presentations/<id>/<version>/...`, or embedded
 by `--inline-images`.
+
+The theme's slide chrome alignment is typed too: `slide-header.align` and
+`slide-footer.align` accept `left`, `center` or `right`. A document author can
+override the theme for one article with `style.slide-header.align` and
+`style.slide-footer.align` in its `lwp:meta` block; this changes the position
+of the chrome row, not the inherited content or model.
+
+`slide_chrome_placement` is optional and defaults to `edge`. Use `edge` when
+the preset's header and footer should use the available slide height as space
+around the content; use `content` when those slots belong in the normal flow of
+the selected layout. It is a preset structural choice, not a Theme property.
 
 For a kit offering the `hero` variant, place overrides before the slide body:
 
@@ -809,29 +965,40 @@ slide-footer: ""
 `slide-layout` names a supported variant; `default` retains the preset's
 default. Chrome accepts text or a supported JSON model. Exactly `""` removes
 inherited chrome; an unquoted empty value is fatal, as is an empty layout.
+In `series.json`, `chrome` accepts `all` or slide-type maps, with direct
+`header`/`footer` keys as an `all` shorthand; JSON `null` also clears a slot.
 Do not move manifest-only `slide_layouts` or `slide_chrome` into author
-metadata; there is no article-level preset selection.
+metadata; there is no article-level preset selection. The series index has no
+chrome slots and is not wrapped by this cascade.
 
 ```bash
+./lightwebpres kit list
+./lightwebpres kit show builtin
 ./lightwebpres preset list
 ./lightwebpres preset show builtin/standard
 ./lightwebpres series preset my-series
-./lightwebpres series preset set my-series --preset builtin/standard --use-preset-theme
+./lightwebpres series preset set my-series --preset builtin/standard
 ./lightwebpres init my-series --preset builtin/standard
 ```
 
-`series preset set` vendors and selects without applying a starter. It
-preserves pins and `custom.css`; with an explicit `theme:` in `settings.conf`,
-it requires `--keep-theme` or `--use-preset-theme`, which removes that line.
-`--keep-theme` requires an explicit `theme:`. Kits live under
+`kit list` inventories complete native and external kits. `kit show` describes
+one kit's identity label, computed loading scope, path and resource summaries;
+partial and `latest` version selectors resolve the kit that would be selected.
+Both commands are read-only and do not include series-local kits; use
+`series preset` for the resources a series actually resolves.
+
+`series preset set` vendors and selects without applying a starter. It updates
+`appearance.presets` and preserves property pins and `custom.css`.
+`settings.conf` contains active property pins only; an old `theme:` line is
+rejected. Use `series theme set` to write `appearance.themes`. Kits live under
 `kits/<id>/<version>/` in a catalogue and
 `templates/kits/<id>/<version>/` once vendored.
 `LWP_IDENTITY_KITS_DIR` replaces the user catalogue location; an
 id/version collision shadows the entire kit. See `specifications.md`
 §9.9 for manifest, validation and security details.
 
-For a kit preset, `init --preset` validates and vendors the complete kit, writes the
-selector and generates settings from its theme. It applies the declared
+For a kit preset, `init --preset` validates and vendors the complete kit, writes
+the selector in `appearance.presets` and generates settings from its theme. It applies the declared
 starter unless `--no-starter` is passed. Neither option changes the meaning
 of the `template` commands. Choose an installed selector from `preset list`;
 `corporate@1.0.0/brief` is illustrative, not a supplied kit. Native selection
@@ -868,10 +1035,12 @@ For example, `templates/commons/presets/reading.json` contains:
 ```
 
 All five keys are required; no other key is accepted, including `starters`.
-The `id` matches the filename; `theme` is a global theme slug or `builtin:light`.
+The `id` matches the filename; `theme` is a global theme slug or `builtin:<slug>`.
+For example, `light` follows catalogue precedence, while `builtin:light` and
+`builtin:nord` force the shipped resources even when local themes shadow them.
 Select it with `./lightwebpres series preset set my-series --preset commons/reading`.
-If the series has an explicit theme, also choose `--keep-theme` or
-`--use-preset-theme`.
+If the series has an explicit theme, change `appearance.themes` or use
+`series theme set`; preset selection does not require a second flag.
 
 ### Grow a kit from native layouts
 
@@ -1026,19 +1195,19 @@ recipe filename becomes a runtime dependency.
 ### Keep alternate presentations available
 
 A series has one primary presentation, but a build can carry other named
-presets for the reader to choose without rebuilding. A kit or Commons primary
-also makes the compatible native `builtin/standard` available automatically, after
-the declared alternatives. Put other alternatives at the root of
-`series.json`, or pass them for one build:
+presets for the reader to choose without rebuilding. Put the complete ordered
+list in `appearance.presets`, or replace it for one build with
+`--presentation-presets`:
 
 ```json
 {
-  "series_meta": {
-    "presentation_preset": "lightwebpres-docs@0.1.0/docs"
-  },
-  "presentation_presets": [
-    "builtin/standard"
-  ]
+  "appearance": {
+    "presets": [
+      "lightwebpres-docs@0.1.0/docs",
+      "builtin/standard"
+    ],
+    "themes": ["preset", "essential"]
+  }
 }
 ```
 
@@ -1046,23 +1215,31 @@ the declared alternatives. Put other alternatives at the root of
 ./lightwebpres build my-series --presentation-presets builtin/standard
 ```
 
-The primary preset is always emitted first and remains the no-JavaScript
-fallback. The CLI list overrides the JSON list; it adds alternatives rather
-than replacing the primary. Duplicate selectors are removed, and an unknown
-selector fails before output is written. The preset must be available in the
-effective catalogue. Listing `builtin/standard` explicitly is optional for a
-kit or Commons preset. If a slide uses a kit-only `slide-layout`, `slide-header` or
-`slide-footer`, the implicit default is omitted with a warning; explicitly
-requesting `builtin/standard` keeps the normal validation error.
+The first preset is emitted first and remains the no-JavaScript fallback. The
+CLI list replaces the configured list for that invocation, and its first item
+becomes primary. Duplicate selectors are removed, and an unknown selector
+fails before output is written. The preset must be available in the effective
+catalogue. `builtin/standard` must be listed explicitly when it is wanted; a
+named kit-only layout variant or chrome model makes that explicit request fail
+validation, while textual chrome remains available natively.
 
-When alternatives exist, **C** opens the Appearance picker with
-**Identity**, **Preset** and **Theme** controls. The selected preset changes the whole deck,
-including the index, and lasts across pages in the current browser session. It
-does not edit the series. If `settings.conf` names an explicit `theme:`, that
+When a real Identity Kit is published, **C** opens the Appearance picker with
+**Identity**, **Preset** and **Theme** controls. These axes remain available
+when the reader selects native `builtin/standard`. Without a published kit,
+even with Commons presets, **C** offers only **Theme**, with theme-specific
+labels and help. Preset metadata alone does not expose Identity/Preset axes,
+and hidden Commons preset choices are not restored from the browser session.
+
+An available preset choice changes the whole deck, including the index, and
+lasts across pages in the current browser session. It
+does not edit the series. If `appearance.themes` names an explicit theme, that
 theme remains fixed; otherwise the preset's typed theme follows the selected
-presentation until the reader chooses an explicit theme. **Follow preset**
-resets that explicit runtime choice. All themes of every selected kit are
-published under kit-qualified names, even if no selected preset uses them.
+presentation until the reader chooses an explicit theme. In kit-aware mode,
+**Follow preset** resets that explicit runtime choice. In theme-only mode,
+there is no Follow preset option: the actual theme is selected, and choosing
+the primary theme restores the author's base appearance. All themes of every
+selected kit are published under kit-qualified names, even if no selected
+preset uses them.
 
 For example, a runtime theme ID is
 `kit:lightwebpres-docs@0.1.0/docs`, distinct from a global theme slug. An asset
@@ -1070,12 +1247,23 @@ reference inside that kit is `presentation:mark`, not a filesystem path or a
 reference into another kit. Keep those namespaces separate from the persisted
 preset selector `lightwebpres-docs@0.1.0/docs`.
 
-The **Applicable**, **Current identity** and **All** filters only narrow
-published choices. Applicable means typed compatibility, not brand matching;
-Current identity means resource ownership. Identity labels stay fixed when
-the preset or theme changes. The initial/default marker describes a selection,
-not another identity. The picker does not invent a cross-product of presets
-and themes or fetch additional catalogue entries.
+The **Show themes** filter offers **Applicable**, **Current identity** and **All** to narrow
+published choices. Applicable means typed compatibility, not brand matching.
+For native Built-in, Current identity includes published Commons/global
+themes, Light and native custom variants, but excludes foreign kit themes.
+For a real kit, it includes that kit's qualified themes and custom variants,
+not unowned global themes or another kit's themes. Commons availability to
+native `builtin` does not declare kit membership or make Commons an identity.
+Identity labels stay fixed when the preset or theme changes. The initial/default
+marker describes a selection, not another identity. The picker does not invent
+a cross-product of presets and themes or fetch additional catalogue entries.
+
+Theme subtitles show the family, identity label (or Commons collection) and
+loading origin: **Built-in**, **Installed**, **User** or **Series-local**.
+Built-in covers both shipped Commons themes and native Light; it does not make
+Commons an identity. Raw origins are `builtin`, `installed`, `user` and `series`;
+palette credits remain separate in `source`. A Commons preset's theme can have
+a different origin from the descriptor that selected it.
 
 For color and typography changes, choose the smallest value override that
 does the job before adding CSS rules.
@@ -1090,15 +1278,18 @@ background is light or dark, and what hue that background carries.
 ./lightwebpres theme list                                     # the whole catalogue, with facets
 ./lightwebpres theme list --family terrain                    # one editorial family
 ./lightwebpres theme list --polarity dark --hue green          # just the ones you mean
+./lightwebpres theme list --origin user                       # effective user themes
 ./lightwebpres theme gallery                             # every theme, rendered
 ```
 
-The Commons theme catalogue combines the embedded themes with complete UTF-8 `.conf`
+The theme catalogue combines native Light and shipped palettes with complete UTF-8 `.conf`
 snapshots from the installed and user roots; a series can add its own
 `templates/themes/` snapshots on top. `LWP_THEMES_DIR` replaces the user root.
-The order is embedded, installed, user, series, and a collision replaces the
-whole lower entry rather than inheriting it. Use `builtin:<slug>` to select an
-embedded theme hidden by a local file.
+Every entry has a bare slug, including `light`, and a computed loading origin.
+The order is builtin < installed < user < series; a collision replaces the
+whole lower entry rather than inheriting it. Use `builtin:<slug>` to force a
+shipped theme hidden by a local file. `builtin/standard` keeps its explicitly
+native Light theme; selecting bare `light` follows ordinary precedence.
 
 Installed themes live under `<prefix>/share/lightwebpres/themes/` for FHS
 installations, or a sibling `themes/` beside a standalone executable. The
@@ -1114,23 +1305,26 @@ Apply one at init time, or change your mind later:
 ./lightwebpres series theme set my-series --theme crimson
 ```
 
-A theme is a word in a data file: `series theme set` rewrites the one `theme:`
-line of `templates/settings.conf` and nothing else. No CSS is touched —
-the stylesheet is composed in memory at every build.
+A theme is a selector in `series.json`: `series theme set` writes the first
+item of `appearance.themes` and nothing else. `templates/settings.conf` holds
+property pins, not a theme selection. No CSS is touched — the stylesheet is
+composed in memory at every build.
 
-By default, the build embeds the essential runtime theme bundle for the
-reader; `--no-essential-theme` opts out, while explicit selections add to or
-shape the catalogue:
+When `appearance.themes` is omitted, the build embeds the essential runtime
+theme bundle for the reader; `--no-essential-theme` opts out. Explicit lists
+choose and order their own catalogue:
 
 ```bash
 ./lightwebpres build my-series --lang en --themes print-ink,print-grey
 ./lightwebpres build my-series --lang en --themes all
 ```
 
-Or keep the selection in the root of `series.json`:
+Or keep the selection in `appearance.themes` in `series.json`:
 
 ```json
-"themes": ["essential", "background:light", "bgh:red"]
+"appearance": {
+  "themes": ["essential", "background:light", "bgh:red"]
+}
 ```
 
 `essential` embeds Monochrome, Monochrome Night and Print Ink. A selector
@@ -1149,17 +1343,21 @@ Create or make a theme portable explicitly:
 
 `theme create` writes a complete editable snapshot, `theme migrate` keeps only
 the selected theme and explicit pins in an old scaffold, and `theme vendor`
-copies complete snapshots into the series. No theme file uses `extends`.
+copies complete snapshots into the series. It skips the native Light resource,
+but copies a local theme shadowing bare `light`. Selecting two distinct origins
+for one output slug is refused before writes, even with `--force`; export one
+of them under a new slug with `theme create` when both are needed. No theme file
+uses `extends`.
 
-The effective theme in `templates/settings.conf` is always included as the
-first base choice, even if it is not in the list. When that file has property
-pins, the first runtime choice is named `custom(<theme>)` and the raw base
-theme is also present; those settings pins apply only to the custom choice.
-The setting is read at build time, so an author's edit remains the source of
-truth. `style.*` page properties and theme variables declared in `custom.css`
-are left alone while a reader switches. **C** opens the searchable Appearance
-picker when the build carries presentation or theme alternatives, and otherwise
-has nothing to open.
+When `appearance.themes` is absent, the default is `["preset", "essential"]`.
+When it is present, the list is exact: `preset` follows the selected preset,
+the first individual theme fixes the initial theme, and `all`, `essential` or
+facet selectors add ordered alternatives. `--themes` replaces the configured
+list for one build; `--no-essential-theme` changes only the omitted default.
+Property pins in `settings.conf`, `style.*` page properties and variables in
+`custom.css` are left alone while a reader switches. **C** opens the picker
+when the build carries presentation or theme alternatives, and otherwise has
+nothing to open.
 **M** opens the global presenter menu; the same menu is available from the
 bottom-right navigation button. The selection lasts for the other pages of
 the same deck in the current browser session. The session key includes the
@@ -1167,8 +1365,8 @@ deck identity and catalogue digest, so another deck on the same origin or a
 changed local snapshot cannot reuse an old choice.
 Each theme choice previews its
 resolved background, including its gradient, with matching foreground ink.
-The menu actions carry icons and their keyboard shortcuts, including **I** on
-Scroll. In the theme
+The menu actions carry icons and their keyboard shortcuts, including **D** for
+Display settings and **I** on Scroll. In the theme
 picker and that presenter menu, focus starts at the first useful control.
 In the presenter menu, left/right stay on the current row while up/down move
 to the nearest control on the adjacent rendered row. `Tab`, `Home` and `End`
@@ -1196,9 +1394,11 @@ pages. Inspect the actual page after customization.
 The catalogue includes original palettes and ports such as Nord, Dracula,
 Solarized, Gruvbox and Catppuccin. `family` uses `desk`, `light`, `terrain`,
 `heat`, `pop`, `ported`, `print`; polarity and background hue are computed.
-The [compact catalogue](generated/themes-gallery.png) gives an overview;
-open [the HTML gallery](generated/themes-gallery.html) in a browser to filter
-real covers, cards with notes, page-wide notes and long-form text.
+The [compact catalogue](generated/themes-gallery.png) gives a colour-first
+overview of the covers. The [featured comparison](generated/themes-featured.png)
+shows three themes with both a cover and a standard card; open [the HTML
+gallery](generated/themes-gallery.html) in a browser to filter real covers,
+cards with notes, page-wide notes and long-form text.
 
 ### Why essential themes ship by default
 
@@ -1228,7 +1428,7 @@ Opt out of the automatic essential-theme bundle:
 ```
 
 The flag removes only that automatic bundle. Explicit `--themes` or
-`series.json["themes"]` choices, published preset alternatives and selected
+`series.json["appearance"]["themes"]` choices, published preset alternatives and selected
 kits' themes remain available. An Identity Kit can therefore still offer the
 Appearance picker with this flag. Without it, the essential three ship on
 every build, deduplicated against the primary theme, so a series whose
@@ -1269,6 +1469,8 @@ Any property, scoped to that page only:
 page_title: The apple pie
 style.cover.bg.angle: 90deg
 style.page.content-max: 60ch
+style.slide-header.align: center
+style.slide-footer.align: right
 ```
 
 And `fact-variant: warning` on a standard slide gives that one fact box a
@@ -1304,19 +1506,14 @@ error pointing at the file and key. An empty value on a known property,
 such as `page.bg:`, removes that pin and lets the selected theme provide
 the value; an unknown key is still an error.
 
-Three properties people look for by name: **`page.content-max`** is the
-text column width, `84vw` by default — proportional to the window, with
-no ceiling, so a deck shown full screen uses the screen. Every type size
-is proportional too — the kicker, the fact label, the key figure's caption
-and the slide number as much as the title — which is what keeps the line
-length steady and the proportions between them fixed as the screen
-grows. Each size has a floor in pixels, and the floor is what governs a
-phone. **`page.block-max`** is the width of the things that are not
-running text — a table, a code block, a figure — sized by what they hold
-rather than by a count of characters; it carries a floor as well as a
-ceiling — `min(84vw, max(1100px, 102vmin))` — so a table grows with the
-text inside it and still stops before the window edge.
-**`page.hyphens`**
+Two properties people look for by name: **`page.content-max`** is the
+shared width of running text, tables, code blocks and figures, `84vw` by
+default — proportional to the window, with no ceiling, so a deck shown
+full screen uses the screen. Every type size is proportional too — the
+kicker, the fact label, the key figure's caption and the slide number as
+much as the title — which is what keeps the line length steady and the
+proportions between them fixed as the screen grows. Each size has a floor
+in pixels, and the floor is what governs a phone. **`page.hyphens`**
 (`manual | auto`) controls whether words break at end of line; it is
 `manual`, and nothing turns it on for you.
 
@@ -1372,28 +1569,57 @@ use the controls below to present it one slide at a time. The index uses the
 same controls, stepping one article card at a time.
 
 Use **H** for help, or open Menu in the bottom-right corner on touch. **L**
-selects an available content variant; **C** opens Appearance when alternatives
-were included. Identity, Preset and Theme choices change your view without
-editing the author's files. Select **Follow preset** to undo a separate theme
-choice. No control fetches a theme or preset the author did not publish.
+selects an available content variant; **C** opens Appearance when a kit was
+published, or Theme in a native/Commons-only publication with theme alternatives.
+These choices change your view without editing the author's files. In
+Appearance, **Follow preset** undoes a separate theme choice; in Theme, choose
+the primary theme to restore the author's base appearance. No control fetches
+a theme or preset the author did not publish.
 
 ### Adjust zoom, tables and text
 
-Open **Menu** with **M** or the bottom-right Menu button. These controls work
-with a mouse, keyboard or touch; no source edit or rebuild is needed:
+Open **Menu** with **M** or the bottom-right Menu button, then choose
+**Display settings** (**Affichage** in French). This opens a dedicated
+submenu; **Back to main menu** or **Escape** returns to the main menu with focus on that
+item, while clicking outside closes the submenu. These controls work with a
+mouse, keyboard or touch; no source edit or rebuild is needed:
+
+The presenter menu groups related actions in rows: Display settings with
+fullscreen and appearance, the previous/index/next navigation trio, reading
+tools, sharing/help, and the three pause screens. On a wide menu, hidden
+actions do not shift another group; the pause actions are visibly black, white
+and themed.
 
 | Control | What it changes |
 |---|---|
-| Presentation zoom: **-**, **+**, **Reset** | Reduce, enlarge or return to 100%; the current percentage is shown. Keyboard equivalents are **-**, **+**, **=**. |
+| Presentation zoom: **-**, **+**, **Reset** | Reduce or enlarge presentation text and images, or return to 100%, without scaling the slide frame or controls; the current percentage is shown. Keyboard equivalents are **-**, **+**, **=**. |
 | Wide tables | **Hide what does not fit** (`clip`, default), **Allow overflow** (`overflow`), or **Scroll inside the table** (`scroll`). **O** cycles in that order. |
 | Text size | **Keep the chosen size** (`fixed`, default), **Reduce all slides together** (`uniform`), or **Reduce each slide as needed** (`per-slide`). **A** cycles in that order. |
+| Uniform fit scope | Combined-HTML output only, while text size is `uniform`: **Current article** (default) or **Entire series**. |
 | Reduce tables as needed | Independently allow bounded table shrinking; off by default. |
-| Reduce images as needed | Independently allow bounded shrinking of supported images/figures; off by default, not a control for arbitrary embedded widgets. |
+| Reduce images to fit width | Independently allow bounded shrinking of supported images/figures to their available content width; on by default, not a control for arbitrary embedded widgets. |
+| Reduce images to fit height | Independently allow bounded shrinking of supported images/figures to one viewport height; on by default, without counting surrounding prose. |
 
 The author can choose different starting settings and reduction limits.
-Closing and reopening Menu keeps your choices in this loaded page. Reading
-choices and presentation zoom are page-local, not saved across pages or reloads;
-they do not change the author's files.
+Your table mode, text fitting, table/image shrink switches and presentation
+zoom are saved in browser `localStorage` for this output directory on the
+same origin. They follow you between articles and the index and survive
+reloads; another output directory has separate preferences. Author-defined
+minimum reduction limits are not saved as reader preferences. No choice
+rewrites `series.json` or other author files. Invalid saved data or unavailable
+storage falls back to the author's initial settings and 100% zoom; controls
+still work in the loaded page if saving is blocked. Persistence depends on
+browser storage availability, and `file:` URLs can behave differently from
+served HTTP(S) pages and across browsers. Appearance choices keep their
+separate browser-session contract.
+
+In French, the scope control is **Portée de la réduction uniforme**, with
+**Article courant** and **Série entière** as its choices. In combined-HTML output,
+scope is saved separately from the other reading settings for the same output
+directory. Missing or invalid
+stored scope, or blocked storage reads, starts with **Current article**;
+the control remains usable if saving is blocked. It is a reader preference,
+not a `series_meta.reading` field, and does not affect multipage output.
 
 Choose **Scroll inside the table** to read every column of a wide table within
 its own viewport. Focus that region to use arrow keys, or scroll it horizontally
@@ -1405,37 +1631,55 @@ Allow overflow removes that local clipping but may extend beyond the slide.
 
 Text fitting starts from the chosen theme's responsive sizes. **Keep the chosen
 size** means no content-based reduction, not a fixed pixel size at every
-viewport. Shared reduction considers every currently visible slide under the
-active tag, not just the slide on screen; a visible long-form article can drive
-the whole group to its floor. Independent reduction affects only slides that
-need it. Both use actual browser measurements and recalculate when the viewport,
-theme, preset, tags, fonts or loaded images change. If the minimum size still
+viewport. Shared reduction considers every tag-visible slide in the selected
+scope, not just the slide on screen. **Current article** covers the active
+article; **Entire series** includes tag-eligible slides across all articles,
+even those not currently open. The shared factor is the smallest measured
+factor, respecting each article's styles, preset and settings pins. Long-form
+and series-navigation slides participate even when they remain too large at
+the minimum, so one can drive the whole group to its floor. Independent
+reduction affects only slides that need it; fixed sizing does not fit content.
+Both fitting modes use actual browser measurements and recalculate when the
+viewport, theme, preset, tags, fonts or loaded images change. If the minimum size still
 does not fit, the slide remains readable by scrolling; fitting never removes
 text or table cells to make a slide pass.
 
-When fitting or shrinking is enabled, Menu reports how many visible slides
-still need scrolling. It does not put a warning over the presentation itself.
+Series-wide measurement supports static article content. If an eligible article
+contains executable HTML, embedded media, frames or custom widgets, the control
+returns to **Current article** and names the article that prevents measurement.
+Inactive articles are measured in script-disabled, isolated documents; the
+active article, text selection and media state stay in place. Author CSS that
+depends on the surrounding control shell is not guaranteed to measure identically.
 
-Presentation zoom is separate, deliberate magnification. Fitting is calculated
-at 100% presentation zoom, so zooming in can create overflow rather than being
-silently cancelled by fitting. Ctrl/Cmd+plus/minus and native browser pinch
-zoom remain the browser's controls, not a custom LWP pinch gesture.
+When fitting or shrinking is enabled, Display settings reports how many visible
+slides still need scrolling. It does not put a warning over the presentation itself.
+
+Presentation zoom changes content font sizes, line heights and images, not
+the page root's CSS zoom. Frame widths, padding, borders and minimum heights
+keep their normal responsive geometry; the controls neither shrink nor grow
+with presentation zoom. At 100%, native responsive sizing remains in effect.
+Long content can still grow a slide or require scrolling. Fitting is calculated
+at 100% before the manual zoom factor is applied, so zooming in can create
+overflow rather than being silently cancelled by fitting. Ctrl/Cmd+plus/minus
+and native browser pinch remain browser zoom, not a custom LWP pinch gesture.
+Browser emulation is not verification on a physical device.
 
 ### Keyboard
 
 | Key | Action |
 |---|---|
-| ↓ / PageDown / → | Next slide — on the index, next article card |
-| ↑ / PageUp / ← / Backspace | Previous slide — on the index, previous article card |
+| ↑ / ↓ / ← / → | Native page scrolling; focused foreground surfaces and local tables keep their own scroll |
+| PageDown / PageUp / Backspace | Next / previous slide; on the index, next / previous article card |
+| Space / Shift+Space | Next / previous reading step: slide, navigation card or bounded scroll within a long slide |
 | Home | Beginning of the page — first slide on an article; top on the index |
 | Ctrl/Cmd+Home | Back to the series index — on the index: top of the page |
 | End or Ctrl/Cmd+End | Last slide. On the index: last article card |
-| + / - / = | Enlarge / reduce / reset the page zoom (the page only; Ctrl/Cmd +/- remains the browser zoom) |
+| + / - / = | Enlarge / reduce / reset presentation content zoom; Ctrl/Cmd +/- remains browser zoom |
 | O | Cycle wide tables: clip, overflow, local scroll |
 | A | Cycle text fitting: fixed, uniform, per-slide |
 | F | Fullscreen (Esc to exit) |
 | I | Toggle between the configured smooth slide glide and an instant jump |
-| C | Open Appearance: the published identities, presets and themes |
+| C | Open Appearance when a kit is published, otherwise Theme; published choices only |
 | M | Open the presenter menu |
 | S | Open sharing for the series, article or current slide |
 | B | Black pause screen (press again to dismiss) |
@@ -1447,16 +1691,38 @@ zoom remain the browser's controls, not a custom LWP pinch gesture.
 | H | Open the help overlay, which lists every key on this table |
 | Esc | Leave fullscreen; also closes the speaker panel |
 
+While the theme picker is open, typing an unmodified letter focuses its search
+field and starts filtering. Escape closes the picker.
+
 Every navigation action leaves its selected target visible. An index card or a
 series-navigation card is kept entirely inside the viewport when it fits. A
 slide taller than the screen is the necessary exception: it enters with its
 top aligned to the top of the viewport, then its bounded reading steps finish
 with its top or bottom aligned to the corresponding viewport edge.
 
+Space and Shift+Space follow the bounded reading journey, including focused
+cards on the series index, series-navigation slides and unit indexes. Enter
+follows the focused card's link; Space does not activate it. Ordinary links
+retain the browser's Space/Shift+Space scrolling. Buttons, form fields and
+editable text keep their own Space behaviour, and Ctrl/Cmd/Alt+Space is not a
+deck shortcut. Holding Space uses the repeat cooldown. PageUp/PageDown and the
+navigation buttons change slides directly rather than entering that journey.
+Over one of those card lists, the vertical wheel selects one adjacent card,
+keeps its outline visible, and never opens it; Enter or a direct left click
+follows the link. At the first and last card, the wheel returns to native page
+scrolling. A mouse-only reader can hold the left button for 500 ms on that list
+to follow the selected card, even if the pointer is still over another card;
+radial movement beyond 4 CSS px, text selection, modifiers, tables, competing
+help/fullscreen gestures, touch and pointer cancellation cancel the hold.
+Elsewhere, the wheel always keeps its native reading role.
+A second mouse click during a glide remains a mouse-specific jump, not a
+keyboard shortcut.
+
 When the help overlay is open, its scrollable foreground owns the arrow,
 PageUp/PageDown, Home/End and Space keys. The same is true of the speaker
 panel when it has focus; while that panel is merely open and unfocused, the
-arrows keep navigating the deck.
+arrows keep scrolling the page. Focused speaker notes retain Space even when
+they fit without scrolling.
 
 The B/W/T pause screens hide the slide so the audience's eye comes back
 to the speaker — the same feature PowerPoint and Keynote call "blank".
@@ -1513,6 +1779,11 @@ without screen clipping or local scroll limits, and runtime fitting scales and
 presentation zoom are cleared for print. The screen choices return afterwards;
 print expansion does not guarantee that a wide table fits the physical paper.
 
+In combined-HTML series output, printing includes only the active article with
+its current tag filter, never the whole collection. If the series contents
+view is active, only those contents print. Switch to the intended article
+before opening print preview.
+
 For black ink on white, press **C** and select **Print Ink** before opening
 the print dialog. It is included by default in the essential theme bundle;
 printing does not switch to it automatically.
@@ -1528,19 +1799,23 @@ assume a long-form article fits on one physical sheet.
 
 | Gesture | Action |
 |---|---|
-| Single click on content | Next slide (configured glide, 200ms default) |
-| Right-click on content | Previous slide (configured glide, 200ms default) |
+| Single left click on article background | Next slide (configured glide, 200ms default) |
+| Right-click on article background | Previous slide (configured glide, 200ms default) |
+| Vertical wheel over an index, series-navigation or unit-index list | Select the adjacent card without opening it; native scrolling resumes at either edge |
+| 500 ms left press on a card list after wheel selection | Follow the selected card; movement, text selection, modifiers, tables, competing help/fullscreen gestures, touch and pointer cancellation cancel it |
 | Click during the glide | Jump straight to that click's target |
 | Middle button anywhere | Exit fullscreen on its own; to enter, press the middle button, then click left inside the window |
 | Click in the bottom-right corner | Toggle the navigation buttons (hide/show) |
 
 Clicks on links, images, buttons, and the share popover are not
-intercepted — they keep working. The right-click to go back is the
+intercepted — they keep working. A direct left click on a card follows its
+link; an index-background click still moves through the card journey. The
+right-click to go back is the
 remote-mouse use case: the speaker with a wireless mouse in hand
 left-clicks to advance, right-clicks to go back — two distinct buttons,
 no aiming. The native context menu is suppressed on slide content so
 right-click is a clean back gesture. A click lands instantly on the
-next card and glides to it over the configured duration (200 ms by default);
+next slide and glides to it over the configured duration (200 ms by default);
 a click that arrives while the
 deck is still gliding does not wait — it jumps straight to its target,
 so two clicks in quick succession land two pages on, and a right-click
@@ -1548,8 +1823,8 @@ during the glide returns you to the card you left. The middle button
 only leaves fullscreen by itself: browsers refuse `requestFullscreen()`
 from any non-left event, so entering is a two-step gesture — middle
 button to arm the intent, then a left click inside the window (a right
-click in the same window goes to the index instead). The wheel itself
-keeps scrolling; the ⛶ button and F stay direct entries. Esc exits
+click in the same window goes to the index instead). Outside navigation lists,
+the wheel keeps scrolling; the ⛶ button and F stay direct entries. Esc exits
 fullscreen. The cursor hides after 1 second of idleness in fullscreen.
 A left click on an existing selection just dismisses the highlight —
 no step — and a right-click on a selection opens the browser's own
@@ -1567,9 +1842,18 @@ steps: the deck never treats a double click as anything else.
 | Press and hold | Select text and open the copy menu — the deck does not take it |
 | Pinch | Native browser zoom; not presentation zoom or slide navigation |
 
-In a table set to **Scroll inside the table**, touch gestures scroll the table
-instead of changing slides. Browser touch emulation can check event handling;
-it is not evidence of pinch behavior on a physical phone or tablet.
+In a table set to **Scroll inside the table**, a brief tap or left click on a
+plain cell advances just like ordinary content. On a table taller than the
+viewport, each step scrolls a bounded distance within the slide; only after its
+bottom is reached does the next step enter the next slide. No rows are removed.
+Drag to scroll the table instead: even a drag at a horizontal edge does not
+advance the deck. Long press, text selection, pinch, links, images and native
+controls keep their browser behavior. Focused-table keys and the wheel remain
+local; right-click keeps the native context menu. Table taps do not participate
+in the navigation-visibility double-tap gesture.
+
+Browser touch emulation can check event handling; it is not evidence of pinch
+behavior on a physical phone or tablet.
 
 ### Navigation buttons
 
@@ -1599,7 +1883,8 @@ that bar rather than the middle button: the middle button alone only exits
 fullscreen — entering is the two-step, middle button then a left click. With
 a mouse, clicking the corner (not a button) toggles their current visibility.
 
-Text selection, long press and the copy menu remain the browser's. The
+Touch long press, text selection and the copy menu remain the browser's everywhere;
+only the fine-pointer mouse gesture on a wheel-selected card list is intercepted. The
 navigation double tap is recognized from touch events themselves, not from
 the delayed clicks a browser synthesizes, so those clicks cannot advance the
 deck after the first tap has been restored.
@@ -1633,11 +1918,11 @@ switches between that configured duration and `0` and shows the active value.
 | Symptom | Reader action |
 |---|---|
 | The controls vanished | Move the mouse or double-tap on touch; idle controls fade intentionally. |
-| The text is hard to read | Open Appearance and try Monochrome, Monochrome Night or Print Ink if supplied; use page or browser zoom. |
-| A table loses its rightmost columns | Open Menu and choose **Scroll inside the table**, or press **O** until that mode is selected; the HTML still contains every cell. |
-| A slide is too tall | Try **Reduce each slide as needed** in Menu; optionally enable table/image shrinking. Scroll any content that still exceeds the author's reduction floor. |
+| The text is hard to read | Open Theme or Appearance and try Monochrome, Monochrome Night or Print Ink if supplied; use presentation or browser zoom. |
+| A table loses its rightmost columns | Open **Menu > Display settings** and choose **Scroll inside the table**, or press **O** until that mode is selected; the HTML still contains every cell. |
+| A slide is too tall | Try **Reduce each slide as needed** in **Menu > Display settings**; optionally enable table/image shrinking. Scroll any content that still exceeds the author's reduction floor. |
 | Every slide became smaller | **Reduce all slides together** includes all visible slides, even a long-form article. Choose independent reduction or **Keep the chosen size** instead. |
-| Enlarging the page causes overflow | Zoom is independent of fitting. Use **Reset** to return presentation zoom to 100%, or keep magnification and scroll. |
+| Enlarging presentation content causes overflow | Zoom is independent of fitting. Use **Reset** to return presentation zoom to 100%, or keep magnification and scroll. |
 | A language or article seems missing | Open the variant menu; a saved selection may differ from the author's initial choice. |
 | Arrow keys scroll a panel instead of the deck | Close help, or move focus out of the speaker panel. |
 | A numeric jump does nothing | It works on article decks of at least ten slides, not the index; there is no touch-number jump control. |
@@ -1687,22 +1972,28 @@ and render failures non-zero CI results. `--templates` limits the check to
 the presentation layer, including resolved styles, without rendering or
 per-article checks. It is cheaper than the full audit, which costs about a build.
 
-`verify` asks the other question: it rebuilds every article in memory and
-compares it against `public/` (ignoring build stamps and surrounding
-whitespace), exiting non-zero when output differs. Run it before `build` to
-catch a `public/` that was hand-edited or never rebuilt after a source change.
+`verify` prepares the same outputs as `build` in temporary storage and compares
+them against the published files. HTML and README comparisons ignore build
+stamps and surrounding whitespace; copied images and kit assets are compared
+byte for byte in both multipage and combined-HTML modes. It exits non-zero on
+drift or missing output. Run it before `build` to catch a publication that was
+hand-edited or never rebuilt after a source change.
+
+Build finishes rendering, asset reads, manifest checks and destination-conflict
+checks before replacing published files. These preparation errors preserve the
+previous output. Promotion is atomic per file, with bookkeeping last; a disk
+failure during promotion does not roll back an entire publication directory.
 
 Use the same supported rendering options as the build, including `--lang`,
-`--themes` and `--no-essential-theme`. **`verify` does not accept
-`--inline-images`** and cannot reproduce that build mode: embedded images or
-presentation assets can therefore report drift even with unchanged sources.
-Use a separate, non-inline build output for this CI check.
+`--themes`, `--no-essential-theme`, `--single-html [FILE]` and `--inline-images`
+when used. `verify` reproduces both inline-image and combined-HTML output; no
+separate non-inline build is needed for this CI check.
 
 ### Asking why a value is what it is
 
 Most of what ends up on a page was never written on that page: a title
 falls back through `series.json`, the meta block and the cover slide, a
-colour falls through `settings.conf`, the theme and the built-in
+colour falls through the appearance theme, `settings.conf` and the built-in
 defaults. When the result surprises you, ask:
 
 ```bash
@@ -1756,21 +2047,118 @@ source files are not published and existing output assets are left in place.
 files as data URIs, with no copied `img/` directory. Base64 adds roughly a
 third to image size before serving compression. Raw HTML images with relative
 paths cannot be inlined: the build names and rejects them rather than leaving
-references to an absent asset directory. Keep a non-inline output for `verify`.
+references to an absent asset directory. `verify --inline-images` reproduces
+this mode; `watch` accepts the option too. Declared kit images follow the same
+embedding rule.
 
-Output switches on `build` and `watch`: `--no-index` skips `index.html`,
+SVG is embedded as an `<img>` data URI with its original vector bytes, not
+inserted as interactive SVG DOM. Nested SVG resources are blocked in image
+rendering even when the parent SVG is served online. The engine reports a
+warning summary; `--verbose` adds source paths, line numbers and remediation.
+`--quiet` keeps warnings, and `audit --strict` may fail on them. Export a
+self-contained static SVG or replace nested references with SVG shapes; the
+engine does not fetch resources or rewrite the SVG. This inspection is not
+proof of offline completeness. CSS, fonts, scripts, media and arbitrary raw
+HTML dependencies are outside the image-embedding bundle.
+
+Output switches on `build`, `verify` and `watch`: `--no-index` omits series
+contents (the separate `index.html` in multipage output),
 `--no-readme` skips the series README, `--no-nav` leaves a placed `series-nav`
-without generated links, `--drafts-only` previews only drafts, and `--open`
-opens the result. `build --include-drafts` includes drafts alongside active
-articles; `verify` supports that selection too. `--slides-page-numbers on`
+without generated links. On `build` and `watch`, `--drafts-only` previews only
+drafts and `--open` opens the result. `--include-drafts` includes drafts alongside
+active articles on all three commands. `--slides-page-numbers on`
 engraves top-right numbering (off by default, independent of the live counter).
 
-A single article can set `page_dest: index.html` to become the directory's
-landing page; no redundant one-card index is then generated. In a multi-article
+In default multipage output, a single article can set `page_dest: index.html`
+to become the directory's landing page; no redundant one-card index is then
+generated. In a multi-article
 series that name is reserved when an index is generated. `--no-index` leaves
 it available. Duplicate destinations (case-insensitive), unsafe filenames,
 malformed JSON, missing slugs and duplicate slugs are fatal. Generated HTML
 is checked for tag balance before writing; that is not a security sanitizer.
+
+### Publish a series in one HTML file
+
+```bash
+./lightwebpres build my-series --lang en --single-html --inline-images
+./lightwebpres verify my-series --lang en --single-html --inline-images
+./lightwebpres build my-series --lang en --single-html collection.html --inline-images
+./lightwebpres verify my-series --lang en --single-html collection.html --inline-images
+./lightwebpres watch my-series --lang en --single-html collection.html --inline-images --serve --open
+```
+
+`--single-html [FILE]` accepts an optional filename on `build`, `verify` and
+`watch`. Without one, it derives a `.html` filename from `series_meta.title`:
+strip HTML, decode entities, lowercase, fold accents and replace punctuation
+with hyphens, retaining Unicode letters. For example, `Café & Climate` becomes
+`cafe-climate.html`. An empty result falls back to the series directory name,
+then `series`, never a translated "untitled" label. Automatic stems are limited
+to 100 characters and 200 UTF-8 bytes; reserved Windows names receive a
+`series-` prefix.
+
+An explicit bare `.html` or `.htm` filename takes precedence; paths, URLs and
+empty values are invalid. `--single-html=collection.html` is also supported.
+The root `build.single_html` value in `series.json` supplies the default
+combined filename when the CLI does not provide one; an explicit CLI filename
+still takes precedence.
+Before the positional series directory, the next separate argument is a
+filename only if it ends in `.html` or `.htm`; otherwise it remains the series
+directory. Use `build --single-html -- archive.html` for a series directory
+whose name looks like a filename. After the positional directory, any next
+non-option argument is treated as an explicit filename and validated.
+
+`--output` still selects the output directory. The explicit-name commands
+above produce `my-series/public/collection.html` by default; the first two
+use the title-derived name. Match the automatic or explicit choice in `verify`.
+`watch` rederives an automatic name when the series title changes; choose an
+explicit filename if the published address must stay stable.
+
+Omit `--inline-images` to keep supported images and presentation assets as
+copied files beside the combined
+HTML; include them when distributing it. Image embedding has the portability
+limits described above. Without `--single-html`, output remains multipage.
+
+The combined document opens on series contents by default. Readers deliberately switch
+to an article and back, rather than scrolling continuously through all articles.
+Only the active view is mounted in the DOM; inactive articles are stored as
+inert data. Styles, notes and IDs stay article-local. One root runtime remains
+in place, preserving fullscreen across article switches. Print uses the active,
+tag-filtered article, or only the series contents when that view is active.
+
+Add `--no-index` to omit series contents entirely and open the first published
+unit instead. One or several units are supported; `series-nav` and authored
+links still reach other units, without a generated back-to-index link. An empty
+published collection fails before writes. `Home` returns to the current unit's
+start; `Ctrl+Home` and the menu's **Start of series** return to the first unit.
+Source `unit-index` slides and `--unit-index` remain independent and unchanged.
+Use the same `--no-index` choice in `verify`.
+
+Any `templates/nav.js` must match the built-in runtime. Nonempty
+`templates/index_extra.html` is rejected when series contents are included;
+with `--no-index` it is unused and ignored. Arbitrary
+widget script lifecycles are unsupported. Use default multipage output for
+those extensions rather than expecting their scripts to restart on each switch.
+`--drafts-only` remains refused in combined-HTML mode.
+`--include-drafts`, `--no-nav` and `--no-readme` remain supported.
+`build --incremental ARTICLE` validates the target but rebuilds the complete combined
+file, not an incremental fragment.
+
+Do not change source `page_dest` values. Generated series README links point
+to `collection.html#lwp/a/<encoded page_dest>`. Article-local targets append
+`/<encoded local id>`; series contents use `collection.html#lwp/index`.
+With `--no-index`, sharing the series uses the physical URL without a hash,
+so it follows the first published unit after reordering. An incoming
+`#lwp/index` also resolves to that first unit, not a hidden contents view.
+For example, `collection.html#lwp/a/first-page.html/introduction` addresses
+the `introduction` target in `first-page.html`. Encode each component separately.
+
+### Review stale output
+
+The combined-HTML build manifest records the physical combined HTML file and
+copied images/presentation assets unless inlined, not one file per virtual
+article. Changing publication mode or the combined filename, including an
+automatic name after a title change, does not automatically remove old files
+or previously copied assets. They remain recorded for explicit cleanup.
 
 Removing an article from the array, marking it draft/ignored, or dropping an
 image reference does not erase an old published file. Review the manifest-based
@@ -1845,11 +2233,10 @@ python3 restored-series/lightwebpres verify restored-series --lang en
 python3 restored-series/lightwebpres build restored-series --lang en --output /tmp/lwp-restored-public --open
 ```
 
-Skip the initial `verify` if the backup has no generated output. An inline
-publication cannot be checked by `verify`; rebuild a separate non-inline
-output instead. Match any original theme, preset-alternative or typography
-flags rather than assuming the defaults in this example. `.lwp-cache/` is
-rebuildable state; retain output manifests with a published tree if you want
+Skip the initial `verify` if the backup has no generated output. Match the
+original `--single-html [FILE]`, `--inline-images`, theme, preset-alternative or
+typography flags rather than assuming the defaults in this example.
+`.lwp-cache/` is rebuildable state; retain output manifests with a published tree if you want
 `clean` to know which files it owns.
 
 ### Upgrade the executable and templates
@@ -1931,7 +2318,7 @@ python3 lightwebpres series slug my-series --format json
 python3 lightwebpres resolve my-series page_title --article first-page.md --format json
 ```
 
-`contract` returns `lightwebpres.slide-draft/1`, with required fields, allowed
+`contract` returns `lightwebpres.slide-draft/2` for five types, with required fields, allowed
 order, cardinality and parseable skeletons. Its generated slugs avoid those
 already declared in the named article; that is not a request to rename existing
 slides. Only run `series slug set` if filling missing slugs is authorized,
@@ -1948,13 +2335,13 @@ schema rather than guessing its meaning.
 
 | Interface | Contract or result | Consumer obligation |
 |---|---|---|
-| `contract --format json` | `lightwebpres.slide-draft/1` | Use the engine's field rules and skeletons. |
-| `status --format json` | `lightwebpres.series-info/4` | Preserve article order and inspect `source_read`, not only the exit code. |
+| `contract --format json` | `lightwebpres.slide-draft/2` | Use the engine's field rules and skeletons for all five types. |
+| `status --format json` | `lightwebpres.series-info/5` | Preserve article order and inspect `source_read`, not only the exit code. |
 | `series tags --format json` | `lightwebpres.series-tags/1` | Check `default_output` and active-only per-tag `output`, not just tag names. |
-| `series preset --format json` | `lightwebpres.series-preset/2`, containing a `lightwebpres.presentation-preset/2` object | Read the nested `preset` selector and resources; `native_renderer` describes rendering, not the initial selection. |
+| `series preset --format json` | `lightwebpres.series-preset/3`, containing a `lightwebpres.presentation-preset/4` object | Read the nested `preset` selector and resources; `native_renderer` describes rendering, not the initial selection. The identity resource is under `identity`; `slide_chrome_placement` is the preset-owned structural placement. |
 | `build` | Non-zero on fatal structural/render errors | Read warnings too; exit 0 is not editorial approval. |
 | `audit` | Reports warnings and render failures; normally exits 0 | Read the report, or use `--strict` for a failing gate. |
-| `verify` | Non-zero on drift or failure | Match supported rendering flags; it cannot verify inline-image mode. |
+| `verify` | Non-zero on drift or failure | Match rendering flags, including `--single-html [FILE]` and `--inline-images` when used. |
 
 `status` can succeed with **incomplete source information**. A missing,
 unreadable or non-UTF-8 article stays in the report with `source_read: false`,
@@ -2007,15 +2394,16 @@ Do not rely on its in-memory files surviving a reload or closing the tab.
    testing. Verify the destination before entering a token: requests go to
    that instance directly.
 2. Choose **Pull**, then the build language and **Build**. Read the log before
-   proceeding. Pull downloads repository inputs; the local browser engine
+   proceeding. Pull downloads repository inputs at one immutable commit; the local browser engine
    builds them without sending content to a separate build service.
 3. Enter a useful commit message and choose **Push** only when you intend to
    modify that remote branch. Push sends sources and settings as well as
-   `public/`, excluding derived build-state files. It does not merge changes
-   or detect edits made on the branch since Pull: an old browser snapshot can
-   overwrite a colleague's newer source. Avoid concurrent branch edits during
-   this workflow; if remote inputs changed, save any local work separately,
-   pull again and rebuild before pushing. Inspect the resulting commits and,
+   `public/`, excluding derived build-state files and unchanged content. It
+   refuses a branch changed since Pull, checks file revisions during updates,
+   and verifies each confirmed commit's parent before advancing its snapshot.
+   On a conflict or uncertain result, save local work separately, Pull again
+   and rebuild; the client does not merge competing edits. A no-change Push
+   creates no commit. Inspect the resulting commits and,
    if configured, the hosting pipeline and published site. A push itself is
    not proof that hosting deployed successfully.
 
@@ -2107,25 +2495,38 @@ check it **before** rebuilding, so build does not erase evidence of drift:
 
 A fresh checkout with no committed output needs a build, not that initial
 drift gate. Match rendering options in `verify`, including language, themes
-and `--no-essential-theme`. It cannot reproduce `--inline-images`.
+and `--no-essential-theme`, plus `--single-html [FILE]`, `--inline-images`,
+`--unit-index`, `--unit-index-max-columns` and `--unit-index-selector` when used.
 
 ### Target builds and record build stamps
 
 ```bash
-./lightwebpres build my-series --lang en --only first-page.md
+./lightwebpres build my-series --lang en --incremental first-page.md
 ```
 
 For the author's rebuild-and-preview loop, use [watch](#preview-while-writing)
 in route 1; it does not reload the browser.
 
-`--only` targets one article only when the navigation cache is safe. It still
+`--incremental` targets one article only when the navigation cache is safe. It still
 refreshes derived outputs (index, README and assets according to options,
 manifest and cache); changes affecting index/navigation trigger a full build.
+With `--single-html [FILE]`, it validates the target and always rebuilds the
+complete combined document.
+The build also keeps a disposable per-page image inventory beside the
+navigation fingerprint. When a retained page's output hash matches, its local
+image references are reused instead of reparsing the HTML. A missing, corrupt
+or stale entry falls back to parsing that page; cache state is never author
+input and must not be edited.
 The cache is bound to its output directory. Switching output directories, or
 losing retained pages or declared assets, also triggers a full build rather
 than producing a partial site under a successful exit code.
 `--nav-cache path` relocates the fingerprint, normally `.lwp-cache/nav.json`.
 That cache is derived state and can be deleted, not hand-edited.
+For a build system, use this public executable command as the integration
+boundary: pass the changed article's `page_source` or `page_dest` to
+`--incremental`. The caller does not need to reproduce the cache or safety
+checks, and a normal full `build` remains the correct fallback when no single
+target is known.
 `--build-stamp` records version and time on the pages; `--build-stamp-minimal`
 keeps a marker without either and takes precedence. `status: draft` and
 `ignored` control which articles enter normal output (route 2).
@@ -2194,7 +2595,7 @@ in sync with whatever commands the version you are running knows about.
 | A title or color ignores your edit | `resolve my-series page_title --article first-page.md` or `resolve my-series kicker.fg` shows the winning and losing levels. |
 | An article is absent | Check registration, `status`, article tags and effective slides with `status` and `series tags`. |
 | An old page remains online | Review local `clean`, then remove stale files on the host too (route 5). |
-| `verify` reports drift after an unchanged build | Match rendering options; inline-image builds need a separate non-inline verification output. |
+| `verify` reports drift after an unchanged build | Match rendering options, including the combined filename and inline-image mode when used. |
 | Builder fails under `file://` or on `.mjs` | Serve the builder and check executable placement/MIME types (route 6). |
 
 ### Command routes

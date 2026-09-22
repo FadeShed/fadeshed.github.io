@@ -1,11 +1,11 @@
 <!-- lwp:meta -->
 page_title: Le texte, avec une structure légère — LightWebPres
-page_desc: Quatre types de fiches, des champs explicites et du Markdown libre.
+page_desc: Cinq types de fiches, des champs explicites et du Markdown libre.
 card_title: Le texte, avec une structure légère
-card_desc: Quatre types de fiches, des champs explicites et du Markdown libre.
+card_desc: Cinq types de fiches, des champs explicites et du Markdown libre.
 card_label: 03 / ÉCRIRE
 nav_title: Le texte, avec une structure légère
-nav_desc: Quatre types de fiches, des champs explicites et du Markdown libre.
+nav_desc: Cinq types de fiches, des champs explicites et du Markdown libre.
 ---
 
 <!-- lwp:slide:cover -->
@@ -19,7 +19,7 @@ summary: Une série contient des articles. Un article contient des fiches et, au
 <!-- lwp:slide -->
 slug: quatre-types
 kicker: LA STRUCTURE
-## Quatre types de fiches. Pas de type à inventer.
+## Cinq types de fiches. Pas de type à inventer.
 summary: Chaque fiche commence par un marqueur, porte un slug explicite et se sépare de la suivante par une ligne de trois tirets.
 source: <a href="reference/agent/skills/lightwebpres/SKILL.md">Skill de format · Slide types</a>.
 
@@ -29,6 +29,7 @@ source: <a href="reference/agent/skills/lightwebpres/SKILL.md">Skill de format �
 | `standard` | Le contenu : texte, chiffre clé, encadré, code, image ou tableau. |
 | `series-nav` | Les liens vers les autres articles, générés depuis la série. |
 | `full-article` | Un fichier Markdown de fond, inclus dans la même page. |
+| `unit-index` | Un sommaire généré pour l’unité logique, sans corps libre. |
 
 Le marqueur `<!-- lwp:slide -->` suffit pour une fiche standard. `series-nav` apparaît au plus une fois par article.
 

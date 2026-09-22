@@ -3,7 +3,7 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from PIL import Image,ImageDraw
-import argparse,io,zipfile
+import argparse,io,os,zipfile
 from qa import serve
 from build import refresh_manifest
 
@@ -11,7 +11,7 @@ def run(output,root):
     server,base=serve(output)
     try:
         with sync_playwright() as p:
-            b=p.chromium.launch(headless=True)
+            b=p.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM'))
             for lang,prefix in [('en',''),('fr','fr/')]:
                 shots=[]
                 for width,height,anchor in [(1280,800,'opening'),(390,844,'purpose')]:

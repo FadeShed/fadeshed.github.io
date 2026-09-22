@@ -101,7 +101,7 @@ gets its own entry and its own state**, however small.
 <!-- INDEX: généré par `python3 tools/decisions_index.py`. Ne pas éditer à
      la main : la source est la ligne de champs de chaque entrée. -->
 
-**à étudier** 10 · **à faire** 0 · **en cours** 1 · **terminé** 55 · **abandonné** 1 · **sans objet** 3
+**à étudier** 10 · **à faire** 0 · **en cours** 2 · **terminé** 59 · **abandonné** 1 · **sans objet** 3
 
 ### à étudier
 
@@ -119,6 +119,7 @@ gets its own entry and its own state**, however small.
 ### en cours
 
 - **B62** — Le cover Lava reste sauvegardé dans Lava hot
+- **B67** — Logical units, scoped selectors and resolution policies
 
 ### terminé
 
@@ -177,6 +178,10 @@ gets its own entry and its own state**, however small.
 - **B60** — Le zoom de présentation ne grandit pas le cadre des fiches
 - **B61** — Le redimensionnement repositionne la fiche courante
 - **B63** — Le lecteur peut changer d'enveloppe sans changer de source
+- **B68** — Identity Kit vocabulary and native identity boundary
+- **B69** — Canonical theme-resource index and appearance resolution
+- **B70** — Publication planning and revision-bound GitLab snapshots
+- **B71** — Author chrome independent of Identity Kits
 
 ### abandonné
 
@@ -674,12 +679,19 @@ typographic blocks.
 
 **État :** terminé
 
-**Done.** Ten align axes (`title1`, `title2`, `summary`, `fact`, `cover`,
-`table.head`, `table.cell`, `caption`, `article`, `highlight`), enum
+**Done.** Twelve align axes (`title1`, `title2`, `summary`, `fact`, `cover`,
+`table.head`, `table.cell`, `caption`, `article`, `highlight`,
+`slide-header`, `slide-footer`), enum
 `left | center | right | justify`, behaving like every other axis across
 layers 1–4. What left the skeleton is layout by fiat: the key figure
 centred with no recourse (**this closes B4**), table cells left, the
 figure caption centred.
+
+The two chrome axes deliberately expose only `left | center | right`.
+Headers and footers are flex rows rather than prose blocks, so their typed
+value controls `justify-content` for the item group and `text-align` for any
+wrapped text. `justify` remains a text-block value and is not silently given a
+different flex meaning.
 
 Two decisions worth keeping:
 
@@ -2609,7 +2621,7 @@ the opposite domain so a partial override cannot silently alter typography or
 interface behavior.
 
 The guards cover split precedence and validation, FHS discovery and its
-standalone boundary, runtime payloads, watch paths and `build --only`
+standalone boundary, runtime payloads, watch paths and `build --incremental`
 invalidations. The full suite passes with 1105 tests in 197 classes.
 
 ## B49 — La locale du navigateur choisit seulement l’interface
@@ -2665,7 +2677,7 @@ Après avoir composé les pages qu’il écrit ou qu’il conserve dans une
 reconstruction incrémentale, il relève leurs `src` locaux et ne copie que les
 fichiers référencés qui existent réellement. Cette même représentation rendue
 couvre les images Markdown, les figures, le contenu `full-article`, le HTML
-brut et les pages qui restent en place pour `--only` ou `--drafts-only`.
+brut et les pages qui restent en place pour `--incremental` ou `--drafts-only`.
 
 La copie reste additive : elle fusionne dans `public/img/` et ne supprime pas
 un fichier déjà présent. Le manifeste, lui, ne déclare que les fichiers que
@@ -2682,7 +2694,7 @@ inventaire.
 
 **Ce qui est vérifié.** Les tests couvrent les images inline, figures et
 inclusions, les fichiers inutilisés, les sorties additives, les builds
-`--only` et `--drafts-only`, le manifeste et les symlinks d’images. L’audit
+`--incremental` et `--drafts-only`, le manifeste et les symlinks d’images. L’audit
 conserve son comportement non bloquant, tandis que `--strict` compte ses
 nouveaux avertissements.
 
@@ -2808,7 +2820,7 @@ n'est atteinte qu'au mouvement suivant, alignée au haut de la fenêtre.
 Un défilement manuel peut néanmoins laisser une fiche adjacente partiellement
 visible. Elle n'est alors pas consommée : le prochain mouvement dans sa
 direction l'aligne d'abord et ne saute pas la fiche. Cette règle s'applique
-aux flèches, aux boutons, aux clics et aux balayages tactiles ; les nav-dots
+aux actions PageUp/PageDown et boutons, aux clics et aux balayages tactiles ; les nav-dots
 et la détection de fiche suivent le même état logique.
 
 **Ce qui est vérifié.** Le probe Playwright couvre le saut observé vers le bas,
@@ -2923,15 +2935,21 @@ navigateur.
 **Voir :** specifications.md §9.3.5 ; `lightwebpres` ;
 `tests/keyboard_nav_e2e.cjs`
 
-Le raccourci `+` agrandit le contenu de la page, mais ne doit pas transformer
-une fiche normale de 800 px en cadre de 880 px : `zoom` à la racine agrandit
-aussi les unités de viewport. La `min-height` du cadre est donc divisée par le
-facteur runtime avant ce zoom. Le contenu qui dépasse réellement cette boîte
-reste une fiche longue et conserve le parcours incrémental borné.
+Presentation zoom scales content, not the slide frame. The root-zoom approach
+compensated viewport height but still scaled viewport-relative content widths:
+at 390 pixels wide, the native fact box shrank from 327.6 to 163.8 pixels at
+50% zoom. Compensating only the outer slide's height was insufficient.
 
-**Ce qui est vérifié.** Le probe Chromium mesure une fiche normale à la hauteur
-du viewport après `+`, puis vérifie que le premier `ArrowDown` entre bien dans
-la fiche suivante ; les parcours des fiches réellement longues restent verts.
+The runtime now scales content fonts, line heights and images after optional
+fitting. Responsive frame widths, padding, borders and minimum heights retain
+their normal geometry. Font-relative image dimensions keep their pre-zoom font
+context so the manual factor applies once. Original inline declarations are
+restored on reset and print. Truly long content still grows and scrolls.
+
+**Guards.** `tests/zoom_geometry_e2e.cjs` measures native, documentation-kit and
+Field Notes frames at mobile and landscape sizes with 50%, 100% and 200% zoom.
+Reading and keyboard tests cover inherited typography, images, fitting,
+navigation, author styles and print restoration.
 
 ## B61 — Le redimensionnement repositionne la fiche courante
 
@@ -2945,16 +2963,17 @@ fenêtre passait de `1024×800` à `1024×600` : son haut se retrouvait à `-200
 et le lecteur voyait le milieu de la fiche. Le même défaut pouvait apparaître
 après le zoom de présentation, qui modifie lui aussi la géométrie.
 
-Le runtime regroupe maintenant les événements `resize` de la fenêtre et du
-`visualViewport` dans une frame, recalcule la fiche visible puis la replace au
-haut. Pendant un glissé, il conserve la destination déjà choisie au lieu de
-revenir à la fiche encore visible ; sur l'index, il révèle à nouveau la carte
-focalisée. Le parcours et les limites des fiches longues ne changent pas.
+Window resize is coalesced into one frame. Presentation cards are realigned
+to their top, while full articles retain their relative reading position,
+including across width/orientation changes. During a glide, navigation keeps
+the intended destination; the index reveals its focused card. Native
+visual-viewport pinch keeps the browser's focal point instead of scheduling
+a jump to the slide top.
 
-**Ce qui est vérifié.** Le probe Chromium vérifie `+`, `-` et `=` puis
-redimensionne une fiche longue active et exige que son bord haut revienne à
-`0px`; les scénarios existants de glissé, de fiches longues et d'index restent
-verts.
+**Guards.** Keyboard navigation verifies card alignment and glide targets.
+The reading-controls browser probe also verifies long-form reading position
+across zoom and viewport changes. These are Chromium checks, not a claim of
+physical-device or cross-browser certification.
 
 ## B62 — Le cover Lava reste sauvegardé dans Lava hot
 
@@ -3008,9 +3027,21 @@ dans `series.json`. L'axe des thèmes reste indépendant ; sans `theme:` explici
 le thème typé suit le preset, et avec une telle ligne il reste fixe. Un thème
 runtime explicite persiste jusqu'à **Follow preset**. Tous les thèmes de chaque
 kit sélectionné sont publiés avec qualification du kit, sans produit cartésien.
-Applicable / Current identity / All filtrent les choix publiés par compatibilité
-typée ou appartenance, jamais par approbation de marque. Le label d'identité
-reste fixe ; le marqueur initial décrit une sélection.
+Applicable / Current identity / All filter published choices, never certify
+brand approval. For native Built-in, Current identity includes available
+Commons/global themes and native Light/custom choices; a real kit exposes its
+own qualified themes and custom variants. Without any published real kit, the
+picker omits Identity/Preset axes and uses theme-only labels and selection.
+It does not restore an inaccessible Commons preset from an older session.
+Publishing a kit keeps the axes available even when native Standard is active.
+Identity labels remain fixed; an initial marker describes a selection.
+
+Reading preferences use a separate versioned localStorage record, scoped by
+output-directory path within the browser origin. Zoom, table/text modes and
+shrink switches follow the reader across articles, index and reloads; author
+minimum scales remain in source configuration. Invalid or unavailable storage
+falls back to author defaults. A Display settings submenu keeps those controls
+out of the main menu while preserving Back/Escape focus navigation.
 
 **Gardes.** Ordre primaire, déduplication, `builtin/standard`, validation avant
 écriture, omission sûre d'un candidat natif implicite incompatible, fragments
@@ -3102,3 +3133,525 @@ The bounded cleanup leaves these dispositions explicitly undecided:
 This preserves uncertainty without labeling the whole archive either
 delivered or blocking. B64 and B65 own the two specific unresolved reports
 identified separately; all other dated evidence remains recoverable exactly.
+
+## B67 — Logical units, scoped selectors and resolution policies
+
+**État :** en cours · **Depuis :** 2026-09-10
+
+**Scope: first increment implemented; broader redesign still open.**
+The owner requested a coordinated redesign of vocabulary, selectors and cascade
+resolution. The commissioned execution plan below follows the design-only
+tracking commit `d41802a`. Version 0.59.0 implements logical scopes, bounded
+selectors, unit indexes and the authorized physical-output rename. Current
+contracts are in `specifications.md` and `GLOSSARY.md`. Historical proposals and
+simulation results below retain their original evidence; they are not proof
+that the remaining wire-vocabulary or publication-filter work has shipped.
+
+### Agreed requirements
+
+- Logical series, coherent content units and slides remain distinct regardless
+  of how many HTML files hold their output. A combined HTML does not turn a
+  series into an article or collapse its logical ownership levels.
+- Rename `--single-page` to a name describing the physical output. The owner
+  explicitly requests **no legacy handling**: no alias, deprecation window,
+  migration handler or instructions teaching the old spelling in active docs.
+  Completed in the first increment as `--single-html [FILE]`, by explicit owner
+  authorization; ordinary unknown-option handling rejects the removed spelling.
+- User tag names are opaque selectors, not inferred editorial roles or language
+  codes. `hero`, `expert-fr` and `expert-en` are examples, not engine categories.
+- A common internal selector operates on the ordered collection supplied by its
+  caller. `*` means that entire collection, with no intrinsic status/type
+  exclusions. Earlier publication decisions determine what reaches an index;
+  a selector cannot restore an item absent from its input.
+- Selection data must preserve the logical origin of values. Ordinal levels
+  support traversal in either direction, not just most-specific-first.
+- Both general-first and specific-first resolution must be possible. The choice
+  must be explicit rather than an accidental consequence of implementation order.
+- The initial consumer under discussion is an article-level contents/index slide:
+  multiple indexes are allowed, each with a maximum column count (default 1)
+  and a selector for its entries. Explicit and automatic placement are requested.
+
+### Vocabulary decision and retained alternatives
+
+**Adopted logical term: content unit / unité de contenu**, shortened to
+**unit** internally. It is a coherent authored support containing one deck and
+zero or more supporting long-form texts. A published view may expose the cards,
+the supporting text, or both; source membership and displayed forms are distinct.
+It is not defined by a physical HTML page. The implemented level names are
+`series`, `unit`, `slide`, with internal ranks 0, 1, 2 respectively. Public
+expressions should use names rather than require authors to memorize numbers.
+The treatment of long-form resources inside a unit remains to be specified;
+the three ranks do not by themselves create another content format.
+
+`module` is a credible alternative with identical French/English spelling,
+but has software/course connotations. `document` collides with the physical
+HTML/DOM document; `presentation` already participates in preset terminology;
+`article` conflates this unit with its supporting prose. No public field has
+been renamed to `unit_*` by this proposal.
+
+**Implemented flag: `--single-html [FILE]`.** It precisely names the combined
+HTML output, unlike `--single-container`, which could suggest an archive or a
+container runtime. Image embedding and resource independence remain separate
+choices; preserve the existing optional filename and title-derived default.
+The first increment preserves that behavior under the new spelling only.
+
+### Four independent dimensions
+
+An ordered scope is useful, but cannot replace these distinctions:
+
+| Dimension | Examples | Meaning |
+|---|---|---|
+| Logical scope | `series=0`, `unit=1`, `slide=2` | Which authored object owns a value |
+| Source authority | series-entry JSON, unit Markdown meta, CLI | Which declaration wins when several sources configure the same object |
+| Field policy | specific-first, general-first, source-order | How eligible declarations are considered |
+| Composition | scalar/slot replacement, per-key merge, intersection | What it means to combine the participating values |
+
+For example, `articles[i].status` in `series.json` and `status:` in its Markdown
+metadata both configure the same logical unit. Giving the JSON entry a `series`
+scope because of its filename would confuse source authority with ownership.
+The current report's origin label `series` denotes that JSON source; any new
+report must separate or clearly qualify these meanings.
+
+CLI options likewise have authority without being a fourth logical parent.
+Registry defaults are fallback values, not an outer scope that wins every
+general-first resolution. Preserve candidate values, contribution/absence state,
+source identity and a trace of the selected contributors.
+
+### Resolution before selection
+
+Recommended policy names are **`specific-first`** and **`general-first`**.
+They describe precedence without the viewpoint ambiguity of ascending/descending
+or top-down/bottom-up. A field may instead have an explicit **`source-order`**
+profile where logical distance cannot express its established precedence.
+
+These are resolution policies, not content tags. Assigning a tag such as
+`cascade_specific` to a slide would mix data with evaluation instructions and
+make the same item change interpretation between callers. A future query
+language may expose explicit resolution operations, but their behavior belongs
+to the resolver, not to tag membership.
+
+Conceptual operations, **not current CLI or selector syntax**:
+
+```text
+resolve(field, policy="specific-first")
+resolve(field, policy="general-first")
+select(items, predicate_on_resolved_values)
+```
+
+An unqualified field uses its declared resolution policy. An explicitly scoped
+field reads that level, resolving conflicts between sources at that level only.
+Inspecting the complete raw declaration list and testing the origin of an
+effective value are separate operations. An explicit scope must not silently
+fall back to another level.
+
+**Resolve before comparing.** If a unit JSON entry declares `status: draft`
+and its Markdown metadata declares `status: active`, the effective status is
+draft under current precedence. Filtering declarations for active before
+resolving them would incorrectly recover the masked value.
+
+Do not impose one empty-value rule: Boolean false can be a real override;
+ordinary metadata can fall back on an empty value; an explicitly empty chrome
+slot stops inheritance. Style maps merge per key, then resolve references;
+chrome slots replace complete models rather than recursively merge them.
+
+### Historical mechanisms and simulation results
+
+The investigation used the engine at commit `e7fa595` (0.58.1), not hypothetical
+rules inferred from filenames. Source references are function names to avoid
+presenting line numbers as durable identities.
+
+| Mechanism | Current ordering/composition | Result of the proposed model |
+|---|---|---|
+| Notes placement/tooltips | Unit meta > series defaults > registry; resolve fields independently | Specific-first works, with field-specific handling of empty values |
+| Engraved slide numbers | Unit meta > CLI > series defaults > false | Needs a source-order profile; scope rank alone cannot place CLI |
+| Unit metadata | JSON entry > unit meta > field-specific fallback | Scope plus within-scope authority works; JSON is not a series-level override |
+| Typed appearance | Merge properties per key, then resolve references | Per-key resolution works; whole-map replacement or early reference resolution changes results |
+| Kit chrome | Preset all/type defaults, then each internally supplied layer's all/type slots, then explicit slide overrides | Requires slot replacement and an explicit-clear state; internal layers are not an accepted author-metadata cascade |
+| Reading tags | Unit gate AND slide acceptance; shared default slides | This is predicate composition, not choosing one winning tag list |
+| Status | JSON entry > unit meta > active | Currently unit-only; adding series/slide status is a new contract, not existing inheritance |
+| Runtime theme choices | Settings pins belong to custom variants; unit/custom-CSS pins remain protected | An authority/protection mechanism, not evidence of general-first logical inheritance |
+
+A disposable standard-library prototype under `work/tmp/` ran **23 tests**,
+with **0 failures, errors or skips**, and asserted **14 counterexamples** to
+overly simple models. It called the actual notes, numbering, metadata, style,
+tag and chrome helpers. General-first, scoped series/slide status and wildcard
+operations were explicitly hypothetical. The registry fallback stayed last
+in both directions; source authority stayed independent of direction.
+
+The chrome probes also exercised internal layer parameters which are not a
+public author cascade: current `slide_chrome` metadata is rejected. Passing
+such a prototype is not evidence that those inputs are accepted by the build.
+Runtime-theme authority was inspected in code/tests, not simulated in a browser
+by this prototype. No complete selector parser, regex engine, named-query
+resolver, new file format or CLI rename was implemented.
+
+The 14 asserted counterexamples retain these concrete distinctions:
+
+| Inputs or naive operation | Result that must be distinguished |
+|---|---|
+| Series notes local; unit notes page | Current resolution gives page; proposed general-first gives local |
+| Same-unit JSON author JSON; Markdown author Meta | JSON wins; sorting only by logical scope cannot explain the tie |
+| JSON display author is a single space | Current display metadata retains it; a global nonblank rule incorrectly falls back to Meta |
+| Unit slide numbering false; series true | False wins; a global truthiness filter incorrectly discards it |
+| Unit overrides only color.ink | Inherited color.call must survive; replacing the whole map loses it |
+| fact.strong.bg references mark; a later layer changes color.mark | Resolve the reference after merging; eager evaluation freezes the old color |
+| Registry color default plus explicit series/unit values | Registry remains fallback even with general-first; it must not mask explicit values |
+| Chrome model replaced by a text-only slot | The model disappears; recursively merging retains it incorrectly |
+| Explicitly empty slide header over inherited text | Empty clears the slot; blank-as-absent incorrectly restores inherited text |
+| Unit gate red; slide accepts blue | Blue remains unavailable; using only the nearest tag list bypasses the gate |
+| Slide tags contain only default; reader chooses red | Existing visibility accepts it; literal red membership is false |
+| Hypothetical series draft or slide ignored status | Neither is current unit-status inheritance; adding them changes behavior |
+| JSON status draft masks Markdown active | Effective active test is false; searching matching candidates first incorrectly returns true |
+| Upstream draft removed before passing live items to wildcard | Wildcard returns only the supplied live item; it cannot restore the draft |
+
+The local probe is `work/tmp/cascade-selector-simulations.py`, run with
+`TMPDIR="$PWD/work/tmp" python3 -B work/tmp/cascade-selector-simulations.py`.
+It is disposable evidence, not a shipped module or a required file for readers
+of this register. The tables above retain the reasoning independently of the
+local probe's availability.
+
+**Assessment:** shared records, provenance and resolution profiles are useful;
+one universal cascade is not. None of the examined current mechanisms establishes
+a general-first logical scalar cascade. Support that direction deliberately for
+new policies rather than relabel a same-scope JSON override or a parental gate.
+
+### Selected profile and remaining publication work
+
+The first increment selects a compact predicate language and an explicitly
+bounded JSONPath **filter profile**, not complete RFC 9535 or I-Regexp.
+No external runtime/library or `eval` is added. Queries run in the same Python
+core under CPython and Pyodide; regexes use a case-sensitive, non-backtracking
+NFA, not Python `re`. The exact supported syntax, typed/missing comparisons,
+registered field views, AST-based named references, reachable cycle errors and
+resource limits are specified in §3.4. No unsupported-expression fallback or
+silent truncation is permitted. The measured code constant for aggregate regex
+work is 4,000,000 per record, separate from the 16,384-step evaluation budget.
+
+The implementation distinguishes `series`, `unit`, `slide`, `effective`,
+`specific`, `general` and `origin` views. Scoped reads do not fabricate defaults;
+implicit active status exists only in resolved views. Raw unit declarations
+remain separate from resolved display metadata; registered field eligibility
+ignores empty metadata where appropriate and retains false where required.
+Origin traces include rejected candidates. Existing notes/numbering consumers
+reuse the common resolver without changing their established results.
+
+The build's publication policy chooses its input/output membership. A selector
+over already published content has a later universe. `-status:draft` over an
+unfiltered universe would retain ignored items; that is not the current default
+publication policy. Existing `--drafts-only` preview navigation also prevents a
+mechanical translation of every flag into one whole-publication predicate.
+
+### Coordinated rollout checklist
+
+- [x] Adopt logical unit/series/slide vocabulary separately from physical HTML;
+  document retained canonical `articles[]`, `page_source`, `page_dest` wires.
+- [x] Rename combined physical output to `--single-html [FILE]` in the first
+  increment, preserving filename behavior and adding no legacy handling.
+- [x] Support explicit `--single-html --no-index`: omit series contents, start
+  at the first published unit, retain multi-unit navigation and unit indexes,
+  and reject an empty published collection before writes. No legacy alias.
+- [x] Implement scoped candidates, source authority, both traversal directions,
+  origin traces and field eligibility; maintain selector/resolver tests.
+- [x] Select and document the compact/JSONPath filter profile, named AST queries,
+  bounded NFA and explicit failures; no claim of full standards conformance.
+- [ ] Integrate selection before dependent metadata, counts, navigation and
+  output inventories. Preserve explicit identity and manifest ownership.
+- [x] Implement multiple explicit indexes, responsive maximum columns default 1,
+  selector default `*`, automatic insertion and existing-kit layout fallback.
+- [x] Synchronize `specifications.md`, `GLOSSARY.md`, the six-route `GUIDE.md`,
+  README and product-skill references. Keep proposed and delivered capabilities
+  distinguishable throughout the transition.
+- [x] Deliver the first-increment browser UI/help, `tools/guide-deck.md` index,
+  example sources and regenerated guide/gallery/captures. Inspect desktop,
+  mobile, keyboard, mouse-remote and print workflows.
+- [ ] Complete the broader terminology sweep, including diagram generators,
+  alongside the remaining persisted/report vocabulary decisions.
+- [x] Advance the live draft contract to `lightwebpres.slide-draft/2`, with five
+  authored types; record the schema impact in product references.
+- [ ] Specify broader persisted/report wire migration and coordinate downstream
+  GUI/site consumers without accessing another repository. The optional
+  sourced-presentation method is not a product-schema rewrite target.
+- [x] Record the implemented increment in VERSION/CHANGELOG as Unreleased 0.59.0.
+- [x] Complete first-increment generated-output synchronization and the full
+  regression run. Keep B67 open until the broader redesign checklist is complete.
+
+Do not blindly replace every occurrence of `page`: DOM APIs and physical page
+layout vocabulary are not necessarily logical-unit names. Reuse sites must be
+classified before renaming. Update this entry as decisions settle; do not create
+an untracked proposal that becomes the only place an agent can learn the design.
+
+### Implementation plan commissioned on 2026-09-10
+
+The owner requested committing/pushing this record, then planning and executing
+an implementation. The design-only record was published as d41802a. The first
+functional increment adopts **unit** for logical selection records and
+**--single-html** for combined physical output. No old CLI alias is added.
+
+Execution order and acceptance:
+
+1. Rename the combined-output option in code, command help, completion inputs,
+   tests and active product documentation. Preserve optional filename behavior.
+   Ordinary unknown-option handling rejects the removed spelling.
+2. Implement ordered scope records, separate source authority and traceable
+   specific-first/general-first resolution. Exercise real existing cascades;
+   retain field-specific blank, false and explicit-clear rules.
+3. Implement a bounded common selector evaluator. Document its supported query
+   profile explicitly; no eval, implicit status exclusion, regex backtracking
+   hazard, or unsupported-expression fallback. Scoped and effective reads remain
+   distinct. Evaluate author queries at build time, not separately in JavaScript.
+4. Add unit-index slides with index-selector and index-max-columns (default 1),
+   multiple explicit indexes, optional automatic insertion after the first cover
+   or at the start, and stable target anchors. Indexes select from published
+   content, including themselves when selected; the wildcard has no exception.
+5. Integrate native/kit rendering, responsive columns, keyboard/touch links,
+   tag-aware anchor navigation, preset replacement, printing and single HTML.
+   Existing kits need a defined standard-layout fallback for the new slide type.
+6. Synchronize the specification, glossary, product skill, guide, live draft
+   contract, examples and generated outputs. Run the parallel full suite with
+   8 workers and actual desktop/mobile browser checks before claiming delivery.
+
+This increment does not silently rewrite persisted author fields or arrays:
+articles[], page_source/page_dest and related metadata remain their canonical
+source spellings, not compatibility aliases. The selection model exposes their
+logical unit ownership separately. A later wire-vocabulary change and broader
+publication-selector replacement still need their own contract and consumer
+rollout; B67 stays open until its full checklist is complete. New slide types and
+query/report interfaces must state their schema/version impact explicitly.
+
+### First-increment delivery and verification
+
+Execution steps 1-6 are implemented and verified locally for 0.59.0. The guide
+now contains its own unit-index, and source-only `examples/unit-index/` provides
+multiple explicit selections. Authoring documentation, glossary, product skill,
+live draft contract and generated guide/gallery/capture manifests are synchronized.
+This first-increment delivery follows the separately commissioned design-only
+commit d41802a. Build defaults remain multipage HTML and referenced images;
+the proposed default-policy change and inverse options are a subsequent task.
+
+The index universe is all published content in its unit, including itself,
+other indexes, covers, full-article slides and generated endnotes. No wildcard
+exceptions or runtime tag refiltering apply. Anchor reveal may choose a tag to
+show a linked target; no new journey mode was introduced. Automatic defaults
+resolve meta > CLI > series > off/1/*, insert after the first non-excluded cover
+or at the start, and use collision-checked `lwp-index` with ordinary prefixes.
+Any explicit index, even excluded, suppresses insertion. Existing kits may
+omit the new layout and use standard with chrome, without manifest rewriting.
+
+Verification on 2026-09-10 passed **1,414 tests across 227 classes with 8 workers**
+in approximately 224 seconds. The full run includes the new selector, index,
+browser and test-discovery guards; its local log is
+`work/tmp/unit-index-release-check.log`. Compilation, whitespace, 231-section
+reference checks and generated-artifact freshness checks passed too.
+
+Browser coverage includes native and documentation-kit indexes, 1/2/3-column
+ceilings at 1100 x 700 and one column at 390 x 844, long titles, targets of at
+least 44 pixels, empty results, preset replacement, fullscreen, keyboard and
+left/right mouse navigation. A native PDF contains all 38 long-list entries in
+source order across three sheets. These are observations on the supplied
+Chromium environment, not certification of other engines or physical devices.
+
+Review-driven regressions cover heading selection before typography, removing
+footnote markers from index labels, generated endnotes in visibility metadata,
+and preserving an internal anchor when a queued layout follows navigation.
+Automatic-index reports reuse the build's field resolver. Compact tag literals
+follow existing case folding; general string comparisons and regex stay
+case-sensitive. Discovery import errors now fail the parallel runner rather
+than becoming empty successful worker classes.
+
+Still open: broader `unit_*` wire vocabulary, publication-selector replacement
+before dependent metadata/counts/navigation/inventories, downstream consumer
+coordination and the corresponding terminology sweep. In particular,
+no global `build --select` exists. The owner authorized the physical-output
+rename in this first lot; that does not authorize silently migrating persisted
+author fields or adding compatibility aliases.
+
+## B68 — Identity Kit vocabulary and native identity boundary
+
+**État :** terminé · **Depuis :** 2026-09-12
+
+The former internal presentation-package model is replaced by an Identity Kit
+model. `builtin` is the native Built-in identity embedded in the executable;
+external Identity Kits are versioned, autonomous trees loaded from installed,
+user or series-local catalogues. Both are represented by the same internal
+identity resource so rendering and preset resolution do not need a second
+native path.
+
+The identity catalogue resolves native, Commons and kit presets. A
+`PresentationPreset` points internally to `identity_kit`, not to a package.
+At this increment, the persisted selectors and fields were still described as
+`presentation_preset`, `presentation_presets`, `articles[]`, `page_source` and
+`page_dest`. B69 later replaced the persisted appearance selectors with the
+root `appearance.presets` and `appearance.themes` lists; `articles[]`,
+`page_source` and `page_dest` remain canonical author fields.
+
+Standalone `.conf` themes remain in the separate ThemeCatalog. A user or
+series-local theme can be consumed by the native identity without becoming an
+Identity Kit or acquiring implicit identity ownership. Kit-owned themes remain
+manifest-declared and kit-qualified. Resource origin (`embedded`, `installed`,
+`user`, `series`) remains separate from identity ownership and palette
+attribution.
+
+The versioned preset reports now expose the resolved identity under `identity`:
+`presentation-preset/3`, `preset-list/3`, `series-preset/3` and
+`series-info/5`. The generated build manifest is `lightwebpres.manifest/2` and
+uses `identity_digest`. No compatibility alias for the retired internal names
+is retained; public consumers must use the new report schema identifiers.
+
+The implementation was verified with the Identity Kit, runtime-theme,
+series-report, generated-guide, generated-demo, resource-factoring and browser
+checks. The mandated parallel run discovered 1,433 tests across 230 classes;
+all classes passed except the pre-existing documentation-link check for
+`examples/first-article/README.md`, which points at the disposable absent path
+`../../work/tmp/index-frame/...` and remains outside this vocabulary change.
+
+## B69 — Canonical theme-resource index and appearance resolution
+
+**État :** terminé · **Depuis :** 2026-09-13
+
+The theme system has two valid internal representations that must not be
+collapsed. `THEMES` remains the palette table for the embedded colour
+catalogue. The native `Light` theme belongs to the embedded `builtin` Identity
+Kit and keeps symbolic registry references so settings pins resolve after the
+theme layer is merged.
+
+The first increment exposed `builtin:light` through the same
+`ThemeCatalog` resource index used by theme listing, inspection, gallery,
+runtime selectors and series theme commands. Its qualified-only native catalogue
+entry was an intermediate design, superseded by the owner's clarification below.
+The display entry is derived from the resolved native layer; the composition
+layer retains references.
+
+The owner subsequently made the appearance contract canonical: the root
+`series.json.appearance` object carries ordered `presets` and `themes` lists.
+The first preset is the initial presentation and later entries are explicit
+alternatives; the first theme token sets the initial theme policy. This
+supersedes B68's historical persisted-preset spelling, while `articles[]`,
+`page_source`, `page_dest` and related article fields remain unchanged. `ALL`,
+`ESSENTIAL` and settings migration are part of this contract; publication
+presence semantics remain a separate concern. Loading origin is settled by the
+owner clarification below. All appearance decisions consume this index rather
+than reconstructing a second catalogue in the build or browser.
+
+The runtime increment now derives theme resource ids from their owning identity
+and preset instead of reconstructing a second native id. `builtin:light` is the
+single native runtime resource, including custom variants and `all`; a local
+bare `light` and themes owned by real kits remain distinct. Browser tests cover
+unique native choices with both native and Commons presets, settings pins,
+desktop/mobile layouts and both interface languages. Appearance configuration
+is now represented by `series.json.appearance`; publication-selection policy
+remains separate.
+
+**Owner clarification after 0.59.2:** all shipped themes are built-in. Listing
+only Light with a qualified prefix mixed identity ownership and loading origin.
+The effective catalogue now uses bare slugs for every theme, including `light`,
+and shows computed `origin` separately. `ThemeResource` owns the slug, origin,
+display entry, property layer, source path and optional identity. The catalogue
+enforces builtin < installed < user < series precedence rather than relying on
+the order its callers add resources. A local `light` shadows the bare selection;
+`builtin:light` still forces the native resource owned by `builtin/standard`.
+
+Origin uses the same four tokens in records and runtime data. Palette credits,
+descriptor scope and theme ownership remain independent. Kit resource ancestry
+is named `source_identity` internally rather than overloading `origin` with an
+identity selector. Theme reports add `origin`; preset reports expose
+`theme.origin`. No public report schema bump is needed for these optional fields.
+
+The consistency pass also removed palette-table-only fallbacks from settings
+parsing, report generation and CLI directory disambiguation. Known global slugs
+win over same-named directories. Commons descriptors accept `builtin:<slug>` for
+any shipped theme, not only Light. Runtime selection deduplicates bare and forced
+references to one resource, while a direct property-only preset retains unknown
+provenance instead of inventing a loader origin. Vendor selection is prepared
+before writes and rejects two distinct resources claiming one filename, even
+with `--force` or an already-local selected snapshot.
+
+`theme list --origin` filters effective global entries after precedence; it does
+not load series roots implicitly. Series operations add their own layer.
+Publication policy outside the appearance lists remains separate from B69.
+
+This clarification and consistency pass were verified on 2026-09-12 with 1,478
+tests across 233 classes and 8 workers, without failures or skips. Dedicated
+regressions cover origin-order independence, bare/forced native selection,
+installed/user/series collisions, runtime identity deduplication, Commons
+portability, standalone helpers, directory disambiguation and vendor conflicts.
+An independent re-review found no remaining material issue in these paths.
+
+The canonical-appearance documentation and example sweep is complete. The
+executable, tests, active product references and generated examples now use
+the root `appearance` contract. The product/documentation captures and golden
+demo were regenerated from those sources and inspected. The final verification
+passed 1,478 tests across 233 classes with 8 workers, alongside the capture
+freshness guards and guide regeneration.
+
+## B70 — Publication planning and revision-bound GitLab snapshots
+
+**État :** terminé · **Depuis :** 2026-09-12
+
+The 0.56–0.59.1 review found related lifecycle gaps: ignored sources could remove
+published presets; copied-image verification differed between physical output
+topologies; and late article errors could leave mixed multipage output. Separate
+GitLab destination binding did not protect a branch from changes since Pull.
+
+The engine now distinguishes a parsed-unit source inventory, declared/index-claim/
+navigation/render membership, and a disk-backed publication plan. Mutable slides
+are cloned for rendering, while compiled selector programs are reused. Published
+preset compatibility reads emitted membership; audit keeps its complete source
+universe. Existing status, index-claim and persisted-field contracts are retained.
+This is an implementation of existing publication policy, not the global selector
+or wire-vocabulary changes still open in B67.
+
+Build and verify consume the same staged HTML/README/asset inventory. Rendering,
+asset reads, existing-manifest validation and destination-graph validation finish
+before any output is replaced. Graph validation resolves parent-directory aliases
+and refuses duplicate destinations or a planned file used as a directory. The
+manifest carries source-derived ownership history, not a rescan of arbitrary
+output files. Invalid existing bookkeeping fails instead of losing that history.
+
+**Publication guarantee:** preparation failures preserve previous output, README,
+cache and manifest. Promotion is atomic per file and bookkeeping is last. Shared
+output directories, manual sidecars and symlink composition rule out silently
+replacing an entire directory. Crash-atomic whole-publication visibility and
+rollback after promotion I/O failures are not provided; a separate transaction
+contract would be required for them. Staging uses temporary storage rather than
+accumulating all rendered output strings in memory.
+
+GitLab Pull resolves and downloads one commit. Push compares local files with
+checksums at that snapshot revision, skips unchanged content before chunking,
+checks the branch, and uses file `last_commit_id` preconditions for updates.
+Create conflicts never become updates. Each acknowledged commit must have the
+expected parent before its revision can become the next snapshot baseline; this
+also detects a concurrent edit to a file from an already-completed chunk.
+Failures invalidate the snapshot and require Pull, while reporting acknowledged
+chunks and distinguishing an uncertain request. No remote delete or automatic
+retry is introduced. UI target capture remains independent of revision checks.
+
+Verification includes the review reproductions, failure snapshots, destination
+alias/ancestor collisions, malformed manifests, unit parse/query counts, copied
+image parity, optimistic GitLab conflicts, empty-change chunk avoidance, and real
+browser target binding/native-theme uniqueness. The final parallel registry
+passed 1,463 tests across 232 classes with 8 workers, without skips, on 2026-09-12.
+Golden output, gallery, product/documentation captures and the guide were
+regenerated from their sources; the captures were inspected. The independent
+follow-up review found no remaining material issue in these corrected boundaries.
+
+## B71 — Author chrome independent of Identity Kits
+
+**État :** terminé · **Depuis :** 2026-09-13
+
+Authors may declare presentation chrome at three authoring levels without
+changing the selected identity: root `series.json.chrome`, article
+`lwp:meta` fields, and slide-local `slide-header`/`slide-footer` fields. The
+resolution order is preset defaults, series, article, then slide; complete
+chrome slots replace earlier values, and an explicit empty slot clears
+inheritance. Textual chrome is available with `builtin/standard`; named models
+and their assets remain validated against every selected Identity Kit.
+
+The root declaration accepts `all` and the five slide types, with direct
+`header`/`footer` shorthand for `all`. It does not wrap the generated series
+index, which has no chrome slots. The implementation and focused regressions
+are in `lightwebpres` and `tests/test_lightwebpres.py`. The specifications,
+glossary, guide, README, product skill, examples and generated captures now
+describe the same contract.
+
+The focused B71 tests and the full parallel registry passed on 2026-09-14:
+**1,500 tests across 234 classes with 8 workers**, without failures or skips.

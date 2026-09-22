@@ -27,7 +27,7 @@ jobs:
           with tempfile.TemporaryDirectory() as td:
               src = pathlib.Path(td) / 'source'
               subprocess.run(['git', 'init', '-q', str(src)], check=True)
-              subprocess.run(['git','-C',str(src),'fetch','--depth=1','https://github.com/Fade78/pasteberth.git','36f2da3c5b57fc35e237225b8d9bd4c3c7eeb50b'],check=True)
+              subprocess.run(['git','-C',str(src),'fetch','--depth=1','https://github.com/Fade78/pasteberth.git','97315ada7715641dadf93364c73f9ddad0857f45'],check=True)
               subprocess.run(['git','-C',str(src),'checkout','--detach','-q','FETCH_HEAD'],check=True)
               for name in (src/'site/publish-files.txt').read_text().splitlines():
                   p=src/name

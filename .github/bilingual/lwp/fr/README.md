@@ -6,10 +6,10 @@ Un cours, une synthèse de recherche, un point de projet. Gardez la vue d’ense
 
 ## Articles
 
-1. [Un document pour tout le parcours](../../../../../../../_temp/publication/fr/lightwebpres/decouvrir.html) — Lire la vue d’ensemble, explorer les détails et choisir comment créer.
-2. [Trouvez votre usage](../../../../../../../_temp/publication/fr/lightwebpres/usages.html) — Lire, écrire, organiser, concevoir, automatiser et publier : choisissez un parcours lié à votre travail.
-3. [Choisissez comment créer](../../../../../../../_temp/publication/fr/lightwebpres/demarrer.html) — Navigateur, agent externe ou éditeur et ligne de commande : choisissez le chemin adapté à votre tâche.
-4. [Le texte, avec une structure légère](../../../../../../../_temp/publication/fr/lightwebpres/ecrire.html) — Quatre types de fiches, des champs explicites et du Markdown libre.
-5. [L’apparence sans réécrire le contenu](../../../../../../../_temp/publication/fr/lightwebpres/apparence.html) — Thèmes, presets et kits : trois rôles distincts, un choix visible.
-6. [Vérifier, puis publier](../../../../../../../_temp/publication/fr/lightwebpres/publier.html) — Le bon dossier, les bons contrôles et des liens qui restent stables.
-7. [La documentation, au bon endroit](../../../../../../../_temp/publication/fr/lightwebpres/ressources.html) — Le manuel, le format exact, les exemples et les sources du projet.
+1. [Un document pour tout le parcours](public/decouvrir.html) — Lire la vue d’ensemble, explorer les détails et choisir comment créer.
+2. [Trouvez votre usage](public/usages.html) — Lire, écrire, organiser, concevoir, automatiser et publier : choisissez un parcours lié à votre travail.
+3. [Choisissez comment créer](public/demarrer.html) — Navigateur, agent externe ou éditeur et ligne de commande : choisissez le chemin adapté à votre tâche.
+4. [Le texte, avec une structure légère](public/ecrire.html) — Cinq types de fiches, des champs explicites et du Markdown libre.
+5. [L’apparence sans réécrire le contenu](public/apparence.html) — Thèmes, presets et kits : trois rôles distincts, un choix visible.
+6. [Vérifier, puis publier](public/publier.html) — Le bon dossier, les bons contrôles et des liens qui restent stables.
+7. [La documentation, au bon endroit](public/ressources.html) — Le manuel, le format exact, les exemples et les sources du projet.

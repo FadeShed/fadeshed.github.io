@@ -43,7 +43,8 @@ vocabulary; it is not proof of who produced the file and must not be used as an
 authorization, trust, or security decision. `duplicate` remains a response flag
 for unnamed-content deduplication and does not rewrite the existing sidecar.
 Older valid sidecar schemas without the digest remain readable; when needed, legacy
-content is hashed on demand for duplicate detection. Pasteberth recognizes an
+content is hashed on demand for duplicate detection, not to populate API
+listing or download identities. Pasteberth recognizes an
 item only when the data file and sidecar are coherent. For a direct local
 `drop`, the source bytes pass through a private staging file; the daemon
 validates them and creates a new managed pair before removing the staging file.
@@ -121,6 +122,73 @@ Only supported local filesystems are within the official deployment boundary.
 Network mounts and concurrent file synchronization are not made safe merely by
 using this directory layout. For a consistent backup, stop the daemon and all
 CLI or external writers; see [operations](../operations.md).
+
+### Managed Reads
+
+Since `2.1.22`, preview/download GET and HEAD and selected-file ZIP use the
+published zone registry without triggering discovery or waiting for a scan.
+Membership is eventual: a newly eligible zone is unknown until published, and
+loss of eligibility takes effect for new reads when a later registry publishes
+its removal. A captured destination still checks its directory identity; this
+is not permission to follow a replaced zone directory.
+
+Acquisition takes the existing stable filesystem lock and directory operation
+lock in shared mode. It bypasses the service's per-zone Python `RLock`, allowing
+shared history reads to coexist. Under those filesystem locks, it enumerates
+directory names, reads transaction journals to preserve history's visibility
+rules, and validates selected metadata against retained, safely opened payload
+handles. It does not read unrelated payloads or ordinary sidecars. Names
+enumeration is still O(n) in directory entries and journals still require I/O;
+this is not an O(1) filename lookup or a full-history scan.
+
+The service releases both locks and closes the bound directory before sending
+headers or reading the response body. Metadata and source handles remain paired, and HTTP reads
+at most 64 KiB at a time up to each captured length. Cooperating managed writes
+can replace or delete the same filenames while those open versions are served.
+External in-place changes can still alter or truncate an open source: retained
+handles are not a filesystem snapshot against arbitrary writers.
+
+There are no new persistent per-file locks or sidecar format changes. The
+existing lock protocol remains compatible with older cooperating CLI writers.
+Mutations and history still use their existing zone coordination. Generic
+content GET/HEAD and HTTP ZIP request `blocking=False` acquisition and report
+`423` on writer contention. Legacy `/previews` retains `blocking=True`, so it
+can wait for an exclusive writer. Generic `/items` listing uses published
+membership and nonblocking history acquisition without global discovery;
+legacy `/images` listing still refreshes or joins discovery. No hard acquisition
+or filesystem deadline is promised.
+
+The generic Python entity is `StoredItem`, with `UnknownItemError` for an unknown
+managed item. `StoredImage` and `UnknownImageError` remain aliases in storage and
+service for 2.x Python consumers, not separate implementations. Existing
+image-named service entry points such as `open_preview` remain callable; genuine
+image validation concepts keep their names. The HTTP terminology change needs
+no stored-zone migration.
+
+`StoredItem.sha256` comes from validated sidecar metadata: 64 lowercase hex
+digits, or `None` for valid legacy metadata without a digest. Its `etag` property
+is the exact quoted `"sha256-HEX"` value, or `None`. API JSON uses `null` for
+unknown values. No listing/download read hashes the payload or backfills a
+zone's legacy digests. The validator identifies managed bytes, not a signature,
+read-time integrity check, or metadata revision. Comments do not change it;
+replacing A with B and then the original A restores A's ETag. `changed_at` stays
+null. Both HTTP content paths evaluate `If-Match` against the acquired metadata
+and retained handle before sending file bytes, and close the handle on a failed
+condition. An external same-length in-place edit can evade server-side coherence
+checks; consumers must verify length and digest locally. A missing digest cannot
+pin listing identity. See [API identity](api.md#item-metadata).
+
+ZIP keeps selected handles and one per-process archive slot, not zone locks,
+through compression and network output. New default limits are 64 source files
+per archive and four active archives per process; existing source-byte and
+streaming-duration limits remain. Completion, timeout, disconnect, and failure
+release all acquired handles and the slot as the operation unwinds. A blocked
+filesystem call can delay cleanup. See [download errors and headers](api.md#downloads)
+and [configuration budgets](configuration.md#operational-budget-defaults).
+
+This does not expand platform support. Windows backend testing under Wine is
+not native Windows validation; Linux on supported local filesystems remains
+the official server platform.
 
 ## Web UI
 
@@ -249,6 +317,20 @@ The selected-content panel provides the reference and applicable content actions
 for one item. For several selected items it instead lists filenames, sizes, and
 stored dates, and exposes the group actions. Individual preview/download actions
 are not shown in that state.
+
+### Displayed dates
+
+**Since `2.1.22`:** the selected-item panel shows
+both date and time when the stored `created_at` is more than 24 elapsed hours
+old according to the browser clock. At exactly 24 hours or less it shows only
+the time; crossing midnight alone does not add a date. Formatting uses the
+browser's local timezone and the existing `en` locale, not a new locale setting.
+Missing or invalid timestamps display `Unknown time`.
+
+Tooltips and multiple-selection rows already show the full date and time and
+continue to do so. Copy and move preserve `created_at`: it is the stored item
+creation time, not arrival time in the destination zone. This display change
+adds no timestamp field and does not change history or retention ordering.
 
 ### Retention
 

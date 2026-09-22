@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Verify the public EN/FR portal, native touch zoom and existing product journeys."""
-import argparse,functools,hashlib,http.server,json,re,threading,traceback,urllib.parse,zipfile
+import argparse,functools,hashlib,http.server,json,os,re,threading,traceback,urllib.parse,zipfile
 from pathlib import Path
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright,expect
-ENGINE='7e63cf4b13882f1318a5a9630bbe389cd9d2b71a583790e9021604aba321f250'
+ENGINE='b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962'
 CHAPTERS=['decouvrir.html','usages.html','demarrer.html','ecrire.html','apparence.html','publier.html','ressources.html']
 EXTRA=['demo/library.html','demo/ma-page.html','demo/index.html','guide/guide.html','guide/index.html','themes.html','web/index.html']
 
@@ -46,7 +46,7 @@ def run(root,report,base=None):
                 check('No product release number '+prefix+rel,not re.search(r'(?:LightWebPres\s+v?\d+\.\d+|\b0\.(?:56|57)\.0\b|\b1\.(?:0\.5|1\.0)\b)',text))
                 check('No internal repository link '+prefix+rel,'fadeshed-internal-docs' not in f.read_text())
         with sync_playwright() as pw:
-            browser=pw.chromium.launch(headless=True)
+            browser=pw.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM'))
             for lang,prefix in [('en',''),('fr','fr/')]:
                 for route in ['', 'fileshed/', 'pasteberth/', 'lightwebpres/']:
                     for width in [320,390,768,1440]:
@@ -69,7 +69,7 @@ def run(root,report,base=None):
                     check(f'Complete portal {lang} {rel}',response.status==200 and page.locator('html').get_attribute('lang')==lang)
                     expect(page.locator('.fs-language').first).to_be_visible()
                     if page.locator('section.slide').count():
-                        check('Native zoom controls '+lang+rel,page.locator('#presenterMenu [data-menu-action=zoom-in]').count()==1)
+                        check('Native zoom controls '+lang+rel,page.locator('#readingMenu [data-menu-action=zoom-in]').count()==1)
                         check('No redundant reader control '+lang+rel,page.locator('.fs-reader-open').count()==0)
                         page.locator('#navMenu').click();expect(page.locator('#presenterMenu')).to_be_visible();page.locator('#presenterMenu').click(position={'x':4,'y':4});expect(page.locator('#presenterMenu')).not_to_be_visible()
                 # Existing Pasteberth sandbox: keep operations and resolve the blocked chrome.
@@ -100,16 +100,16 @@ def run(root,report,base=None):
                 page.goto(base+prefix+'lightwebpres/demo/library.html',wait_until='networkidle')
                 check('No redundant touch reader control '+lang,page.locator('.fs-reader-open').count()==0)
                 expect(page.locator('#navMenu')).to_be_visible()
-                page.locator('#navMenu').tap();expect(page.locator('#presenterMenu')).to_be_visible()
+                page.locator('#navMenu').tap();expect(page.locator('#presenterMenu')).to_be_visible();page.locator('#menuReading').tap();expect(page.locator('#readingMenu')).to_be_visible()
                 page.locator('[data-menu-action=zoom-in]').tap();expect(page.locator('#menuZoomValue')).to_have_text('110%')
-                check('Touch zoom increases '+lang,page.evaluate('parseFloat(document.documentElement.style.zoom)>1'))
+                check('Touch zoom increases '+lang,page.evaluate('parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lwp-presentation-zoom"))>1'))
                 page.screenshot(path=str(report/f'{lang}-touch-zoom.png'))
                 page.locator('[data-menu-action=zoom-out]').tap();expect(page.locator('#menuZoomValue')).to_have_text('100%')
                 page.locator('[data-menu-action=zoom-in]').tap();page.locator('[data-menu-action=zoom-reset]').tap();expect(page.locator('#menuZoomValue')).to_have_text('100%')
-                check('Touch zoom resets '+lang,page.evaluate('!document.documentElement.style.zoom||Number(document.documentElement.style.zoom)===1'))
-                menu=page.locator('#presenterMenu').bounding_box();check('Touch menu fits screen '+lang,menu['x']>=0 and menu['x']+menu['width']<=391,menu)
+                check('Touch zoom resets '+lang,page.evaluate('parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lwp-presentation-zoom"))===1'))
+                menu=page.locator('#readingMenu').bounding_box();check('Touch menu fits screen '+lang,menu['x']>=0 and menu['x']+menu['width']<=391,menu)
                 # Select table scrolling explicitly through the same native reader menu.
-                page.locator('#menuTableMode').select_option('scroll');page.locator('#presenterMenu').tap(position={'x':4,'y':4});expect(page.locator('#presenterMenu')).not_to_be_visible()
+                page.locator('#menuTableMode').select_option('scroll');page.locator('#readingMenu').tap(position={'x':4,'y':4});expect(page.locator('#readingMenu')).not_to_be_visible()
                 page.locator('#comparison').scroll_into_view_if_needed();page.wait_for_timeout(250)
                 table=page.locator('#comparison .lwp-table-viewport')
                 check('Wide table scroll mode '+lang,table.evaluate('e=>getComputedStyle(e).overflowX==="auto"'))

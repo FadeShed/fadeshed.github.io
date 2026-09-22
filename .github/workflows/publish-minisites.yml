@@ -28,7 +28,7 @@ jobs:
           from pathlib import Path
           root=Path('.github/minisites')
           packed=base64.b64decode((root/'publication.bundle').read_text().strip(),validate=True)
-          expected='9056c420d6987fb34f67e1285c8b91a868eca7fdb135941935e6aec30f5c2d81'
+          expected='5b1eeef6c7e30c1ff1b4a1e59465707624b5d40e2c1db7df8566ee7510437091'
           if hashlib.sha256(packed).hexdigest()!=expected: raise RuntimeError('Publication source checksum mismatch')
           files=json.loads(lzma.decompress(packed))
           if set(files)!={'harmonize.py','qa.py','prepare_commit.py'}: raise RuntimeError('Unexpected source files')

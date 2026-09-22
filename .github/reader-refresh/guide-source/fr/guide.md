@@ -55,11 +55,11 @@ kicker: Démarrer
 <!-- lwp:slide -->
 slug: anatomie
 kicker: Anatomie
-## Quatre types de fiches, un fichier source
+## Cinq types de fiches, un fichier source
 
  
 
-<div class="highlight"><span class="highlight-figure">4</span><span class="highlight-caption">cover, standard, series-nav et full-article</span></div>
+<div class="highlight"><span class="highlight-figure">5</span><span class="highlight-caption">cover, standard, series-nav, full-article et unit-index</span></div>
 <div class="fact-box">
 <div class="fact-label">Les champs, puis le texte</div>
 <div class="fact-content"> <p>Une couverture fournit le titre. Une fiche standard accepte du texte, des images, des tableaux, des notes et des composants nommés facultatifs. Une fiche series-nav génère des liens ; une fiche full-article inclut un fichier Markdown séparé.</p>
@@ -99,8 +99,8 @@ kicker: Identité
 
 <div class="fact-box">
 <div class="fact-label">Structure interne, sans remplacer le moteur</div>
-<div class="fact-content"> <p>Un Identity Kit autonome fournit dispositions, chrome, assets et thèmes typés. LWP conserve l’enveloppe de page, la navigation et le script. Sélectionnez un preset avec <code>series_meta.presentation_preset</code> : <code>builtin/standard</code>, <code>commons/id</code> ou <code>id@version/preset</code>. Sans choix, Standard natif utilise le thème Light minimal ; les presets Commons associent des thèmes globaux aux dispositions natives. L’identité est déduite de la référence et son libellé reste fixe quand la sélection change.</p>
-<p>Placez les alternatives à la racine de <code>series.json</code> avec <code>presentation_presets</code>, ou passez <code>--presentation-presets</code> à <code>build</code>, <code>verify</code> ou <code>watch</code>. Un preset principal de kit ou de Commons ajoute aussi <code>builtin/standard</code> après ces choix lorsqu’il est compatible ; une disposition ou un chrome propre au kit rend ce candidat implicite indisponible et produit un avertissement. Le choix principal reste premier ; <strong>C</strong> ouvre Identité, Preset et Thème et change tout le deck sans modifier ses sources. Le choix de session est propre au deck et à son catalogue. Applicable / Identité courante / Tous filtrent les choix publiés par compatibilité typée ou appartenance, pas par marque. Suivre le preset réinitialise un choix de thème explicite du lecteur.</p>
+<div class="fact-content"> <p>Un Identity Kit autonome fournit dispositions, chrome, assets et thèmes typés. LWP conserve l’enveloppe de page, la navigation et le script. Sélectionnez un preset avec <code>appearance.presets</code> : <code>builtin/standard</code>, <code>commons/id</code> ou <code>id@version/preset</code>. Sans choix, Standard natif utilise le thème Light minimal ; <code>appearance.themes</code> règle le thème initial et ses alternatives. L’identité est déduite de la référence et son libellé reste fixe quand la sélection change.</p>
+<p>Placez les alternatives ordonnées dans <code>appearance.presets</code> et les thèmes dans <code>appearance.themes</code>, ou passez <code>--presentation-presets</code> à <code>build</code>, <code>verify</code> ou <code>watch</code>. Le premier preset reste principal ; aucun preset n’est ajouté implicitement. Une disposition ou un chrome propre au kit peut faire échouer une demande explicite du preset natif. <strong>C</strong> ouvre Identité, Preset et Thème lorsque ces ressources sont publiées et change tout le deck sans modifier ses sources. Le choix de session est propre au deck et à son catalogue. Applicable / Identité courante / Tous filtrent les choix publiés par compatibilité typée ou appartenance, pas par marque. Suivre le preset réinitialise un choix de thème explicite du lecteur.</p>
 <p>Utilisez <code>preset list</code>, <code>preset show</code> et <code>series preset set</code> pour examiner ou modifier le choix. <code>init --preset</code> peut aussi installer le projet de départ du kit. <code>kit compose</code> construit un kit autonome à partir de fichiers explicites et d’un manifeste final complet. Les champs de fiche <code>slide-layout</code>, <code>slide-header</code> et <code>slide-footer</code> remplacent les valeurs par défaut.</p></div>
 </div>
 <p class="source">Source : Guide, chapitre 5</p>

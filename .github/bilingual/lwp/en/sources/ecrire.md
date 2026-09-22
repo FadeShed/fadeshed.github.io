@@ -1,11 +1,11 @@
 <!-- lwp:meta -->
 page_title: Text, with a little structure — LightWebPres
-page_desc: Four card types, explicit fields and free-form Markdown.
+page_desc: Five card types, explicit fields and free-form Markdown.
 card_title: Text, with a little structure
-card_desc: Four card types, explicit fields and free-form Markdown.
+card_desc: Five card types, explicit fields and free-form Markdown.
 card_label: 03 / WRITE
 nav_title: Text, with a little structure
-nav_desc: Four card types, explicit fields and free-form Markdown.
+nav_desc: Five card types, explicit fields and free-form Markdown.
 ---
 
 <!-- lwp:slide:cover -->
@@ -19,7 +19,7 @@ summary: A series contains articles. An article contains cards and, when needed,
 <!-- lwp:slide -->
 slug: quatre-types
 kicker: THE STRUCTURE
-## Four card types. No new type to invent.
+## Five card types. No new type to invent.
 summary: Each card starts with a marker, has an explicit slug, and is separated from the next by a line of three hyphens.
 source: <a href="reference/agent/skills/lightwebpres/SKILL.md">Format skill · Slide types</a>.
 
@@ -29,6 +29,7 @@ source: <a href="reference/agent/skills/lightwebpres/SKILL.md">Format skill · S
 | `standard` | Content: text, a key number, a callout, code, an image or a table. |
 | `series-nav` | Links to the other articles, generated from the series. |
 | `full-article` | A long-form Markdown file, included in the same page. |
+| `unit-index` | Generated contents for the logical unit, with no free-form body. |
 
 The `<!-- lwp:slide -->` marker is enough for a standard card. `series-nav` appears at most once per article.
 

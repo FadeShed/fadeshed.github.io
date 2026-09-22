@@ -1,31 +1,38 @@
 # LightWebPres
 
-> Un même contenu. À lire, à présenter et à publier.
+> Documents to read, present and share. Editable sources to write, organize, design and automate.
 
-Un cours, une synthèse de recherche, un point de projet. Gardez les idées principales, les sources et le récit complet ensemble — dans des pages que chacun ouvre avec son navigateur.
+Status: **Beta**.
 
-## Lire et présenter
+## Read and present
 
-Un dossier à lire avant une réunion, à suivre pendant et à consulter après.
+A briefing before a meeting, a course during a session, a reference afterwards. Your audience opens the same pages in a browser: they do not need the generator or a presentation-service account. On a phone they scroll; on a larger screen they can follow the cards. Long content stays available instead of being cut to fit a slide.
 
-## Écrire et expliquer
+## Write and explain
 
-Réunissez les idées clés, les références et les explications dans un article modifiable.
+Prepare a course, a research brief or a project update without maintaining a disconnected slide deck and handout. Write the main ideas as cards and keep the explanation, references and longer text in the same article project. You decide the argument and the level of detail; LightWebPres renders the structure you provide.
 
-## Organiser les connaissances
+## Organize knowledge
 
-Réutilisez le même article dans un dossier court et une collection plus vaste. Changez le parcours, pas le texte de référence.
+A course has modules. Documentation has topics. A briefing selects only what its audience needs. LightWebPres lets a series select and order articles while the source of each article remains reusable. The same canonical text can belong to a short briefing and to a larger reading collection, with context-specific titles and descriptions.
 
-## Concevoir une identité
+## Design an identity
 
-Donnez aux documents leur typographie, leur mise en page et leur signature. Transmettez ensuite cette identité à d’autres auteurs.
+Choose colors and typography with a theme. Use a preset to select an arrangement of appearance choices. When you need layouts, marks, headers and footers together, create an Identity Kit that another author can reuse. A composed kit is self-contained: its recipients need the delivered kit, not a chain of its source kits.
 
-## Automatiser une production
+## Automate a workflow
 
-Transformez des mises à jour récurrentes en documents à construire, à vérifier et à transmettre.
+Generate recurring project reports, update a documentation collection or give an agent a precise publishing task. The command line works with ordinary source files and structured reports. Build the pages, inspect source warnings and compare the output with a fresh render before handing it over. Generation, checking and publication remain distinct steps.
 
-## Publier et conserver
+## Publish and keep
 
-Livrez les pages et leurs ressources. Gardez le projet source pour la prochaine révision, migration ou sauvegarde.
+Deliver a folder of pages and resources, publish it on static hosting or include it in an existing website. Readers use their browser; the source project stays with you for future edits and backups. Each article carries its own CSS and JavaScript. Referenced images and kit assets must travel with the output directory.
 
-LightWebPres construit le document. L’agent de rédaction reste externe.
+## Start here
+
+- [LightWebPres](index.html)
+- [Use cases](usages.html)
+- [Interactive briefing](demo/library.html)
+- [Create](demarrer.html)
+- [Guide](guide/guide.html)
+- [Browser builder](web/)

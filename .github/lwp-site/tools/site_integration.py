@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup, NavigableString, Comment
 HERE=Path(__file__).resolve().parent
 PUBLIC=['index.html','index.md','style.css','llms.txt','.nojekyll','assets','fileshed','pasteberth','lightwebpres']
 BASE='https://fadeshed.github.io/'
-ENGINE_SHA='5e702fed91c8694a794f0b0c8a0daa8a517d95904ed4269954c3aef835793191'
+ENGINE_SHA='b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962'
 
 
 def read_json(path): return json.loads(path.read_text(encoding='utf-8'))

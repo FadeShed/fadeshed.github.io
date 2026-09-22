@@ -22,7 +22,7 @@ read-only deployment.
 By default it refuses to replace an existing file; add the global `--force`
 option only after checking the target path.
 
-The active configuration, password file, TLS private key, and zone directories
+The active configuration, password file, bearer-token registry, TLS private key, and zone directories
 must be outside `PasteBerth/`. These paths may contain symbolic links; Pasteberth
 resolves the target before opening it and checks the target and its parents.
 
@@ -71,7 +71,8 @@ The available `[limits]` keys are `max_image_dimension`, `max_image_raw_size`,
 `max_multipart_boundary_length`, `max_multipart_parts`,
 `max_multipart_header_size`, `max_multipart_field_name_length`,
 `max_multipart_body_size`, `max_batch_names`, `max_batch_body_size`,
-`max_archive_size`, `max_archive_duration_seconds`, `max_comment_body_size`,
+`max_archive_size`, `max_archive_files`, `max_active_archives`,
+`max_archive_duration_seconds`, `max_comment_body_size`,
 `max_http_header_size`, `max_login_body_size`, `max_login_fields`,
 `max_login_delay_seconds`, `max_login_concurrent_checks`,
 `max_login_tracked_ips`, `login_forget_after_seconds`,
@@ -89,10 +90,19 @@ request, including framing and auxiliary fields. It is independent from
 limits default to `256MiB` of uncompressed selected files and `300` seconds of
 total streaming time; ZIP output remains streamed without a temporary archive.
 
+**Since `2.1.22`:** `max_archive_files = 64` bounds retained source
+handles per ZIP; `max_active_archives = 4` bounds concurrent ZIP acquisitions and
+transfers across all zones in one process. Both accept positive integers or
+`"unlimited"`. They do not change `max_batch_names` or the byte/duration budgets.
+Exceeding the file count returns `413 too_large`; a full archive slot pool
+returns `503 server_busy` with `Retry-After: 1`, not the `423 zone_busy` used for
+an exclusive writer blocking ZIP acquisition. Restart after changing limits.
+
 #### Operational budget defaults
 
-These are TOML key names, not the private Python attribute names. Size values
-accept a byte count or a size string such as `"8KiB"` or `"20MiB"`.
+The table covers 37 TOML keys, including the two archive limits.
+These are not private Python attribute names. Size values accept a byte count
+or a size string such as `"8KiB"` or `"20MiB"`.
 
 | `[limits]` Key | Default | Budget |
 |---|---:|---|
@@ -112,6 +122,8 @@ accept a byte count or a size string such as `"8KiB"` or `"20MiB"`.
 | `max_batch_names` | `10000` | Filenames in one batch selection. |
 | `max_batch_body_size` | `"2MiB"` | Batch/transfer and direct-drop JSON request body. |
 | `max_archive_size` | `"256MiB"` | Total uncompressed selected files. |
+| `max_archive_files` | `64` | Selected source files retained open per ZIP. |
+| `max_active_archives` | `4` | Concurrent ZIP acquisitions/transfers per process, across all zones. |
 | `max_archive_duration_seconds` | `300` | Total archive streaming duration. |
 | `max_comment_body_size` | `"8KiB"` | Comment request body. |
 | `max_http_header_size` | `"64KiB"` | HTTP request header budget. |
@@ -131,6 +143,15 @@ accept a byte count or a size string such as `"8KiB"` or `"20MiB"`.
 | `max_pending_requests` | `8` | Connections waiting for headers. |
 | `http_header_timeout_seconds` | `5` | Pending-header timeout. |
 | `http_request_timeout_seconds` | `60` | Request timeout; streaming responses also have activity and archive deadlines. |
+
+Since `2.1.22`, previews stream as well as ZIPs. The request timeout applies
+to the initial request/acquisition phase, then measures inactivity while a
+download emits content, rather than total elapsed transfer time. ZIP's separate
+300-second default deadline starts with the streaming phase. Expiry or client
+disconnect closes the response and releases handles and archive slots as the
+handler unwinds, but cannot interrupt a blocked filesystem call. Shared read
+acquisition can still wait for an exclusive writer; these budgets are not hard
+filesystem-latency guarantees.
 
 Removing one budget does not remove the others or a proxy's limits. Large
 uploads and multipart bodies are read into memory; `"unlimited"` is not a
@@ -159,6 +180,7 @@ enabled = true
 session_ttl_hours = 72
 max_sessions = 4096
 # password_file = "/absolute/path/to/passwd"
+# token_file = "/absolute/path/to/tokens.sqlite3"
 ```
 
 The password file defaults to `passwd` next to the selected configuration. It
@@ -173,7 +195,22 @@ Authentication uses one shared password, not individual accounts. A session
 can access all configured zones; zone groups are not access-control lists.
 Changing the password file invalidates existing sessions on their next
 validation; each session is tied to the file version at login. A restart is
-not required. See [credential rotation](../operations.md#credentials-and-sessions).
+not required. Bearer tokens are separate persistent credentials and are
+managed from the Web UI or the token API; changing the shared password does
+not invalidate them. See [credential rotation](../operations.md#credentials-and-sessions)
+and [bearer token operations](../operations.md#bearer-tokens).
+
+`token_file` defaults to `tokens.sqlite3` next to the selected configuration.
+It must be an absolute path outside the read-only deployment, in a directory
+writable by the service account. The registry is created with a private mode;
+its parent directories must not be writable by other users or groups, but
+their read and traverse permissions are an administrative choice. The
+registry contains only token hashes, grants, and suspension state.
+When authentication is enabled, the server opens the registry at startup; set
+an explicit path when the configuration directory is read-only or managed by a
+system service with a separate state directory. Set `enabled = false` to turn
+off both sessions and bearer-token authentication; bearer credentials are not
+an anonymous-mode access mechanism.
 
 ### Zones
 
@@ -183,7 +220,7 @@ Each `[[zones]]` table defines one independent project area:
 |---|---:|---|
 | `id` | required | Lowercase API/UI identifier, up to 64 characters. |
 | `label` | `id` | Human-readable UI label. |
-| `type` | `local` | Only `local` is implemented in v2.1.21. |
+| `type` | `local` | Only `local` is implemented in v2.1.26. |
 | `directory` | required | Absolute path as seen by the server and the harness. |
 | `retain` | `10` | Number of managed items retained in the zone. |
 | `reference_prefix` | `@` | Text prepended to one returned reference. |
@@ -209,9 +246,11 @@ For a shared POSIX zone, use one common group, a `setgid` directory, and group
 membership for every writer and for the daemon process. A `file_group` setting
 does not grant access to the directory or add a group to a running process. The
 group must be present in the credentials of the actual daemon process, not only
-in the shell that ran `register`. Prefer ordinary group membership and
-filesystem `setgid` permissions over filesystem-specific ACLs when the zone must
-work across several filesystems.
+in the shell that ran `register`. With the systemd user-service template, set
+`PrivateTmp=false` for such a zone; its private user namespace masks
+supplementary groups. Prefer ordinary group membership and filesystem `setgid`
+permissions over filesystem-specific ACLs when the zone must work across several
+filesystems.
 
 If a user is added to the shared group after a `systemd --user` manager has
 started, log out and in again (or reboot) before restarting Pasteberth. A
@@ -300,13 +339,25 @@ sidecars will not.
 Regular files copied or moved directly into a collection zone have no coherent
 sidecar, so they remain foreign and are ignored. Uploads through the browser,
 API, or CLI create the data/sidecar pair. A visible browser polls `/api/zones`
-every 10 seconds; the request starts a background collection scan and returns
-the last completed snapshot while a scan is running. A new matching project
-directory therefore appears on the first poll after the scan completes, without
-a daemon restart. The `/api/groups` endpoint uses the same background discovery
-behavior and returns the last completed group snapshot while scanning. A hidden
-tab refreshes when it becomes visible. The complete
-discovery contract, including aliases, diagnostics, permissions, group
+every 10 seconds; a hidden tab refreshes when it becomes visible. Overview
+requests use background discovery and return the last completed registry while
+it runs. A new matching directory appears after a scan observes it and a later
+poll reads that registry, without a daemon restart. `/api/groups` uses the same
+background discovery path.
+
+**Since `2.1.22`:** both endpoints share a
+background cooldown of `max(10 seconds, last full refresh duration)`, measured
+from completion and including registry installation. Startup, foreground, and
+failed refresh attempts also set the cooldown. The next eligible poll can
+start one job; expiry alone starts nothing. Explicit service actions bypass
+the cooldown or wait for an in-flight refresh, without a second refresh within
+the same action. These are not configurable timing settings or hard deadlines.
+Overview history and free-space reads remain synchronous and can still block.
+
+Scanner caches share filesystem observations across rules only
+within a discovery pass; later passes read the filesystem again. Collection
+and group regex semantics are unchanged. The complete discovery contract,
+including cache boundaries, aliases, diagnostics, permissions, group
 expansion, and lifecycle, is in
 [`docs/zone-collection-contract.md`](../zone-collection-contract.md).
 

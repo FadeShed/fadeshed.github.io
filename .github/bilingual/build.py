@@ -7,7 +7,7 @@ rebuilt from translated Markdown; reference guide/gallery translations are
 versioned publication catalogs. Backend programs and legal notices stay intact.
 """
 from __future__ import annotations
-import argparse, hashlib, json, os, re, shutil, subprocess, sys, tempfile, zipfile
+import argparse, base64, hashlib, json, os, re, shutil, subprocess, sys, tempfile, zipfile
 from pathlib import Path
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup, NavigableString, Comment
@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup, NavigableString, Comment
 HERE=Path(__file__).resolve().parent
 PUBLIC=['index.html','index.md','style.css','llms.txt','.nojekyll','assets','fileshed','pasteberth','lightwebpres']
 BASE='https://fadeshed.github.io/'
-ENGINE_SHA='5e702fed91c8694a794f0b0c8a0daa8a517d95904ed4269954c3aef835793191'
+ENGINE_SHA='b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962'
 
 
 def read_json(path): return json.loads(path.read_text(encoding='utf-8'))
@@ -168,6 +168,15 @@ def run(engine,*args):
     return result.stdout
 
 
+def audit_example(engine,series,locale):
+    result=subprocess.run([sys.executable,str(engine),'audit',str(series),'--lang',locale],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=180)
+    print(result.stdout,flush=True)
+    expected='library.md: slide 4 (comparison), table 1: ESTIMATE'
+    warnings=[line for line in result.stdout.splitlines() if line.startswith('[WARNING]')]
+    if result.returncode or len(warnings)!=1 or expected not in warnings[0]:
+        raise RuntimeError('Unexpected example audit finding: '+result.stdout)
+
+
 def zip_tree(path,root):
     with zipfile.ZipFile(path,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
         for p in sorted(root.rglob('*')):
@@ -182,13 +191,13 @@ def build_lwp(root,out,locale,temp):
     img=series/'sources/img';img.mkdir(exist_ok=True)
     for name in ['product-responsive.png','themes-featured.png']:shutil.copyfile(root/'lightwebpres/img'/name,img/name)
     # Pin the original build identity without calling it the latest release.
-    conf=read_json(series/'series.json');conf['series_meta']['version']=('Moteur 0.56.0 · version de travail' if locale=='fr' else 'Engine 0.56.0 · development build');dump(series/'series.json',conf)
+    conf=read_json(series/'series.json');conf['series_meta']['version']=('Moteur 0.66.1 · version de travail' if locale=='fr' else 'Engine 0.66.1 · development build');dump(series/'series.json',conf)
     dest=out/'lightwebpres';run(engine,'build',series,'--lang',locale,'--output',dest)
     run(engine,'audit',series,'--lang',locale,'--strict');run(engine,'verify',series,'--lang',locale,'--output',dest)
     example=series/'example'
     for name in ['lightwebpres','COPYING','COPYING.EXCEPTION','THIRD-PARTY-NOTICES.md']:shutil.copyfile(root/'lightwebpres/web'/name,example/name)
     run(engine,'build',example,'--lang',locale,'--output',dest/'demo')
-    run(engine,'audit',example,'--lang',locale,'--strict');run(engine,'verify',example,'--lang',locale,'--output',dest/'demo')
+    audit_example(engine,example,locale);run(engine,'verify',example,'--lang',locale,'--output',dest/'demo')
     for p in (dest/'demo').glob('*.html'):
         target=example/'public'/p.name;target.parent.mkdir(exist_ok=True);shutil.copyfile(p,target)
     (example/('LIRE-MOI.txt' if locale=='fr' else 'README.txt')).write_text(('Depuis ce dossier :\n' if locale=='fr' else 'From this directory:\n')+f'python3 lightwebpres build . --lang {locale}\n'+('Puis ouvrir public/index.html. Modifiez sources/ma-page.md ; gardez les slugs stables.\n' if locale=='fr' else 'Then open public/index.html. Edit sources/ma-page.md; keep its slugs stable.\n'))
@@ -257,6 +266,31 @@ def builder_translate(s,locale):
             if option.get('value')==locale:option['selected']=''
 
 
+def clean_engine_versions(s):
+    for node in s.select('.version-tag,.build-stamp,.brand-version'):node.decompose()
+    for stamp in s.select('.help-stamp'):
+        for text in stamp.find_all(string=True,recursive=False):
+            if re.search(r'\bv?\d+\.\d+\.\d+',str(text)):text.extract()
+    return s
+
+
+def inline_demo_resources(s,root):
+    # The sandbox CSP permits inline CSS/JS and data images, but no external files.
+    for style in list(s.select('style')):
+        if (style.string or '').startswith('/* Shared navigation, not a shared product theme. */'):style.decompose()
+    for script in list(s.select('script:not([src])')):
+        if (script.string or '').startswith('/* Static bilingual editions: explicit URLs'):script.decompose()
+    for link in list(s.select('link[rel="stylesheet"]')):
+        if 'assets/minisites.css' in link.get('href',''):
+            style=s.new_tag('style');style.string=(root/'assets/minisites.css').read_text()+'\n'+(HERE/'language.css').read_text();link.replace_with(style)
+    for script in list(s.select('script[src]')):
+        if 'assets/minisites.js' in script.get('src',''):
+            inline=s.new_tag('script');inline.string=(HERE/'language.js').read_text();script.replace_with(inline)
+    mark='data:image/webp;base64,'+base64.b64encode((root/'assets/fadeshed-mark.webp').read_bytes()).decode()
+    for image in s.select('.fs-utility img'):image['src']=mark
+    return s
+
+
 def main(root,output):
     root=root.resolve();output=output.resolve()
     if output.exists():raise ValueError('Use a fresh output directory')
@@ -271,6 +305,7 @@ def main(root,output):
         src=output/name
         if src.is_dir():shutil.copytree(src,fr/name)
         elif src.is_file():shutil.copyfile(src,fr/name)
+    (fr/'assets/bilingual-manifest.json').unlink(missing_ok=True)
     with tempfile.TemporaryDirectory(prefix='bilingual-') as d:
         tmp=Path(d)
         for locale,edition in [('en',output),('fr',fr)]:
@@ -300,14 +335,14 @@ def main(root,output):
                 if shortcut:
                     put_html(shortcut,'Sélectionnez une zone ou utilisez les touches 1 à 9. Ctrl/Commande+V colle dans la zone active ; C copie la référence. Maj-clic sélectionne une plage ; Ctrl/Commande-clic ajoute des éléments. A ouvre les zones, U les ferme. Vous pouvez aussi déposer directement un fichier dans une zone.')
                 node=ds.new_tag('script');node.string=(HERE/'pasteberth-demo-fr.js').read_text();ds.body.append(node)
-            dp.write_text(serialize(decorate(ds,'pasteberth/demo.html',locale)))
+            dp.write_text(serialize(inline_demo_resources(decorate(ds,'pasteberth/demo.html',locale),root)))
             for p in sorted((edition/'lightwebpres').rglob('*.html')):
                 if 'reference' in p.relative_to(edition).parts:continue
                 rel=p.relative_to(edition).as_posix();s=soup(p.read_text())
                 if rel.startswith('lightwebpres/guide/') and locale=='fr':guide_translate(s)
                 if rel=='lightwebpres/themes.html' and locale=='fr':text_translate(s,read_json(HERE/'translations/gallery-fr.json'))
                 if rel=='lightwebpres/web/index.html':builder_translate(s,locale)
-                p.write_text(serialize(decorate(s,rel,locale)))
+                p.write_text(serialize(clean_engine_versions(decorate(s,rel,locale))))
     # A single locale-aware integration layer, never a copy of application code.
     for edition in [output,fr]:
         (edition/'assets/minisites.css').write_text((root/'assets/minisites.css').read_text()+'\n'+(HERE/'language.css').read_text())

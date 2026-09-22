@@ -33,6 +33,428 @@ link to the originals. They are at
 
 ---
 
+## Unreleased — 0.66.1
+
+The theme gallery's featured documentation now shows three real themes with
+both their covers and standard cards, so a palette is not mistaken for the
+whole presentation surface. The README and guide expose that comparison,
+while the compact catalogue is identified as a colour-first cover overview.
+
+## v0.66.0
+
+Slide headers and footers now expose typed horizontal alignment with the
+`left`, `center` and `right` values. Themes and `settings.conf` can set the
+default, while an article can override the two chrome rows through its
+`style.*` metadata without changing the chrome content or slide model.
+
+## v0.65.0
+
+Incremental multipage builds now keep a disposable, per-page image inventory
+cache beside the navigation fingerprint. A matching output hash reuses the
+retained page's image references instead of reparsing its HTML; missing,
+corrupt or stale entries fall back safely. Shared images, newly available
+sources and `--no-index` output remain correct. The guide and specification
+document the cache and its failure-safe behavior.
+
+Display settings now expose independent horizontal and vertical reduction for
+images and figures, enabled by default. Vertical fitting measures the object
+against one viewport height without shrinking it because surrounding prose
+spans several screens. Author settings use `object_shrink_horizontal` and
+`object_shrink_vertical`, and the saved reader record is now version 2; the
+former `object_shrink` format is removed for explicit agent migration.
+
+`slug_prefix` now shares one normalized value and provenance resolution across
+builds, reports and `series slug`, so blank values cannot appear as winners
+when the build correctly falls back to the next level.
+
+## v0.63.0
+
+The build target option is now `--incremental` instead of `--only`. It accepts
+an article's `page_source` or `page_dest` and safely requests a targeted
+multipage rebuild: shared-input, cache, manifest and retained-output checks
+fall back to a full build when needed. Combined HTML validates the target but
+still rebuilds the complete document. The removed option spelling is rejected,
+and the build-system documentation identifies the public CLI as the
+integration boundary.
+
+## v0.62.0
+
+Themes can now give slide chrome more vertical room through the typed
+`slide-header.padding-block` and `slide-footer.padding-block` properties.
+The default remains `0`, so existing themes keep their rendered geometry while
+large-reading and identity themes can enlarge the header and footer footprint.
+
+## v0.61.0
+
+Presentation presets now own `slide_chrome_placement`: `edge` uses the
+available slide height to separate declared header and footer chrome from the
+content, while `content` keeps those slots in normal layout flow. Identity Kit
+manifests validate the two values, the `/4` preset report exposes the resolved
+choice, generated article slides carry it, and runtime preset switching updates
+the live placement without changing the Theme contract.
+
+The typed Theme registry now owns free-form slide-body typography, the three
+body-heading scales, and native header/footer typography, spacing, rule and
+declared-asset geometry. Body headings remain proportional to
+`slide-body.size`, while cover chrome inherits the cover foreground so the
+existing readable result is preserved.
+
+`theme show` reports the complete resolved property map, and `contract` exposes
+the live Theme registry for authoring tools. Contrast and audit measurements
+include the new text surfaces. Older external Theme snapshots may omit only
+these newly introduced properties; loading supplies the registry defaults and
+preserves their former page/body-heading inheritance.
+
+Identity Kit structural CSS remains scoped and functional, but selectors aimed
+at native Theme-controlled surfaces now produce an actionable warning. The
+gallery, guide, examples, golden demo and responsive documentation captures
+were regenerated from the updated executable.
+
+Read-only `kit list` and `kit show` commands now inspect complete native and
+external Identity Kits without changing a series. Their versioned JSON reports
+expose the kit identity, resolved loading scope, resources and digest through
+the `lightwebpres.identity-kit-list/1` and `lightwebpres.identity-kit-info/1`
+contracts.
+
+Selector-scoped kit inspection now resolves the effective copy before parsing,
+so installed, user and series precedence applies to whole kits. Kit inventory
+is independent of the Commons preset catalogue, and native theme reports carry
+their canonical `builtin` origin.
+
+The embedded `builtin` identity is now labelled `Built-in`, keeping it distinct
+from the product name and the official `LightWebPres` documentation kit. `kit
+show` validates its kit-only selector before loading catalogue resources, so a
+malformed Commons preset cannot obscure that grammar error.
+
+Arrow keys and the wheel retain native reading scroll instead of changing
+slides. Over a series index, `series-nav` or `unit-index` list, vertical wheel
+input selects one adjacent card without opening it and returns to native scroll
+at either edge. A 500 ms left press on that list follows the wheel-selected card
+for mouse-only readers, while movement, text selection, modifiers, tables,
+competing help/fullscreen gestures, pointer cancellation and touch cancel the
+hold. PageUp/PageDown, navigation buttons and article-background
+clicks change slides directly; index-background clicks retain the card journey.
+Space and Shift+Space remain the bounded reading journey for long slides and
+navigation cards. The separate `page.block-max` property was removed: content
+blocks now share the responsive `page.content-max` measure.
+
+## v0.60.1
+
+Full-article slides can now replace their localized kicker with an explicit
+`kicker:` field. Publication cleanup validates the
+`lightwebpres.manifest/2` schema before touching output, and watch serves the
+configured combined-HTML filename.
+
+The theme picker starts its search when an unmodified letter is typed while a
+choice has focus. The official guide's embedded Identity Kit labels its
+identity `LightWebPres`, independently of its `LightWebPres documentation`
+preset label.
+
+Identity Kit preset selectors in `series.json` accept exact, partial and
+floating versions (`X.Y.Z`, `X.Y`, `X` or `latest`). Partial and `latest`
+selectors resolve the highest available matching version and remain persisted
+as given. `audit` reports the resolved filesystem path of every selected
+Identity Kit.
+
+Filtered builds no longer parse malformed, unselected Identity Kit or Commons
+entries; complete catalogue commands retain strict validation.
+
+Series authors can now declare presentation chrome independently of an Identity
+Kit. The root `series.json.chrome` layer cascades through article metadata to
+slide-local `slide-header` and `slide-footer` overrides; textual chrome works
+with `builtin/standard`, while named models remain kit-validated. Empty slots
+can explicitly clear inherited chrome.
+
+The specifications, glossary, guide, examples and generated captures describe
+these changes and are rebuilt from the current executable.
+
+Builds with one published presentation preset now render each article and the
+series index once instead of creating and discarding an identical capture.
+
+GitLab sync now uses the pulled file contents as a local push baseline, avoiding
+remote metadata requests for unchanged files.
+
+## v0.60.0
+
+Presentation selection is now declared by the canonical root
+`series.json.appearance` object. Its ordered `presets` and `themes` lists
+separate the initial choice from explicit alternatives, while an omitted
+appearance uses the built-in standard preset and the default theme policy.
+
+The executable, reports and examples now resolve this contract through one
+catalogue. Native Light and shipped themes keep their resource identity and
+loading origin distinct, and runtime choices no longer duplicate one resource
+when bare and forced references meet. `settings.conf` remains limited to
+property pins; `series theme set` writes appearance policy instead of creating
+a second theme configuration.
+
+The former persisted and CLI appearance selectors are rejected rather than
+silently migrated or aliased. Public report fields that describe resolved
+presentation choices remain unchanged where they are part of the output
+contract. Demo generation preserves a series' selected appearance while
+refreshing its editorial content.
+
+The specifications, glossary, guide, agent skill, examples and generated
+captures now describe and exercise the canonical contract. The golden demo,
+documentation captures, product comparison and generated guide were rebuilt
+from the current executable.
+
+## v0.59.2
+
+Theme listing now uses bare slugs for every theme, including `light`, and displays
+loading origin independently of palette credits. All shipped themes use
+`builtin`; `--origin` filters effective entries. The catalogue enforces the same
+builtin < installed < user < series precedence for all slugs, with
+`builtin:<slug>` available to force any shipped theme, including in Commons
+presets. Theme and preset reports expose the selected theme's origin separately.
+
+Bare and forced references to one resource no longer create duplicate runtime
+choices. Settings/report helpers use the same complete catalogue without an
+explicit context, and known theme slugs take precedence over same-named
+directories. Vendoring validates every selected destination before writes and
+refuses distinct origins that would overwrite the same theme filename, including
+with `--force`.
+
+Build and verify now share a disk-backed publication plan for HTML, README and
+assets. Multipage verification detects changed or missing copied images just as
+combined-HTML verification does. Rendering, asset reads, manifest validation and
+destination conflicts finish before any published file is replaced. Files are
+then promoted atomically one at a time, with bookkeeping last; a disk failure or
+process crash during promotion is not a whole-directory transaction. Manual
+sidecars and retained incremental/draft-only pages keep their ownership.
+
+Unit sources are parsed once per build context and cloned for each render;
+compiled index selectors are reused across preset variants. Ignored units,
+omitted drafts and excluded slides no longer remove compatible published presets.
+Audit retains its complete source universe. Native Light now keeps its canonical
+`builtin:light` identity through presets and the browser, eliminating duplicate
+Light choices from `--themes all` while keeping local `light` snapshots distinct.
+
+GitLab Pull now downloads an immutable commit and binds the working snapshot to
+its revision and destination. Push omits unchanged files, refuses a changed
+branch, guards updates with file revisions, and checks each confirmed commit's
+parent before advancing the snapshot. Failed or uncertain requests require
+another Pull and report confirmed chunks; concurrent creates are never retried
+as updates. No-change pushes create no commit.
+
+The `resolve` report now uses `lightwebpres.resolve/3`: the series-wide
+`presentation_preset` query is reported as a series field and an omitted value
+resolves to the canonical `builtin/standard` selector. Commons presets retain
+standalone theme source and note metadata, and changing identity follows the
+Identity Kit manifest's `default_preset` when that preset is published.
+
+The native Light theme participates in the same catalogue as the shipped
+palettes. Its display metadata is resolved for inspection, while its composition
+layer retains symbolic property references. A local `light` shadows the bare
+selection; `builtin:light` still selects the native resource. `theme vendor`
+skips the native resource and copies effective local snapshots normally.
+
+## Unreleased — 0.59.1
+
+The internal presentation-package vocabulary is now expressed through Identity
+Kits and the identity catalog. The native identity is represented as the
+embedded `builtin` Identity Kit, while external kit resources keep their
+existing selectors and `lightwebpres.identity-kit/1` manifest contract. The
+versioned preset, preset-list, series-preset and series-info reports now expose
+their identity resource under `identity`; the generated manifest records
+`identity_digest` instead of the retired package name.
+
+Theme picker choices now split their previews into a cover-styled name and a
+standard-slide label strip. Each surface uses the selected theme's resolved
+colours and typography instead of inheriting the currently active theme.
+
+Cancel obsolete glide safety timers before starting another transition, so a
+late timeout cannot reset navigation to the previously visible slide.
+
+Space now follows the same slide, navigation-card and bounded long-slide steps
+as the arrow keys, instead of accumulating native page-scroll offsets.
+Shift+Space steps backward, and held Space uses the existing keyboard cooldown.
+Series-index, series-navigation and unit-index cards can be traversed without
+activation; Enter still follows their links. Ordinary links keep native Space
+scrolling, controls keep their own activation or editing, and foreground panels
+retain Space even when focused speaker notes do not overflow. The mouse-only
+second-click shortcut during a glide is unchanged.
+
+In scroll-mode tables, a brief left click or tap on plain cells now advances
+through the same bounded reading steps as ordinary content. Tall tables remain
+complete: repeated taps read down the slide before entering the next one.
+Dragging still scrolls locally, including at horizontal edges, without a stray
+navigation click. Long presses, text selection, native links and controls,
+pinch, wheel and focused-table keyboard handling retain their own behavior;
+right-click still opens the table's native context menu.
+
+Theme subtitles now use one localized loading-origin vocabulary: Built-in
+(Intégré) for both shipped Commons themes and native Light, plus Installed,
+User and Series-local. The filter is labelled Show themes / Afficher les thèmes
+rather than Theme source. Raw JSON origins, palette source credits, selectors,
+collection and identity ownership, and filter behavior are unchanged.
+
+Repeated embedded images and exact stylesheets inside inert unit-view and
+preset payloads now share a deterministic resource pool within each HTML file
+when factoring saves space. Primary live images and styles remain directly
+renderable without JavaScript; their repeated image URLs are intentionally not
+pooled. Runtime references restore ordinary data URIs, including SVG fragments,
+without blob URLs or external requests. Preset switches, unit navigation and
+passive fitting use the same pool. Linked files remain path-based; arbitrary
+CSS, media, widgets and private navigation scripts are not rewritten.
+
+`--single-html --no-index` now omits series contents and opens the first
+published unit, with one or several units supported. An empty published
+collection fails before writes. Other units remain reachable through navigation
+and authored links, without generated back-to-index links. Home starts the
+current unit; Ctrl+Home and Start of series return to the first unit. Series
+sharing uses the hash-free physical URL. Unused `index_extra.html` is ignored;
+unit-index slides, native-navigation requirements and the refusal of
+`--drafts-only` are unchanged.
+
+**D** now opens or closes the Display settings submenu directly, without
+requiring the presenter menu first. The shortcut is listed in the generated
+keyboard help and on the accessible menu action.
+
+The presenter menu now keeps Display settings, navigation, tools, sharing/help
+and pause screens in stable rows, so Previous slide, the series index and Next
+slide stay together. Black screen, White screen and Theme screen actions now
+show their corresponding backgrounds, with the themed action following the
+current page colours.
+
+## Unreleased — 0.59.0
+
+`--single-html [FILE]` replaces `--single-page` on `build`, `verify` and
+`watch`, preserving the optional filename and title-derived default. The old
+spelling has no alias, deprecation path or special migration handler.
+
+Add `unit-index` slides: an ordered, linked contents list for one logical
+content unit, with an optional title, selector and responsive maximum column
+count (default 1). Multiple explicit indexes are allowed. Automatic insertion
+is opt-in through `unit_index` or `--unit-index on`; metadata overrides CLI,
+then series defaults. It inserts after the first non-excluded cover, or at the
+start, without writing sources. Any explicit index, even excluded, suppresses
+insertion. The generated `lwp-index` slug obeys prefixes and collision checks.
+Existing kits may omit the new layout and use their standard layout with chrome;
+no manifest rewrite is needed. Long lists remain complete on screen and in print.
+
+Indexes use a shared build-time selector core with `series`, `unit` and `slide`
+scopes, separate source authority, specific-first/general-first views and origin
+traces. Compact Boolean expressions support literal tags, scoped fields, named
+queries and bounded regex search. A documented JSONPath filter profile adds
+scalar comparisons, existence and nested array-filter existence, plus `match`
+and `search`; it is not full RFC 9535 or I-Regexp. Limits include 4,096-character
+queries, depth 32, 256 AST nodes, 64 reachable names, 512-character regexes,
+256 NFA states, repeat bounds of 64, 8,192-character regex inputs, arrays of
+1,024 items, 16,384 evaluation steps and 4,000,000 regex work units per record.
+Invalid syntax and exhausted budgets fail rather than broaden or truncate results.
+
+`*` selects every supplied published item, including the index itself, other
+indexes, covers, long-form slides and generated endnotes. Literal tag predicates
+do not inherit the reader filter's shared-default behavior. Index entries are
+fixed at build time; following a link uses existing tag-aware anchor reveal,
+not a new reading-journey mode. Existing notes and numbering resolution reuse
+the core while preserving their field-specific results.
+
+Generated endnotes now participate in tag inventories, card visibility and
+previews as well as index selection. Index title matching precedes display
+typography and excludes footnote-call markers. Parallel test discovery fails
+explicitly on import errors instead of rescheduling incomplete test modules.
+
+The live drafting contract is now `lightwebpres.slide-draft/2`, with five slide
+types. Documentation and a source-only unit-index example cover both selector
+syntaxes and named queries. Logical units are not physical HTML pages:
+`articles[]`, `page_source`, `page_dest` and related persisted names remain the
+canonical format, not aliases. No global `build --select` is introduced; broader
+wire migration and publication filtering remain open in B67.
+
+## Unreleased — 0.58.1
+
+`--single-page` now accepts an optional filename on `build`, `verify` and
+`watch`. Without one, the name comes from the series title: HTML is stripped,
+entities decoded, accents folded and punctuation replaced by hyphens. Unicode
+letters remain supported, empty titles fall back to the series directory then
+`series`, and automatic names have bounded character and UTF-8 byte lengths
+and protection against reserved Windows names. An explicit `.html` or `.htm`
+filename takes precedence. `watch` derives the name again after title changes;
+old output remains recorded for explicit cleanup with `clean`.
+
+Single-page readers using **Reduce all slides together** can now choose
+**Current article** (the default) or **Entire series** in Display settings.
+Series scope shares the most restrictive measured factor across all
+tag-eligible article slides, respecting their styles, presets and settings
+pins. Long-form and series-navigation slides participate even if they still
+overflow at the minimum. The scope preference is saved separately; independent
+per-slide fitting, fixed sizing and multipage output keep their own behavior.
+Inactive static content is measured in script-disabled isolated documents,
+preserving active selection, focus and media. Unsupported widgets or executable
+HTML return the control to article scope with an explanation.
+
+Remove the unwanted focus outline around programmatically focused reading
+containers that appeared as a white contents frame or cover separator. Links
+and controls retain visible keyboard focus.
+
+## Unreleased — 0.58.0
+
+`build`, `verify` and `watch` accept `--single-page FILE` to publish a series
+in one HTML document. Readers deliberately switch between articles; only the
+active view is mounted, with article-local styles, notes and IDs. One root
+runtime preserves fullscreen across switches. Printing uses the active,
+tag-filtered article, or only the series contents when that view is active.
+Multipage output remains the default, with an intentionally updated runtime.
+
+`verify` now reproduces `--inline-images` as well as single-page output. Image
+embedding includes SVG as an image data URI, preserving its vector bytes,
+not turning it into interactive SVG DOM. Warnings identify SVG resources that
+image rendering blocks even online; `--verbose` adds source lines and remedies.
+This is not a complete offline bundle: raw HTML images are not auto-inlined,
+and external CSS, fonts, scripts and media can remain dependencies.
+
+Single-page mode requires built-in navigation and rejects nonempty
+`templates/index_extra.html`, `--no-index` and `--drafts-only`. Use multipage
+output for existing script extensions. Switching modes does not delete old
+published files; review `clean` explicitly.
+
+Update the optional sourced-presentation skill to version 0.19, clarifying
+evidential scope and removing unnecessary disclaimers.
+
+## Unreleased — 0.57.2
+
+Display settings (**Affichage** in French) names the submenu that controls
+zoom, text fitting, table overflow and optional table/image shrinking. Its
+Back button uses a normal text layout rather than an icon-sized grid column.
+
+Reading and theme-source selectors explicitly receive the theme's page
+background and foreground, including their option lists. Dark themes no
+longer leave pale option text on a browser-default white popup. Table clicks
+remain isolated from slide navigation while horizontal scrolling is enabled.
+
+## Unreleased — 0.57.1
+
+The **C** picker's Current identity filter includes all published Commons/global
+themes and native Light/custom choices when using native LightWebPres, without
+including foreign kit themes. For a real kit it retains that kit's qualified
+themes and custom variants. Without a published kit, the Identity/Preset boxes
+and headings are omitted and the picker simply selects a theme. Hidden Commons
+preset choices are not restored from session storage; selecting the primary
+theme restores the author's base appearance.
+
+Presentation zoom scales content fonts, line heights and images rather than
+the page root. Frame widths, padding, borders and minimum heights keep their
+normal responsive geometry, so reducing text makes more room within the same
+surface. Fitting is resolved at 100% before manual scaling, and genuinely long
+content can still grow or scroll. Font-relative images scale once rather than
+receiving the factor through both their inherited font and image zoom. Reset,
+theme changes and printing preserve the original authored styles.
+
+The main menu has one **Size and tables** item (**Taille et tableaux** in
+French), opening a dedicated submenu. Back and Escape return to the main item
+with keyboard focus; clicking outside closes the submenu. Existing zoom and
+reading shortcuts remain available, and native pinch remains browser zoom.
+
+Reading preferences survive navigation between a series' articles and index,
+and page reloads, through versioned browser `localStorage` scoped by output
+directory. Saved choices include zoom, table/text modes and shrink switches,
+not author minimum scales or source JSON. Invalid or blocked storage falls
+back to author defaults while controls remain usable. Persistence follows the
+browser's storage policy, including its handling of `file:` URLs; theme and
+preset choices keep their separate browser-session contract.
+
 ## Unreleased — 0.57.0
 
 ### Reader Controls

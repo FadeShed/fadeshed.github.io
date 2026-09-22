@@ -13,6 +13,14 @@ pages with slide navigation and a series index. Each article carries its CSS
 and JavaScript; readers need a browser, not LightWebPres, an account or a
 presentation service.
 
+Add a **contents slide inside a content unit** with `unit-index`, or request
+automatic insertion with `--unit-index on`. Select entries with literal tags,
+scoped fields, named queries or a bounded JSONPath filter profile; choose a
+responsive column ceiling without shortening the list. A logical unit keeps
+its deck and supporting text together whether published separately or in one
+series-wide HTML document. See the [contents tutorial](GUIDE.md#add-a-unit-index)
+and [source-only example](examples/unit-index/README.md).
+
 <picture>
   <source media="(max-width: 600px)" srcset="generated/authoring-workflow-mobile.svg">
   <img src="generated/authoring-workflow.svg" alt="Three alternatives converge on the same editable source: a human writes, a human steers an external agent, or an autonomous agent writes from a task. LightWebPres builds those files into an HTML document and assets for reading, presenting and sharing." width="100%">
@@ -97,7 +105,7 @@ rebuilds saved edits; refresh the browser yourself.
 ## One article, different identities
 
 <p align="center">
-  <img src="generated/appearance-choices.png" alt="The same first article rendered with native LightWebPres, the documentation identity and the composed Field Notes identity" width="100%">
+  <img src="generated/appearance-choices.png" alt="The same first article rendered with the native Built-in identity, the documentation identity and the composed Field Notes identity" width="100%">
 </p>
 
 Three actual Chromium views of the same article with different presentation
@@ -112,10 +120,28 @@ preset, or deliver your own kit. Authors select what ships; readers use
 include Monochrome, Monochrome Night and Print Ink. Contrast reports measure
 typed values, not arbitrary custom CSS or overall accessibility.
 
+Authors can also set presentation chrome without making a kit: root
+`series.json.chrome` supplies series defaults, `slide-header` and
+`slide-footer` in article metadata supply article defaults, and the same fields
+on a slide win last. Typed `slide-header.align` and `slide-footer.align`
+properties let a theme author choose `left`, `center` or `right`, while an
+article author can override them with `style.slide-header.align` and
+`style.slide-footer.align`. Named chrome models still come from the selected
+Identity Kits; `""` or JSON `null` clears an inherited slot.
+
 Browse the [interactive theme gallery](generated/themes-gallery.html) or its
-[compact catalogue](generated/themes-gallery.png). For a complete, inspectable
-design workflow, the [Field Notes example](examples/kit-composition/README.md)
-composes layouts, marks and a theme from three independent source kits.
+[compact catalogue](generated/themes-gallery.png). The compact catalogue is a
+colour-first cover overview; the featured comparison below shows three actual
+themes with both a cover and a standard card, so the ordinary reading surface
+is visible before you choose a palette.
+
+<p align="center">
+  <img src="generated/themes-featured.png" alt="Three LightWebPres themes, Lava, Terminal and Pop Lemon, each shown with its cover and standard card in an actual Chromium preview" width="100%">
+</p>
+
+For a complete, inspectable design workflow, the
+[Field Notes example](examples/kit-composition/README.md) composes layouts,
+marks and a theme from three independent source kits.
 Distribute themes as files and complete kits as directories or archives,
 through your own downloads or repositories. LightWebPres loads those files;
 no account is required.
@@ -138,7 +164,20 @@ Follow the [six guide routes](GUIDE.md) or explore the
 
 - **A site, not an application server.** Publish the complete `public/` tree:
   HTML plus referenced `img/` and identity assets. `--inline-images` can embed
-  supported images and kit assets for single-file article delivery.
+  supported images and kit assets, but does not bundle every external dependency.
+- **A series in one HTML file.** `build my-series --single-html`
+  combines the series contents and articles with deliberate article switching,
+  not continuous scrolling through the whole collection. Add `--inline-images`
+  to embed supported images; `--output` still names a directory. The filename
+  comes from the series title, or pass `--single-html collection.html` to choose
+  it explicitly. Fullscreen survives article switches, and printing includes
+   only the active filtered
+   article, or only the series contents when that view is active. Uniform text
+   fitting can cover the current article or the entire series, selected in
+   Display settings. Set `build.single_html` in `series.json` to make a chosen
+   filename the default for this mode; an explicit CLI filename still wins.
+   See the [combined-HTML guide](GUIDE.md#publish-a-series-in-one-html-file) for extension
+   restrictions, links and portability limits.
 - **An index when you need one.** `series.json` determines article order and
   navigation. A lone article can claim `index.html`; `--no-index` lets you
   integrate pages into a site whose landing page is managed elsewhere.
@@ -191,11 +230,10 @@ and its panel opens in the same page that a projector or screen share shows.
 Use `comment:` for source-only review notes; those are not published.
 Tags are viewing filters, not access control.
 
-Before publishing, inspect the output and use matching build/verify options.
-`verify` cannot reproduce `--inline-images`; keep a separate non-inline
-output if you need that CI gate. Removing an article or asset from the
-sources does not itself delete an old published file. Review `clean` and
-the host's stale files as described in
+Before publishing, inspect the output and use matching build/verify options,
+including `--single-html [FILE]` and `--inline-images` when used. Removing an
+article or asset from the sources does not itself delete an old published
+file. Review `clean` and the host's stale files as described in
 [Publish and maintain](GUIDE.md#5-publish-and-maintain). Keep the source project
 and its exact engine version: published HTML or a browser `public.zip` is not
 an authoring backup.

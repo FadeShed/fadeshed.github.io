@@ -21,7 +21,7 @@ jobs:
           python3 - <<'PY'
           import base64,hashlib,json,os,subprocess
           from pathlib import Path
-          expected='bdbb84bc6fee5e27927ddc3d65bcd1d963adcff6350b0c1b16fdc36a9771b974'
+          expected='b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962'
           for name in ['lightwebpres/web/lightwebpres','fr/lightwebpres/web/lightwebpres']:
               if hashlib.sha256(Path(name).read_bytes()).hexdigest()!=expected:raise RuntimeError('Unexpected deployed renderer')
           manifest=Path('assets/bilingual-manifest.json');data=json.loads(manifest.read_text())

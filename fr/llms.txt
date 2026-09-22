@@ -34,3 +34,8 @@ Project status is explicit: **FileShed — Retired; Pasteberth — Beta; LightWe
 
 - [English presentation](https://fadeshed.github.io/): canonical English edition, also used when no language is specified.
 - [Présentation française](https://fadeshed.github.io/fr/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/): édition française explicite ; la navigation conserve cette langue.

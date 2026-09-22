@@ -57,22 +57,54 @@ start a blockquote and needs no escape.
 ## Tables And Reader Sizing
 
 The build keeps every table cell in HTML. Wide tables are visually clipped by
-default, not shortened or summarized. Readers can use **Menu > Wide tables**
-or **O** to choose clipping, overflow or local scrolling. In scroll mode,
-focused keys, wheel and touch interactions stay inside the table viewport
-instead of accidentally navigating the deck. Print expands tables without
+default, not shortened or summarized. Readers can use
+**Menu > Display settings > Wide tables** or **O** to choose clipping, overflow
+or local scrolling. Back or Escape returns from the sizing submenu to its
+main-menu item with focus restored; clicking outside closes it. In scroll mode,
+focused keys, wheel and drags stay inside the table viewport, even at horizontal
+edges. A brief tap or left click on plain cells advances through bounded reading
+steps within a tall slide, then to the next slide after reaching the bottom.
+Table taps do not toggle navigation visibility. Links, images, native controls,
+text selection, long press, pinch and the right-click context menu keep their
+own behavior. Print expands tables without
 screen clipping or local scroll limits; check physical paper width separately.
 
 Text fitting is a reader setting, not a Markdown conversion or an article
 `style.*` key. `fixed` keeps the native responsive sizes without content fitting;
-`uniform` fits all currently visible slides together, including a visible
-full-article, and `per-slide` fits each independently. A long-form article may
-still require scrolling at the reduction floor. Optional shrinking applies
-separately to tables and supported images/figures, not arbitrary iframes or
-buttons. Runtime scales are cleared for print. Exact author defaults and
+`uniform` fits all tag-visible slides in the current article together by
+default. In combined-HTML output only, **Uniform fit scope** in Display settings
+can extend that group to tag-eligible slides across the entire series, using
+the smallest measured factor. Long-form and series-navigation slides participate
+even if they still overflow at the floor. `per-slide` fits each independently,
+without propagating reductions; `fixed` does not fit content. Scope is a
+separate saved reader preference, defaulting to the current article, not a
+source style or reading field; multipage output is unaffected. See
+[Series and Appearance](series-and-appearance.md) for its storage contract.
+Optional shrinking applies separately to tables and supported images/figures,
+not arbitrary iframes or buttons. Image reduction has independent horizontal
+and vertical switches, both enabled by default; the smaller applicable factor
+wins and preserves the image ratio. Vertical fitting uses one viewport height,
+not the total height of a slide whose prose continues below the screen. Runtime
+scales are cleared for print. Exact author defaults and
 limits belong to `series_meta.reading` in
 [Series and Appearance](series-and-appearance.md); do not shorten source data
 merely to imitate visual clipping.
+
+Presentation zoom (**-**, **+**, **=**) changes content fonts, line heights
+and images after fitting has been solved at 100%. It does not zoom the page
+root, frame widths, padding, borders, minimum heights or foreground controls.
+At 100%, normal responsive sizing remains; long content can still grow or
+scroll, and fitting does not cancel manual magnification. Native pinch remains
+browser zoom. Browser emulation alone does not verify a physical device.
+
+Reading modes, shrink switches and presentation zoom are reader preferences
+saved in `localStorage` per output directory path on the same origin, across
+articles, the index and reloads. Author minimum limits are not saved there,
+and controls never rewrite `series.json` or Markdown. Invalid or inaccessible
+stored data falls back to author defaults and 100% zoom; blocked saving leaves
+controls usable in the page. Persistence depends on browser storage policy,
+with `file:` behavior differing from HTTP(S) and between browsers. Appearance
+keeps its separate browser-session persistence.
 
 ## Raw HTML Blocks
 
@@ -94,6 +126,9 @@ a field can still enter the page.
 **Trust boundary:** raw HTML, including `<script>`, reaches published pages.
 LWP trusts author-controlled text; `templates/custom.css` is also appended
 verbatim, and `template write nav.js` can hand over the page script.
+Combined-HTML mode requires that script to match the built-in runtime; arbitrary
+widget script lifecycles are unsupported. Use multipage output for those
+extensions; see [Operations](operations.md).
 Sanitize untrusted CMS exports, database text, translations or another
 agent's output **upstream**. LightWebPres does not filter raw HTML. An HTML
 comment in body text is shipped even when invisible on screen; source-only

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exercise both static editions over HTTP, locally or on deployed Pages."""
-import argparse,functools,hashlib,http.server,json,re,threading,urllib.parse,zipfile
+import argparse,functools,hashlib,http.server,json,os,re,threading,urllib.parse,zipfile
 from pathlib import Path
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright,expect
@@ -43,7 +43,7 @@ def run(root,report,base=None):
     check('Pasteberth original frontend unchanged',(root/'pasteberth/assets/product/app.js').read_bytes()==(root/'fr/pasteberth/assets/product/app.js').read_bytes())
     try:
         with sync_playwright() as p:
-            browser=p.chromium.launch(headless=True)
+            browser=p.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM'))
             diagnostic=browser.new_page(locale='fr-FR')
             diagnostic.add_init_script("""window.__routeTrace=[{event:'init',url:location.href}];for(const method of ['replaceState','pushState']){const original=history[method].bind(history);history[method]=function(...a){window.__routeTrace.push({event:method,from:location.href,to:a[2]});return original(...a)}};addEventListener('load',()=>window.__routeTrace.push({event:'load',url:location.href,entry:window.__fsEntryHash}));""")
             diagnostic.goto(base+'fr/pasteberth/',wait_until='networkidle')

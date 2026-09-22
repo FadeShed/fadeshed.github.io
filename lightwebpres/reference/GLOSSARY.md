@@ -11,6 +11,23 @@ including in this sentence.
 Excludes LWP's structural markers (`<!-- lwp:meta -->`, `<!-- lwp:slide:TYPE
 -->`, `---`) — see `specifications.md` §4.1 for those.
 
+## Logical vocabulary
+
+| Term | Meaning |
+|---|---|
+| **series** | Ordered collection of content units, logical scope 0 |
+| **content unit** / **unit** | Coherent deck and optional supporting long-form texts, logical scope 1; the persisted format calls it an article, not an HTML page |
+| **slide** | An authored card or generated reading section inside a unit, logical scope 2 |
+| **physical HTML document** | Output container: one unit per document by default, or a series combined by `--single-html [FILE]` |
+| **source authority** | Precedence between declarations of the same logical object; an article entry and its Markdown meta both own unit values |
+| **selector** | Build-time predicate over supplied ordered records, with no intrinsic publication exclusions; not the runtime reading-tag filter (§3.4) |
+| **unit index** | A `unit-index` slide linking selected published slides in its own unit; not the series index page (§3.3.6) |
+
+`articles[]`, `page_source`, `page_dest`, `page_title` and related persisted
+fields remain canonical, not aliases for hypothetical `unit_*` replacements.
+`unit_index*` are new settings, not a rename of existing fields. Broader wire
+vocabulary and global publication selectors remain open in DECISIONS.md B67.
+
 ## Naming conventions
 
 **A name's shape says what level it is set at.** Settled in v0.7.0 and
@@ -46,12 +63,17 @@ report (below).
 ## Machine-readable draft contract
 
 `lightwebpres contract` exposes the slide grammar as the versioned
-`lightwebpres.slide-draft/1` contract. It is generated from the same
+`lightwebpres.slide-draft/2` contract. Its five types are `cover`, `standard`,
+`series-nav`, `full-article` and `unit-index`. It is generated from the same
 `SLIDE_TYPES` registry as the parser and reports the canonical type order,
 accepted and required fields, cardinalities, empty-value rules, reserved IDs
 and a complete source skeleton for each type. JSON is the default output;
 `--format text` is the human view. `--article file.md` makes generated slugs
 avoid the slugs already declared in that source. The command is read-only.
+The contract also carries a generated `theme` registry: shared values,
+components and every typed property with its type, default, CSS variable and
+native selector. Authoring tools should discover theme keys from this object
+instead of maintaining a second list.
 
 ## Public report contracts
 
@@ -63,21 +85,27 @@ must tolerate unknown keys (§13.9). Final 1.0.0 starts the stability promise.
 Beta and release candidates invite feedback and may change before final;
 neither pre-beta nor inter-prerelease compatibility is promised.
 
-The native-identity report baseline is `lightwebpres.presentation-preset/2`,
-wrapped by `lightwebpres.preset-list/2`, `lightwebpres.series-preset/2` and
-`lightwebpres.series-info/4`; theme reports use `lightwebpres.theme-info/6`.
+The native-identity report baseline is `lightwebpres.presentation-preset/4`,
+wrapped by `lightwebpres.preset-list/3`, `lightwebpres.series-preset/3` and
+`lightwebpres.series-info/5`; theme reports use `lightwebpres.theme-info/6`.
+Theme reports retain their compact `palette` and `fonts` facets and also expose
+`properties`, the complete resolved `component.axis` map used for CSS emission
+and contrast measurement. This optional addition keeps the report schema while
+making native visual values discoverable to authoring clients.
 Preset reports export `native_renderer`: `true` for native Standard and
 Commons, `false` for kits, even kits using native layout fragments. This is
 the renderer flag, not an inferred initial selection. There is no public
 `default` alias. `selector` identifies the preset, including
-`builtin/standard`; `package.default_preset` names a package-local preference.
+`builtin/standard`; `identity.default_preset` names an Identity Kit-local preference.
 Consumers of earlier report schemas must adapt (§11.18).
+The nested identity resource is exposed as `identity`; it is not a persisted
+author field and does not introduce an `identity` key into `series.json`.
 
 ## `comment` — review notes
 
 `comment` is recognized at every level below — a `series.json` entry, the
 `series_meta` object, an article's meta block, and the header of a slide
-of **any** type (cover, standard, series-nav, full-article) — but never
+of **any** type (cover, standard, series-nav, full-article, unit-index) — but never
 read by any renderer: parsed, then discarded. Use it to leave an editorial note in the source (a reviewer flag,
 a TODO) without it ever reaching the built output, not even in the page's
 raw HTML source (unlike an HTML comment, which LWP passes through
@@ -100,30 +128,59 @@ Once per series, in `series.json`'s `series_meta` object.
 | `scroll_duration` | `200` ms | Duration of the deck's own slide glide. It must be a non-negative integer; `0` jumps instantly. `--scroll-duration` overrides it for one `build`, `verify` or `watch` invocation, and the presenter menu or **I** toggles between this configured value and `0` |
 | `reading` | `{}` resolves to the defaults below | Strict object of initial reader choices and reduction limits, only in `series_meta`; not a theme property or article cascade (§9.3.9) |
 | `lang_tags` | `{}` — no tag selects a typography pack | Object mapping a slide tag to a typography pack name, e.g. `{"fr": "fr", "en": "en"}`; the first mapped tag on a slide selects its engine (§20.5) |
-| `presentation_preset` | omitted: implicit `builtin/standard` | One initial reference for the whole series and index: `builtin/standard`, `commons/<id>` or `id@MAJOR.MINOR.PATCH/preset`. Identity is inferred, not persisted separately. Both `init --preset` and `series preset set` persist an explicit selection, including `builtin/standard`; plain `init` leaves the field absent |
+| `selectors` | `{}` | Named expression strings used by `selector:name`; validates mapping shape, then only reachable expression syntax/cycles/budgets. Compact and bounded JSONPath filter profiles, not full RFC 9535 (§3.4) |
 
-`slide_layouts` and `slide_chrome` belong to Identity Kit manifests, where
-they declare preset defaults; they are not author metadata fields.
+`slide_layouts`, `slide_chrome` and `slide_chrome_placement` belong to Identity
+Kit manifests, where they declare preset defaults; they are not author metadata
+fields.
+
+`slide_chrome_placement` accepts `edge` or `content` and defaults to `edge`.
+It is structural preset state: `edge` separates declared header/footer slots
+with the available slide height, while `content` leaves them in normal layout
+flow. Rendered article slides expose the resolved value through
+`data-lwp-chrome-placement`; runtime preset switching updates the attribute.
+Themes can enlarge the vertical footprint of those slots with
+`slide-header.padding-block` and `slide-footer.padding-block`; both default to
+`0` and affect spacing, not the semantic chrome model. The typed
+`slide-header.align` and `slide-footer.align` properties accept `left`,
+`center` or `right` and default to `left`; they control the horizontal position
+of the rendered chrome row.
 
 ### Reading fields
 
 Only inside `series_meta.reading`. All fields are optional; unknown keys and
-invalid values are fatal. Runtime choices remain in the loaded page, including
-when Menu closes and reopens; they are not persisted across pages or reloads.
-The complete behavior is in §9.3.9.
+invalid values are fatal. **Menu > Display settings** exposes reader controls.
+Its Back button or Escape returns focus to that item in the main menu;
+clicking outside closes the submenu. The complete behavior is in §9.3.9.
+
+Reading preferences use browser `localStorage`, scoped to the output directory
+path on the same origin, across articles, the index and reloads. The version-2
+record contains `v: 2`, `table_mode`, `text_fit`, `table_shrink`,
+`object_shrink_horizontal`, `object_shrink_vertical` and `presentationZoom`,
+never the author's minimum scales. Invalid data or
+unavailable storage leaves author defaults and 100% zoom in effect; blocked
+saving does not disable controls. Storage availability and `file:` behavior
+vary by browser. No reader choice writes `series.json`; theme/preset choices
+retain their separate browser-session contract.
 
 | Field | Default | Description |
 |---|---|---|
 | `table_mode` | `clip` | `clip` visually clips wide tables without deleting cells; `overflow` allows content beyond the local viewport; `scroll` keeps scrolling inside the table. Menu or **O** changes the mode |
 | `text_fit` | `fixed` | `fixed` keeps native responsive sizes without content fitting; `uniform` uses one browser-measured factor for all currently visible slides, including a visible long-form article; `per-slide` measures each separately. Menu or **A** changes the mode |
 | `table_shrink` | `false` | Boolean enabling independent bounded table reduction; reader-toggleable in Menu |
-| `object_shrink` | `false` | Boolean enabling bounded reduction of supported images/figures, not arbitrary iframes, media players or buttons; reader-toggleable in Menu |
+| `object_shrink_horizontal` | `true` | Boolean enabling bounded reduction of supported images/figures to their available width; reader-toggleable in Menu |
+| `object_shrink_vertical` | `true` | Boolean enabling bounded reduction of supported images/figures to one viewport height; reader-toggleable in Menu |
 | `min_text_scale` | `0.75` | Minimum text-fitting factor, a finite number from `0.5` to `1`; text originally at least 12 CSS pixels also keeps that floor, while smaller authored text is not enlarged |
 | `min_table_scale` | `0.85` | Minimum independent table-reduction factor, a finite number from `0.5` to `1` |
 | `min_object_scale` | `0.85` | Minimum supported image/figure reduction factor, a finite number from `0.5` to `1` |
 
 Reduction factors never exceed `1`; reaching a floor need not make content fit.
-Presentation zoom is separate page-local magnification and can create overflow.
+Presentation zoom scales content fonts, line heights and images after fitting
+is solved at 100%, so fitting cannot cancel manual magnification. It does not
+apply root CSS zoom or scale frame widths, padding, borders, minimum heights
+or foreground controls. Native responsive sizing remains at 100%; long content
+can still grow or scroll. Native pinch remains browser zoom, and browser
+emulation does not establish physical-device behavior.
 Print clears runtime scales and expands table viewports without screen clipping.
 
 ## Series root fields
@@ -133,12 +190,17 @@ In the object form of `series.json`, these keys live beside `series_meta` and
 
 | Field | Default | Description |
 |---|---|---|
-| `themes` | omitted — the essential runtime bundle is still added by default | Ordered runtime theme selectors for `build`, `verify` and `watch`; an explicit `--themes` value overrides this list (§9.3.7) |
-| `presentation_presets` | omitted: a compatible kit or Commons primary also receives `builtin/standard` | Non-empty list of published runtime preset selectors; the primary `series_meta.presentation_preset` is inserted first, duplicates are removed, and native Standard is appended for a different primary unless a slide's kit-only layout/chrome override makes it incompatible. `--presentation-presets` overrides this list (§9.3.8) |
+| `appearance` | omitted: `presets` is `builtin/standard`, `themes` is `preset, essential` | Optional object beside `series_meta` and `articles`; it may contain either or both non-empty `presets` and `themes` lists. The first preset is primary; the first individual theme token sets the initial theme policy. Explicit lists are exact; `--themes` and `--presentation-presets` replace them for one invocation (§9.3.7, §9.3.8) |
+| `chrome` | `{}` | Optional object beside `appearance`, `series_meta` and `articles`; series-wide header/footer layer keyed by `all` or slide type. Direct `header`/`footer` keys are shorthand for `all`; slots accept text, models, `""` or JSON `null` to clear inherited chrome (§9.9.1, §20.5.3) |
+| `build` | `{}` | Optional output defaults: `single_html` is a plain combined-output filename and `inline_images` is boolean |
 
 The list is build configuration, not a persisted reader choice. A reader's
 presentation choice is kept in the browser session and never written back to
 `series.json`.
+
+The legacy author selectors `series_meta.presentation_preset`, article-level
+`presentation_preset`, root `presentation_presets`, and root `themes` are
+rejected. Use the corresponding lists under `appearance`.
 
 ## Language pack files
 
@@ -187,9 +249,12 @@ taking priority when both are set (§20.3.1).
 | `typo_units` | meta block only | Unset — rule stays on | `off` disables only the units/`×`/`≈` typography rule, for this article only |
 | `typo_thousands` | meta block only | Unset — rule stays on | `off` disables only the thousands-grouping typography rule, for this article only |
 | `slide_page_numbers` | meta block, `series_meta`, or `--slides-page-numbers` | `off` (§3.3.5) | Engraves the top-right `NN / NN` slide number on every slide; cascade: meta block > CLI flag > `series_meta` > `off` |
+| `unit_index` | meta block, `series_meta`, or `--unit-index` | `off` (§20.5.5) | Opt-in automatic contents after the first non-excluded cover, or at the start; any explicit index, even excluded, suppresses it. Meta > CLI > series > default; no source writes |
+| `unit_index_max_columns` | meta block, `series_meta`, or `--unit-index-max-columns` | `1` (§20.5.5) | Positive integer responsive ceiling for an automatic index; same cascade, Boolean invalid |
+| `unit_index_selector` | meta block, `series_meta`, or `--unit-index-selector` | `*` (§20.5.5) | Automatic index's entry expression; same cascade, not a global publication predicate |
 
 A preset cannot be selected in an `articles[]` entry or an `lwp:meta` block:
-only `series_meta.presentation_preset` selects it for the whole series.
+only `appearance.presets` selects it for the whole series.
 
 ## Tag visibility reports
 
@@ -245,6 +310,7 @@ A `<!-- lwp:slide:full-article -->` slide's own header.
 | Field | Default | Description |
 |---|---|---|
 | `slug` | None — required on every slide; a slide without one is a fatal build error naming `series slug set` | The slide's own name in a URL, and its whole identity (§12.1.1): never its rank, never its title, so it does not move when the deck is reordered or the heading rewritten. A build error if it is not `[A-Za-z0-9][A-Za-z0-9._-]*`, since it becomes an `id`, a URL fragment and the tail of a shared QR code, and a build error if two slides on a page take the same one |
+| `kicker` | the localized `full_article_kicker` string when absent | Editorial label above the included long-form article, such as `Glossary` or `Appendices` |
 | `tags` | `default` when absent or empty | Optional slide tags; `excluded` removes the generated slide before rendering |
 | `article` | None — required for publication; an explicit empty value warns and omits the draft slide | External `.md` file included as the article's long-form body |
 
@@ -256,12 +322,58 @@ navigation cards are generated from `series.json`; it accepts the shared
 on every other card. `comment` is documented above because it is accepted on
 every slide type and is never rendered.
 
+## Unit-index slide fields
+
+`<!-- lwp:slide:unit-index -->` accepts no free body and has no cardinality
+limit. It selects from every published slide in its unit, including itself,
+other indexes, covers, full-article slides and generated endnotes (§3.3.6).
+
+| Field | Default | Description |
+|---|---|---|
+| `slug` | Required | Stable authored identity, ordinary prefix/collision rules; automatic insertion uses `lwp-index` |
+| `slide_title` - written `## Heading` | Localized Contents | Optional index heading; no literal `slide_title:` field |
+| `kicker` | `''` | Optional label above the title |
+| `summary` | `''` | Optional summary below the title |
+| `tags` | `default` | Controls this slide's reader visibility, not its entry selector |
+| `note` | `''` | Speaker cue, including indented continuations; hidden but public HTML |
+| `index-max-columns` | `1` | Positive integer responsive column ceiling; empty uses default, Boolean invalid; print keeps a source-ordered list |
+| `index-selector` | `*` | Build-time selector (§3.4); empty uses default. No automatic exclusion of indexes and no refiltering by the current reader tag |
+
+`comment` and the shared presentation fields below are also accepted. An index
+with no matches displays a localized empty message. Links use the existing
+tag-aware anchor reveal policy, not a new navigation mode.
+
+## Selector record fields
+
+These are query views, not new author keys or a versioned public report schema.
+`series`, `unit`, `slide`, `effective`, `specific`, `general` and `origin` are
+specified in §3.4.1. Source fields are registered parsed values; unknown metadata
+and `comment` are absent. Scoped reads never fall back to another scope.
+
+| Field | Meaning in a slide selection record |
+|---|---|
+| `type` | Authored type, or `notes` for generated endnotes |
+| `title` | Computed plain heading/fallback, separate from original source fields |
+| `slug` | Authored unprefixed slug; `notes` for generated endnotes |
+| `id` | Effective target anchor including any slug prefix |
+| `tags` | Normalized slide tags; effective tags do not merge the unit reading gate |
+| `status` | Resolved unit status; implicit `active` exists in resolved views only, not in an undeclared `unit.status` |
+
+`origin.<field>` holds the effective `value`, numeric `scope`, `source` and
+`candidates` trace with eligibility, including rejected candidates. Source
+authority is separate from scope in both resolution directions. Blank metadata
+may be ineligible, while real Boolean false overrides remain eligible where
+the field requires them. Missing comparison operands are false even for `!=`;
+false/null/empty values still satisfy a path-existence test (§3.4.3).
+
 ## Shared Identity Kit fields
 
 `slide-layout`, `slide-header` and `slide-footer` are accepted in the headers
-of all four types (`cover`, standard, `series-nav`, `full-article`). They
-override the series preset's defaults for one slide. They do not define the
-page shell or navigation, and do not form an author-level JSON cascade.
+of all five types (`cover`, standard, `series-nav`, `full-article`, `unit-index`).
+The two chrome fields also work in an article's `lwp:meta` block, where they
+apply to every slide before slide-local overrides. The complete order is
+preset defaults < root `series.json.chrome` < article meta < slide header.
+They do not define the page shell or navigation.
 
 | Field | Default | Description |
 |---|---|---|
@@ -269,9 +381,14 @@ page shell or navigation, and do not form an author-level JSON cascade.
 | `slide-header` | preset-owned chrome default | Text, a JSON model object, or exactly `""` to remove the inherited header. An unquoted empty value is an error |
 | `slide-footer` | preset-owned chrome default | Same contract as `slide-header`, for the slide footer |
 
-The preset alone owns layout and chrome defaults; slide fields override them
-last. See `specifications.md` §9.9 and §20.5.3 for the manifest, fragments,
-assets and validation rules.
+The preset owns the defaults; root series chrome, article metadata and slide
+fields override them in that order. Textual chrome works with
+`builtin/standard`; named models and their assets must exist in every selected
+Identity Kit. Exactly `""` clears a slot, while an unquoted empty metadata value
+is invalid. See `specifications.md` §9.9 and §20.5.3 for fragments, assets and
+validation rules. A kit may omit the `unit-index` layout: it then uses the
+standard layout with chrome, without rewriting the kit manifest. The series
+`index.html` is not wrapped by this cascade.
 
 The historical `tag:` field is not an alias for either current field. Use
 `kicker:` for the visible label above a slide title, and `tags:` for tag
@@ -294,14 +411,14 @@ description; the terms are fixed here, in English.
 | **shared value** | A palette colour (`color.*`) or font stack (`font.*`) themes provide and properties reference. Never read by an emitted rule directly. |
 | **reference** | A word used as a value, resolved at merge time and never surviving into the output (§9.2). Bare (`kicker.fg: ink-quiet`) it is looked up in its type's namespace; dotted (`title1.fg: cover.fg`) it names another property. At most 3 hops; cycles are detected and named. |
 | **layer** | One dictionary of properties in the cascade (§9.3): built-in defaults, theme, settings, article, instance — merged in that order before emission. |
-| **theme** | A named layer of properties applied over the built-in defaults. It may be an embedded entry or a complete external snapshot. |
+| **theme** | A named layer of properties applied over the built-in defaults. It may be the native `builtin:light` resource, an embedded palette entry, or a complete external snapshot. |
 | **runtime custom variant** | The dynamic `custom(<theme>)` entry made from a base theme and the property pins in `settings.conf`; it is the primary runtime choice when those pins exist. The raw base theme remains separately selectable. |
 | **theme facet** | One catalogue axis used to find themes: `family` is declared, `polarity` is derived from the background, and `hue` is computed from it. |
-| **theme selector** | A runtime selection token from the effective catalogue: a slug, `all`, `essential`, or `X:Y` such as `bg:light`, `fam:terrain` or `bgh:red`; several tokens add their matches. `builtin:<slug>` forces the embedded entry when a local slug shadows it. |
-| **external theme snapshot** | A UTF-8 `.conf` file containing metadata and every property in the registry exactly once. It is complete by design: no CSS and no `extends`/include mechanism. |
-| **effective catalogue** | The themes visible to one operation after merging embedded, installed, user and, for a series operation, `templates/themes/` entries. A higher layer replaces a colliding slug's whole entry. |
+| **theme selector** | A runtime selection token from the effective catalogue: a bare slug (including `light`), a forced built-in reference `builtin:<slug>`, `all`, `essential`, or `X:Y` such as `bg:light`, `fam:terrain` or `bgh:red`; several tokens add their matches. Bare slugs follow provenance precedence; forced built-in references bypass it. |
+| **external theme snapshot** | A current UTF-8 `.conf` file contains metadata and every property in the registry exactly once. The loader also accepts older snapshots missing only allowlisted post-schema properties, preserving their former inherited values; there is no CSS and no `extends`/include mechanism. |
+| **effective catalogue** | One bare-slug index for every theme, including `light`, resolved in builtin < installed < user < series precedence. A higher origin replaces the whole entry of the same slug. Global operations omit the series layer; series operations include `templates/themes/`. Built-in resources remain explicitly addressable as `builtin:<slug>` when shadowed. |
 | **catalogue root** | A directory searched for direct `.conf` snapshots: installed resources, the user root (`LWP_THEMES_DIR` or the platform default), or a series' `templates/themes/`. |
-| **settings** | The author's own property layer (`templates/settings.conf`), applied over the theme for the static sheet and the runtime `custom(<theme>)` variant. Written only on explicit request: `series theme set` changes its `theme:` line, and `theme migrate` reduces an old scaffold while preserving pins. |
+| **settings** | The author's own property layer (`templates/settings.conf`), applied over the theme for the static sheet and the runtime `custom(<theme>)` variant. It contains property pins only; `series theme set` changes `appearance.themes`, and `theme migrate` reduces an old scaffold while preserving pins. |
 | **scaffold** | The generated form of `settings.conf`: every property present, commented out, at the chosen theme's values (§9.3.1). Generated once from the registry, never rewritten on the tool's initiative; `# scaffold-for:` records the theme it was generated under. |
 | **pin** | Uncommenting a scaffold line (or writing one): the value overrides the selected theme in the static build and is carried by the runtime `custom(<theme>)` variant; raw runtime themes may replace it. It survives theme changes and upgrades (§9.3.1). |
 | **override** | The relation between layers: a value in a later layer covering an earlier one. |
@@ -316,18 +433,19 @@ description; the terms are fixed here, in English.
 | **article tag** | A normalized word from an article's meta-block `tags:`. It gates the article card/page for the exact selected tag; an article without tags has no article-level gate. |
 | **image asset** | A regular file below `sources/img/`. A standard build publishes it under `public/img/` only when a rendered page references its local `img/...` path; an existing output file is not removed by the build (§11.3). |
 | **image inventory** | The audit's count of local image references in rendered pages, separated into inline images and standalone figures. It warns about unused source files and references whose source file is missing (§11.5). |
-| **identity** | Resource ownership group: native `builtin` (LightWebPres) or a versioned Identity Kit. Commons is a shared resource collection, never an identity; a Commons preset uses the native LightWebPres identity. The fixed identity label names the owner, not the initially selected preset or theme. |
-| **Identity Kit** | Self-contained `kits/<id>/<version>/` tree, vendored under `templates/kits/`, with a `lightwebpres.identity-kit/1` manifest. Required `label` names the identity; optional `default_preset` names a local preset, otherwise the first in manifest order is used. Owns layouts, chrome, assets, typed themes and constrained structural CSS, never the page shell. Published assets live under `public/assets/presentations/<id>/<version>/...`. `LWP_IDENTITY_KITS_DIR` sets the user root. |
-| **native resource** | Built-in reusable layout `builtin:standard` or minimal theme `builtin:light`. The native preset selector is `builtin/standard`. Using a native layout inside a kit preserves that kit's chrome. |
+| **identity** | Resource ownership group: native `builtin` (Built-in) or a versioned Identity Kit. Commons is a shared resource collection, never an identity; a Commons preset uses the native Built-in identity. The fixed identity label names the owner, not the initially selected preset or theme. |
+| **Identity Kit** | Self-contained `kits/<id>/<version>/` tree, vendored under `templates/kits/`, with a `lightwebpres.identity-kit/1` manifest. Required `label` names the identity; optional `default_preset` names a local preset, otherwise the first in manifest order is used. Owns layouts, chrome, assets, typed themes and constrained structural CSS, never the page shell. Published assets live under `public/assets/presentations/<id>/<version>/...`. `LWP_IDENTITY_KITS_DIR` sets the user root. `kit list` and `kit show` inspect complete kits without changing a series; their reports use `lightwebpres.identity-kit-list/1` and `lightwebpres.identity-kit-info/1`. |
+| **native resource** | Built-in reusable layout `builtin:standard` or minimal theme `builtin:light`. The native preset selector is `builtin/standard`. The catalogue lists bare `light` with its effective origin; `builtin:light` forces the native resource and remains its runtime identity. Native composition retains symbolic references. Using a native layout inside a kit preserves that kit's chrome. |
 | **Commons** | Shared resource collection, not an identity: the global theme catalogue under `themes/` (`LWP_THEMES_DIR`) plus native-layout preset descriptors under `commons/presets/<id>.json` (`LWP_COMMONS_DIR`), with series overrides in `templates/themes/` and `templates/commons/presets/`. |
-| **Commons preset** | Five-field `lightwebpres.commons-preset/1` descriptor: `schema`, `id`, `label`, `description`, `theme`. Binds a global theme slug or `builtin:light` to native layouts, without a starter; selected as `commons/<id>`. |
-| **presentation preset** | Named binding of a theme and layout/chrome defaults; selected as `builtin/standard`, `commons/<id>` or `id@MAJOR.MINOR.PATCH/preset`. Only `series_meta.presentation_preset` persists the initial selection, with identity inferred from that reference. |
+| **Commons preset** | Five-field `lightwebpres.commons-preset/1` descriptor: `schema`, `id`, `label`, `description`, `theme`. Binds a global theme slug or `builtin:<slug>` to native layouts, without a starter; selected as `commons/<id>`. The theme's origin is independent of the descriptor's loading scope. |
+| **presentation preset** | Named binding of a theme, layout/chrome defaults and chrome placement; selected as `builtin/standard`, `commons/<id>` or `id@<version>/preset`, where `<version>` is `X`, `X.Y`, `X.Y.Z` or `latest`. Partial/latest selectors resolve the highest available matching kit version; `X.Y.Z` pins one version. The first `appearance.presets` entry persists the initial selection, with identity inferred from that reference. |
 | **resource collection** | Which resource catalogue a preset belongs to: `builtin`, `commons` or `kit`. This is separate from identity ownership and from the location where the loader found it. |
-| **resource origin** | Loading scope computed by loaders: built-in, installed, user or series-local. It describes where a resource was found, not its collection or identity, and is never declared in a manifest. Kits carry no extension, inter-kit dependency, provenance, filiation or authenticity record. |
+| **resource origin** | Loading provenance computed by loaders: `builtin`, `installed`, `user` or `series`. All shipped themes use `builtin`, displayed as **Built-in** / **Intégré**. Origin is separate from resource ownership, collection and palette `source` credits; it cannot be declared by a theme or kit. `theme list --origin` filters effective catalogue entries after precedence. Kits carry no extension, inter-kit dependency, lineage or authenticity record. |
 | **kit composition** | `kit compose recipe.json --output directory` validates and publishes an autonomous `directory/id/version/` tree. The strict `lightwebpres.kit-composition/1` recipe has `schema`, `sources`, `manifest`, `files`; the final manifest explicitly names every final reference. No guessed remapping or dependency closure. |
-| **runtime presentation catalogue** | Ordered primary-plus-alternatives payload made by `presentation_presets` or `--presentation-presets`; it carries the rendered fragments, index variants, structure CSS and typed theme differences for the appearance picker. |
-| **appearance picker** | The `C` dialogue's Identity, Preset and Theme controls. Applicable / Current identity / All filter published choices only: typed compatibility, ownership, or all published resources, not brand approval. Preset and explicit theme choices persist across pages and the index in the browser session; Follow preset resets the runtime theme override. No resource cross-product is generated. |
-| **kit-qualified theme** | A runtime theme addressed as `kit:<id>@<version>/<theme>` under its owning kit (`kit:builtin/light` for native Light). All themes from selected kits are published, including those not used by a selected preset. |
+| **runtime presentation catalogue** | Ordered primary-plus-alternatives payload made by `appearance.presets` or `--presentation-presets`; it carries the rendered fragments, index variants, structure CSS and typed theme differences for the appearance picker. |
+| **appearance picker** | The `C` dialogue offers Identity, Preset and Theme only when a real Identity Kit is published, even if native Standard is currently selected. Without a kit, including Commons-only presets, it offers Theme labels/help, no Identity/Preset axes and no Follow preset; selecting the primary actual theme restores the author's base. Hidden Commons preset choices are not restored. Available preset and explicit theme choices keep their browser-session persistence across articles and the index; in kit-aware mode, Follow preset resets the runtime theme override. No resource cross-product is generated. |
+| **Current identity filter** | Narrows published themes, not brand approval: native `builtin` includes published Commons/global themes, Light and native custom variants, excluding foreign kit themes; a real kit includes only its own qualified themes and custom variants, excluding unowned global themes and other kits. Commons availability to native Built-in is not declared kit membership. Applicable tests typed compatibility; All includes all published choices. |
+| **kit-qualified theme** | A runtime theme addressed as `kit:<id>@<version>/<theme>` under its owning kit. Native Light uses the same canonical `builtin:light` resource id in the global catalogue and runtime. All themes from selected kits are published, including those not used by a selected preset. |
 | **layout fragment** | Kit HTML fragment: exactly one `{{content}}`, `{{slide_header}}` and `{{slide_footer}}` for a slide; only `{{content}}` for the index. |
 | **chrome model** | JSON declaration of a header or footer, made of text, image or icon items and declared assets. |
 | **furniture** | Descriptive family, not a mechanism: the properties painting the page's apparatus rather than its content or signals — rules, surface veils, sunken and control grounds, the modal scrim. Ordinary properties; the word only lets one speak of them collectively. |

@@ -25,15 +25,29 @@ deposit/download when validating the full handoff path. Do not use a production
 zone for a write probe unless its retention effects are acceptable.
 
 The overview reads zone histories separately, not as one atomic cross-zone
-content snapshot. A zone with `busy: true`, `count: null`, and `images: []` has
-unavailable history, not a confirmed empty directory. Refresh after the busy
-operation finishes before treating missing items as deleted.
+content snapshot. A zone with `busy: true`, `count: null`, and an empty history
+has unavailable history, not a confirmed empty directory. **Since `2.1.22`:** that
+array is `items: []` with `schema=items`, or `images: []` in the default legacy
+schema. Refresh after the busy operation finishes before treating missing items
+as deleted.
+
+Background discovery does not make the entire overview asynchronous. History
+and free-space checks still run synchronously and can block on filesystem I/O.
 
 Monitor filesystem free space, service errors, unreadable sidecars, collection
 diagnostics, repeated login throttling, and `zone_busy` responses. Retention
 counts managed items, not bytes; foreign files still consume disk space.
 `max_upload_size` and multipart/request budgets limit requests, not total
 storage. See [retention](reference/storage.md#retention).
+
+**Since `2.1.22`:** ZIP transfers retain source handles without zone locks, so even
+selected files can be replaced or deleted by managed operations during output.
+Plan for up to 64 source files per archive and four concurrent archives per
+process by default, bounded separately from request admission. Retained open
+versions can defer reclamation of deleted data until handles close. Monitor
+`503 server_busy` archive-slot exhaustion separately from writer-lock `423`;
+both return `Retry-After: 1`. The 256 MiB source-byte and 300-second streaming
+limits remain. See [resource budgets](reference/configuration.md#operational-budget-defaults).
 
 `pasteberth audit --config /absolute/path/config.toml` is a read-only deployment
 check. It includes listener binding and TLS checks, so run it before startup or
@@ -48,6 +62,29 @@ collection, group, or authentication settings. Existing collection rules can
 discover new matching directories without restart or config edits. A visible
 browser polls every 10 seconds, with new candidates appearing after a scan
 completes; this is not a filesystem watcher or a fixed discovery deadline.
+
+**Since `2.1.22`:** zone and group overviews share
+a background cooldown of `max(10 seconds, last full refresh duration)` from
+completion. The duration includes scanning and registry installation; startup,
+foreground, and failed refresh attempts also set the cooldown. Its expiry
+does not launch work: the next eligible poll can start one job. Mutations,
+directory resolution, and legacy `/images` history reads bypass the cooldown or join
+an in-flight refresh, without a second refresh in the same action. Those actions
+can therefore still wait on discovery. Generic `/items` listing, content
+GET/HEAD on both routes, and ZIP neither trigger nor join scans: they use the
+published registry. New zones
+return `404` until published, and removals take effect through later publication.
+Acquisition still checks the destination and can block on filesystem I/O.
+Generic listing/content and HTTP ZIP request nonblocking locks and can return
+`423`; legacy previews can wait for an exclusive writer. This change does not add
+a hard response-time guarantee.
+
+**Since `2.1.22` diagnostics:** debug logs separate scan and registry-install
+durations and report per-rule scan timing, matches, and newly cached paths.
+The scanner shares observations across rules within one pass only; caches do
+not persist into the next scan. Use these measurements to distinguish scan
+cost from installation and overview storage I/O. See
+[troubleshooting](troubleshooting.md#discovery-or-overview-is-slow).
 
 Local filesystem commands read their own selected configuration on each
 invocation. Running them with a different file from the daemon can apply
@@ -72,6 +109,29 @@ Sessions are in memory and are not backed up. Keep the password file and TLS
 private keys private, outside the code bundle. Back them up using a protected
 backup destination if recovery requires the same credentials.
 
+### Bearer tokens
+
+Bearer tokens are persistent capabilities stored in the configured SQLite
+`token_file`. Create and manage them from the authenticated Web UI or the
+token endpoints in the [HTTP API](reference/api.md#bearer-tokens). The secret
+is displayed only after creation or rotation; it cannot be recovered from the
+registry. A token survives daemon restarts and global-password rotation, so
+revoke it explicitly when its calling process is retired or compromised.
+
+Use the admin panel to inspect whether grants are active, missing, or
+suspended. Group and global grants follow the current zone registry; a group
+rename detaches grants using the old name. A zone or group suspension also
+blocks direct zone grants matching that scope. Keep the token registry in the
+same protected backup set as the configuration and password file. Restoring it
+restores token validity, revocations, and suspensions, but never recovers a
+plaintext secret.
+
+For scripts, inject `PASTEBERTH_TOKEN` through the process environment or use
+`--token-stdin`; do not place a token in a command argument, URL, cookie, log,
+or checked-in configuration. Use the smallest grant set possible. `W` does
+not imply `R`, and named replacement requires both the token's
+`allow_replace` policy and an explicit replacement request.
+
 ## Backup, Upgrade, and Recovery
 
 Stop the service and all CLI or external writers before a consistent
@@ -93,7 +153,7 @@ restart the service.
 
 Record the deployed version and configuration path. Preserve all configured
 zone directories, matching sidecars, existing transaction artifacts, the TOML
-configuration, password file, and any locally managed TLS credentials. Code is
+configuration, password file, token registry, and any locally managed TLS credentials. Code is
 replaceable from a release; zone data and deployment secrets are not part of
 the code-only bundle. Back up foreign files separately if they matter, without
 relabeling them as Pasteberth-owned content.

@@ -4,6 +4,141 @@ This file records user-visible changes to Pasteberth.
 
 ## [Unreleased]
 
+## [2.1.26] - 2026-09-15
+
+### Registration Visibility
+
+- warn after filesystem registration when the data file or sidecar lacks group
+  or other read permission, without changing permissions on the existing file;
+
+### Tab Layout Reflow
+
+- keep open zones in independent masonry columns while preserving DOM order,
+  sidebar scrolling, focus, and unsaved comment drafts during responsive reflow.
+- preserve an unsaved comment draft when a duplicate upload reuses the existing
+  item, while discarding it after replacement or deletion.
+
+## [2.1.25] - 2026-09-13
+
+### Compact Zone Layout
+
+- cap the zone thumbnail index and scroll it internally, while preventing the
+  grid from stretching shorter zones to the height of their neighbors;
+- version the browser stylesheet URL so layout changes cannot remain hidden by
+  a stale cached asset;
+
+## [2.1.24] - 2026-09-11
+
+### Frontend Asset Cache Busting
+
+- version the browser application's JavaScript URL so a new release cannot
+  reuse a stale cached asset with an incompatible runtime;
+
+## [2.1.23] - 2026-09-11
+
+### Token Registry Permissions
+
+- allow token-registry parent directories to be readable by others while
+  rejecting parents writable by other users or groups; the registry file
+  remains private;
+
+## [2.1.22] - 2026-09-11
+
+### Scoped Bearer Tokens
+
+- add a persistent SQLite bearer-token registry with hashed secrets, rotation,
+  revocation, expiration, suspensions, and zone, group, path, and global grants;
+- enforce `L`, `R`, and `W` permissions across the HTTP API while keeping token
+  lifecycle operations restricted to authenticated administrators;
+- add bearer-token support to the CLI, MCP client, configuration, and HTTP
+  client, including strict credential precedence and write-only response
+  redaction;
+- protect the token registry file and every ancestor directory against unsafe
+  permissions, symlinks, and non-regular paths.
+
+### Generic Items And Content Identity
+
+- add canonical `/api/zones/{id}/items` routes for listing, upload, comments,
+  deletion, batch deletion, archive, and regularization, plus GET/HEAD
+  `/api/zones/{id}/items/{filename}/content`; generic responses use `content_url`
+  and `unknown_item` without `preview_url`;
+- keep legacy routes on shared handlers and support them throughout 2.x;
+  removal will be no earlier than 3.0 and announced in advance, with no date set;
+  default `/api/zones` and `/api/transfers` to legacy responses, with explicit
+  `schema=images` or generic `schema=items` and no duplicate history arrays;
+- migrate the bundled Web UI and HTTP upload/regularization client to the
+  generic contract; accept either `file` or `image` on both upload routes,
+  rejecting ambiguous or repeated payload fields without changing image validation;
+- expose stored lowercase SHA-256 and the exact quoted `"sha256-HEX"` ETag, or
+  null for legacy unknown identity; legacy payloads add these and `content_url`
+  while keeping `preview_url`. Comments do not change payload identity,
+  A-to-B-to-A restores A's ETag, and `changed_at` remains null;
+- evaluate strong `If-Match` tags/lists, combined repeated headers, and an
+  existence wildcard against the same acquired item used for GET/HEAD headers
+  and bytes on both content routes; malformed conditions return 400 and unmet
+  conditions return 412 before file streaming, releasing the acquired handle;
+- use published membership and nonblocking locks for generic listing and
+  content acquisition; preserve fresh legacy listing and blocking legacy
+  previews. Listing still reads selected-zone history, and filesystem I/O can block;
+- name Python entities `StoredItem` and `UnknownItemError`, retaining old aliases
+  for 2.x consumers without sidecar, journal, or zone migration;
+- add a standalone authenticated external-consumer example and recipe with
+  length/digest verification before local replacement, explicit legacy unknown
+  identity, and a distinct exit 3 when publication succeeds but stdout reporting
+  fails; no post-publication rollback is implied;
+- update public Caddy/nginx blocking examples for both `items/regularize` and
+  `images/regularize`, preserving the direct-drop loopback trust boundary.
+
+Identity is stored metadata for cooperating managed bytes, not a read-time hash
+or protection against arbitrary external in-place writers. No whole-zone
+snapshot, SFTP deployment, or server-side build is added.
+
+### Dates And Discovery
+
+- show the stored `created_at` date and time for selected items older than 24
+  elapsed hours, using the browser's local timezone and unchanged `en` locale;
+  tooltips and multiple-selection rows already show full dates, transfers keep
+  `created_at`, and no arrival timestamp is added;
+- reuse full-path resolution, stat, directory/error, and leaf-check observations
+  across collection rules within one scan only, while preserving per-rule
+  identity tracking and regex semantics;
+- throttle background discovery after completion by the greater of 10 seconds
+  or the last full refresh duration, including registry installation, startup,
+  foreground, and failed attempts; the next eligible overview poll can launch
+  one job, while mutations, directory resolution, and legacy history reads
+  bypass cooldown or join a running refresh without rescanning within that action;
+- add per-rule scan and registry-installation debug timings; overview history
+  and free-space reads remain synchronous, with no hard response deadline.
+
+### Downloads And Archive Budgets
+
+- use the published registry for preview/download GET and HEAD and ZIP requests,
+  without starting discovery or waiting for a scan; new zones return `404` until
+  published, and membership changes take effect through later registry publication;
+- capture selected metadata and payload handles under shared stable/directory
+  filesystem locks, bypassing the Python zone lock so shared history reads can
+  coexist; preserve transaction visibility through names enumeration and journal
+  reads without reading unrelated payloads or ordinary sidecars;
+- release zone locks before headers, compression, or body output, reading at most
+  64 KiB up to each captured size; managed replacement/deletion can proceed while
+  open versions stream, without new per-file lock files or a sidecar migration;
+- route preview HEAD through the same acquisition and representation headers as
+  GET without a response body; preview acquisition still defaults to blocking on
+  a writer, while HTTP ZIP acquisition is nonblocking and can return `423 zone_busy`;
+- add `[limits].max_archive_files = 64` and `max_active_archives = 4`, accepting
+  positive integers or `"unlimited"`; a full per-process archive slot pool returns
+  `503 server_busy` with `Retry-After: 1`, distinct from writer contention;
+- retain the 256 MiB source-byte and 300-second ZIP streaming defaults, release
+  handles and slots on completion or failure, timeout, and disconnect, and apply
+  the preview request timeout as inactivity during emission while retaining the
+  initial acquisition deadline.
+
+Acquisition still enumerates names and reads journals, and filesystem calls can
+block. These changes promise neither O(1) reads nor a hard 100 ms response, do
+not protect against arbitrary external in-place writes, and add no thread pool
+or native Windows support guarantee. Existing cooperating CLI writers remain
+compatible. These changes are included in the `2.1.22` release.
+
 ## [2.1.21] - 2026-09-09
 
 ### Documentation And Examples

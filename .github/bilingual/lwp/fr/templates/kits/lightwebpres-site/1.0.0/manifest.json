@@ -17,6 +17,9 @@
     "full-article": {
       "default": "slides/full-article.html"
     },
+    "unit-index": {
+      "default": "slides/unit-index.html"
+    },
     "index": "index.html"
   },
   "structure_css": "structure.css",
@@ -33,7 +36,8 @@
         "cover": "default",
         "standard": "default",
         "series-nav": "default",
-        "full-article": "default"
+        "full-article": "default",
+        "unit-index": "default"
       },
       "slide_chrome": {}
     }

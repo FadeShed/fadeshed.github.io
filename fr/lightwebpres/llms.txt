@@ -1,28 +1,42 @@
 # LightWebPres
 
-> Outil de génération de pages à lire, présenter et publier à partir de sources Markdown. Bêta.
+> Markdown-based documents for reading, presentation and static publishing. Beta.
 
-Le lecteur utilise son navigateur. Le constructeur web et le CLI utilisent le même moteur ; l’agent de rédaction et l’hébergement sont externes. Les tags filtrent des contenus rédigés, ils ne traduisent pas et ne contrôlent pas les accès. Les notes sont publiées ; le moteur n’est pas un assainisseur HTML.
+Readers use their browser. The web builder and CLI share the same engine; authoring agents and hosting are external. Tags filter authored content, not translate it or control access. Notes are published; the engine is not an HTML sanitizer.
 
-## Parcours
+## Routes
 
-- [Présentation](https://fadeshed.github.io/fr/lightwebpres/index.md)
-- [LightWebPres](https://fadeshed.github.io/fr/lightwebpres/index.html)
-- [Usages](https://fadeshed.github.io/fr/lightwebpres/usages.html)
-- [Dossier interactif](https://fadeshed.github.io/fr/lightwebpres/demo/library.html)
-- [Créer](https://fadeshed.github.io/fr/lightwebpres/demarrer.html)
-- [Guide](https://fadeshed.github.io/fr/lightwebpres/guide/guide.html)
-- [Constructeur navigateur](https://fadeshed.github.io/fr/lightwebpres/web/)
+- [Overview](https://fadeshed.github.io/lightwebpres/index.md)
+- [LightWebPres](https://fadeshed.github.io/lightwebpres/index.html)
+- [Use cases](https://fadeshed.github.io/lightwebpres/usages.html)
+- [Interactive briefing](https://fadeshed.github.io/lightwebpres/demo/library.html)
+- [Create](https://fadeshed.github.io/lightwebpres/demarrer.html)
+- [Guide](https://fadeshed.github.io/lightwebpres/guide/guide.html)
+- [Browser builder](https://fadeshed.github.io/lightwebpres/web/)
 
-## Références techniques originales
+## Original technical references
 
 - [README.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/README.md)
 - [GUIDE.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GUIDE.md)
 - [GLOSSARY.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/GLOSSARY.md)
 - [agent/skills/lightwebpres/SKILL.md](https://raw.githubusercontent.com/Fade78/lightwebpres/main/agent/skills/lightwebpres/SKILL.md)
 
-## Identités et création
+## Website languages
 
-- [Original](https://fadeshed.github.io/fr/lightwebpres/concepts/native/first-page.html): Le même article sous une autre identité.
-- [Documentation](https://fadeshed.github.io/fr/lightwebpres/concepts/docs/first-page.html): Le même article sous une autre identité.
-- [Field Notes](https://fadeshed.github.io/fr/lightwebpres/concepts/field-notes/first-page.html): Le même article sous une autre identité.
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.
+
+## Website languages
+
+- [English presentation](https://fadeshed.github.io/lightwebpres/): canonical English edition, also used when no language is specified.
+- [Présentation française](https://fadeshed.github.io/fr/lightwebpres/): édition française explicite ; la navigation conserve cette langue.

@@ -1,4 +1,3 @@
-<section id="reader-controls-detail"><h2>Touch reader controls</h2><p>The reader menu provides zoom − / + / Reset, the current percentage, text fitting and local table scrolling. These controls do not require a keyboard. Pinch belongs to the browser. Reading choices belong to the currently loaded page.</p></section> 
 <section id="reader-controls-detail"><h2>Touch reader controls</h2><p>The reader menu provides zoom − / + / Reset, the current percentage, text fitting and local table scrolling. These controls do not require a keyboard. Pinch belongs to the browser. Reading choices belong to the currently loaded page.</p></section>
 <h1>LightWebPres — Guide</h1>
 <p>The operational manual for LightWebPres: create a series, add your content, configure its presentation, check the output and publish it. It covers the terminal and browser tools, not editorial craft. For exact parser rules use the <a href="https://github.com/Fade78/lightwebpres/blob/main/agent/skills/lightwebpres/SKILL.md">format reference</a>; for normative contracts use <a href="https://github.com/Fade78/lightwebpres/blob/main/specifications.md">specifications.md</a> (French).</p>
@@ -84,8 +83,8 @@ python3 lightwebpres verify my-series --lang en
 <img alt="The same Nebula content card shown in real landscape and emulated portrait browser viewports" src="img/product-responsive.png" width="100%"/>
 </p>
 <h2 id="3-understand-page-anatomy" tabindex="-1">3. Understand page anatomy</h2>
-<p>A page is a sequence of <strong>slides</strong>, separated by <code>---</code>, preceded by one metadata block. There are four slide types, and inside a standard slide a small set of named components. This section names them and says how you reach each one; <code>agent/skills/lightwebpres/SKILL.md</code> carries the exact syntax and every edge case.</p>
-<p><strong>The four slide types.</strong></p>
+<p>A page is a sequence of <strong>slides</strong>, separated by <code>---</code>, preceded by one metadata block. There are five slide types, and inside a standard slide a small set of named components. This section names them and says how you reach each one; <code>agent/skills/lightwebpres/SKILL.md</code> carries the exact syntax and every edge case.</p>
+<p><strong>The five slide types.</strong></p>
 <table class="comparison-table">
 <thead>
 <tr>
@@ -115,9 +114,14 @@ python3 lightwebpres verify my-series --lang en
 <td><code>slug</code>, <code>article: filename.md</code>, <code>tags:</code>, <code>slide-layout</code>, <code>slide-header</code>, <code>slide-footer</code> and <code>comment:</code></td>
 <td>any number, each with its own file</td>
 </tr>
+<tr>
+<td><code>unit-index</code></td>
+<td><code>slug</code>, <code>kicker</code>, <code>tags:</code>, <code>## Title</code>, <code>summary</code>, <code>index-max-columns</code>, <code>index-selector</code>, <code>slide-layout</code>, <code>slide-header</code>, <code>slide-footer</code>, <code>comment</code>, <code>note</code></td>
+<td>any number, anywhere; generated contents for the logical unit, no free body</td>
+</tr>
 </tbody>
 </table>
-<p>Four, and only four. Mistype one — <code>&lt;!-- lwp:slide:covre --&gt;</code> — and the build stops and tells you which slide, what you wrote, and what the four names are. You will not find out from the page.</p>
+<p>Five, and only five. Mistype one — <code>&lt;!-- lwp:slide:covre --&gt;</code> — and the build stops and tells you which slide, what you wrote, and the five names it accepts. You will not find out from the page.</p>
 <p><strong>The components inside a standard slide.</strong></p>
 <table class="comparison-table">
 <thead>
@@ -227,7 +231,10 @@ python3 lightwebpres verify my-series --lang en
     "scroll_duration": 200,
     "lang_tags": {"fr": "fr", "en": "en"}
   },
-  "themes": ["essential", "family:terrain"],
+  "appearance": {
+    "presets": ["builtin/standard"],
+    "themes": ["essential", "family:terrain"]
+  },
   "articles": [
     {"page_source": "apple-pie.md"}
   ]
@@ -241,24 +248,25 @@ python3 lightwebpres verify my-series --lang en
 <h3>Identities, presets and themes</h3>
 <p><strong>Identity</strong> groups presentation choices. The native identity, <strong>LightWebPres</strong>, provides <code>builtin/standard</code> and the minimal <strong>Light</strong> theme. <strong>Commons</strong> contains the global theme catalogue and presets that bind those themes to native layouts. An <strong>Identity Kit</strong> is a self-contained versioned collection of layouts, headers, footers, assets, typed themes and constrained structural CSS. <strong>Preset</strong> selects a layout/chrome configuration and a base <strong>Theme</strong>; it does not generate every possible combination of those resources.</p>
 <p>LWP owns the page shell, navigation and JavaScript. Kit fragments have <code>{{content}}</code>, <code>{{slide_header}}</code> and <code>{{slide_footer}}</code> slots; the index receives only <code>{{content}}</code>. A kit can use local files or native references <code>builtin:standard</code> for layouts and <code>builtin:light</code> for themes. A native layout inside a kit keeps that kit's chrome. Kits cannot depend on Commons or other kits, extend them, or declare provenance, parentage or authenticity. Resource origins are computed by the loaders.</p>
-<p>The only persisted selection is <code>series_meta.presentation_preset</code>: <code>builtin/standard</code>, <code>commons/&lt;id&gt;</code> or <code>id@MAJOR.MINOR.PATCH/preset</code>. The identity is inferred from this reference. The selection belongs neither in article metadata nor in an <code>articles[]</code> entry. Omission selects <code>builtin/standard</code> implicitly. <code>init --preset builtin/standard</code> and <code>series preset set --preset builtin/standard</code> persist that explicit reference; plain <code>init</code> leaves the field absent. Neither native choice vendors resources.</p>
+<p>The persisted appearance declaration is the root <code>appearance</code> object. Its <code>presets</code> list uses <code>builtin/standard</code>, <code>commons/&lt;id&gt;</code> or <code>id@&lt;version&gt;/preset</code>; the first item is the initial presentation and later items are explicit alternatives. The identity is inferred from each reference. Omission selects <code>builtin/standard</code> implicitly. <code>init --preset builtin/standard</code> and <code>series preset set --preset builtin/standard</code> write the selected reference as the first item. The <code>themes</code> list controls the initial theme and its alternatives. Neither native choice vendors resources.</p>
 <pre><code class="language-json">
 {
-  "series_meta": {
-    "presentation_preset": "corporate@1.0.0/brief"
+  "appearance": {
+    "presets": ["corporate@1.0.0/brief"],
+    "themes": ["preset", "essential"]
   }
 }
   </code></pre>
 <p>The kit manifest's <code>label</code> names the identity, not whichever preset happens to be initial. Its optional <code>default_preset</code> names a local preset, otherwise the first preset in manifest order is used. <code>slide_layouts</code> and <code>slide_chrome</code> declare preset defaults in that manifest only.</p>
-<p><code>slide-layout</code>, <code>slide-header</code> and <code>slide-footer</code> work on all four slide types. They override the selected preset's defaults for one slide, not through an author JSON cascade. The preset's theme supplies the typed base unless <code>settings.conf</code> explicitly selects another theme. Precedence is: base theme &lt; <code>settings.conf</code> pins &lt; article <code>style.*</code> &lt; instance styles; <code>templates/custom.css</code> remains the final advanced CSS layer. Assets are published under <code>public/assets/presentations/&lt;id&gt;/&lt;version&gt;/...</code>, or embedded by <code>--inline-images</code>.</p>
+<p><code>slide-layout</code>, <code>slide-header</code> and <code>slide-footer</code> work on all five slide types. They override the selected preset's defaults for one slide, not through an author JSON cascade. The preset's theme supplies the typed base unless <code>appearance.themes</code> explicitly selects another theme. Precedence is: base theme &lt; <code>settings.conf</code> pins &lt; article <code>style.*</code> &lt; instance styles; <code>templates/custom.css</code> remains the final advanced CSS layer. Assets are published under <code>public/assets/presentations/&lt;id&gt;/&lt;version&gt;/...</code>, or embedded by <code>--inline-images</code>.</p>
 <pre><code class="language-bash">
 ./lightwebpres preset list
 ./lightwebpres preset show builtin/standard
 ./lightwebpres series preset my-series
-./lightwebpres series preset set my-series --preset builtin/standard --use-preset-theme
+./lightwebpres series preset set my-series --preset builtin/standard
 ./lightwebpres init my-series --preset builtin/standard
   </code></pre>
-<p><code>series preset set</code> vendors and selects without applying a starter. It preserves pins and <code>custom.css</code>; with an explicit <code>theme:</code> in <code>settings.conf</code>, it requires <code>--keep-theme</code> or <code>--use-preset-theme</code>, which removes that line. <code>--keep-theme</code> requires an explicit <code>theme:</code>. Kits live under <code>kits/&lt;id&gt;/&lt;version&gt;/</code> in a catalogue and <code>templates/kits/&lt;id&gt;/&lt;version&gt;/</code> once vendored. <code>LWP_IDENTITY_KITS_DIR</code> replaces the user catalogue location; an id/version collision shadows the entire kit. See <code>specifications.md</code> §9.9 for manifest, validation and security details.</p>
+<p><code>series preset set</code> vendors and selects without applying a starter. It updates <code>appearance.presets</code> and preserves property pins and <code>custom.css</code>. <code>settings.conf</code> contains active property pins only; an old <code>theme:</code> line is rejected. Use <code>series theme set</code> to write <code>appearance.themes</code>. Kits live under <code>kits/&lt;id&gt;/&lt;version&gt;/</code> in a catalogue and <code>templates/kits/&lt;id&gt;/&lt;version&gt;/</code> once vendored. <code>LWP_IDENTITY_KITS_DIR</code> replaces the user catalogue location; an id/version collision shadows the entire kit. See <code>specifications.md</code> §9.9 for manifest, validation and security details.</p>
 <p>For a kit preset, <code>init --preset</code> validates and vendors the complete kit, writes the selector and generates settings from its theme. It applies the declared starter unless <code>--no-starter</code> is passed. Neither option changes the meaning of the <code>template</code> commands. Choose an installed selector from <code>preset list</code>; <code>corporate@1.0.0/brief</code> is illustrative, not a supplied kit. Native selection needs no files. Both <code>init</code> and <code>series preset set</code> vendor a Commons descriptor and its selected external theme snapshot, if any; a native or embedded theme needs no snapshot copy. An identical local dependency is reused, while a conflicting file is refused.</p>
 <p>The guide itself uses the tracked kit <code>examples/kits/lightwebpres-docs/0.1.0/</code>. <code>tools/build_guide.py</code> vendors it into a temporary series and publishes its assets with the guide. It is an inspectable kit example, not another source of this manual.</p>
 <h3>Add a Commons preset</h3>
@@ -273,7 +281,7 @@ python3 lightwebpres verify my-series --lang en
   "theme": "builtin:light"
 }
   </code></pre>
-<p>All five keys are required; no other key is accepted, including <code>starters</code>. The <code>id</code> matches the filename; <code>theme</code> is a global theme slug or <code>builtin:light</code>. Select it with <code>./lightwebpres series preset set my-series --preset commons/reading</code>. If the series has an explicit theme, also choose <code>--keep-theme</code> or <code>--use-preset-theme</code>.</p>
+<p>All five keys are required; no other key is accepted, including <code>starters</code>. The <code>id</code> matches the filename; <code>theme</code> is a global theme slug or <code>builtin:light</code>. Select it with <code>./lightwebpres series preset set my-series --preset commons/reading</code>. If the series has an explicit theme, change <code>appearance.themes</code> or use <code>series theme set</code>; preset selection does not require a second flag.</p>
 <h3>Compose a kit</h3>
 <p><code>kit compose</code> builds an autonomous kit from an explicit recipe. This complete <code>recipe.json</code> needs no source files:</p>
 <pre><code class="language-json">
@@ -323,22 +331,23 @@ LWP_IDENTITY_KITS_DIR="$PWD/kits" ./lightwebpres init my-brief --preset brief@1.
 <p>The result is <code>kits/brief/1.0.0/</code>. The recipe requires exactly <code>schema</code>, <code>sources</code>, <code>manifest</code> and <code>files</code>. To reuse declared source files, <code>sources</code> maps an alias to a relative kit path contained below the recipe directory; <code>files</code> maps a destination to <code>{"source":"alias","path":"local/path"}</code>, <code>{"file":"local/path"}</code> or <code>{"text":"content"}</code>. A <code>.css</code> destination also accepts <code>{"parts":[...]}</code> with a non-empty list of those descriptors; files read by <code>parts</code> must also have a <code>.css</code> extension. A source kit's declared <code>structure_css</code> file is recognized by its manifest role regardless of suffix. Only matching class tokens in its selectors are rebound to the target kit's scope, including escaped tokens; comments, strings, attribute values and declarations are preserved. Other copied files are not rebound. The full final manifest must name all final local references explicitly: there is no guessed remapping or dependency closure.</p>
 <p>Publication is staged outside the output catalogue on the same filesystem; <code>--dry-run</code> validates in disposable system temporary storage and creates no output. An output catalogue at a filesystem or mount root is refused: choose a subdirectory within that filesystem. Existing kit destinations are refused. The composed kit needs no source kit at build time and carries no provenance record.</p>
 <h3>Keep alternate presentations available</h3>
-<p>A series has one primary presentation, but a build can carry other named presets for the reader to choose without rebuilding. A kit or Commons primary also makes the compatible native <code>builtin/standard</code> available automatically, after the declared alternatives. Put other alternatives at the root of <code>series.json</code>, or pass them for one build:</p>
+<p>A series has one primary presentation, but a build can carry other named presets for the reader to choose without rebuilding. Put the complete ordered list in <code>appearance.presets</code>, or replace it for one build with <code>--presentation-presets</code>:</p>
 <pre><code class="language-json">
 {
-  "series_meta": {
-    "presentation_preset": "lightwebpres-docs@0.1.0/docs"
-  },
-  "presentation_presets": [
-    "builtin/standard"
-  ]
+  "appearance": {
+    "presets": [
+      "lightwebpres-docs@0.1.0/docs",
+      "builtin/standard"
+    ],
+    "themes": ["preset", "essential"]
+  }
 }
   </code></pre>
 <pre><code class="language-bash">
 ./lightwebpres build my-series --presentation-presets builtin/standard
   </code></pre>
-<p>The primary preset is always emitted first and remains the no-JavaScript fallback. The CLI list overrides the JSON list; it adds alternatives rather than replacing the primary. Duplicate selectors are removed, and an unknown selector fails before output is written. The preset must be available in the effective catalogue. Listing <code>builtin/standard</code> explicitly is optional for a kit or Commons preset. If a slide uses a kit-only <code>slide-layout</code>, <code>slide-header</code> or <code>slide-footer</code>, the implicit default is omitted with a warning; explicitly requesting <code>builtin/standard</code> keeps the normal validation error.</p>
-<p>When alternatives exist, <strong>C</strong> opens the Appearance picker with <strong>Identity</strong>, <strong>Preset</strong> and <strong>Theme</strong> controls. The selected preset changes the whole deck, including the index, and lasts across pages in the current browser session. It does not edit the series. If <code>settings.conf</code> names an explicit <code>theme:</code>, that theme remains fixed; otherwise the preset's typed theme follows the selected presentation until the reader chooses an explicit theme. <strong>Follow preset</strong> resets that explicit runtime choice. All themes of every selected kit are published under kit-qualified names, even if no selected preset uses them.</p>
+<p>The primary preset is always emitted first and remains the no-JavaScript fallback. The CLI list replaces the configured list for that invocation, and its first item becomes primary. Duplicate selectors are removed, and an unknown selector fails before output is written. The preset must be available in the effective catalogue. <code>builtin/standard</code> must be listed explicitly when it is wanted; a kit-only layout variant or chrome model makes that explicit request fail validation, while textual chrome remains available natively.</p>
+<p>When alternatives exist, <strong>C</strong> opens the Appearance picker with <strong>Identity</strong>, <strong>Preset</strong> and <strong>Theme</strong> controls. The selected preset changes the whole deck, including the index, and lasts across pages in the current browser session. It does not edit the series. If <code>appearance.themes</code> names an explicit theme, that theme remains fixed; otherwise the preset's typed theme follows the selected presentation until the reader chooses an explicit theme. <strong>Follow preset</strong> resets that explicit runtime choice. All themes of every selected kit are published under kit-qualified names, even if no selected preset uses them.</p>
 <p>The <strong>Applicable</strong>, <strong>Current identity</strong> and <strong>All</strong> filters only narrow published choices. Applicable means typed compatibility, not brand matching; Current identity means resource ownership. Identity labels stay fixed when the preset or theme changes. The initial/default marker describes a selection, not another identity. The picker does not invent a cross-product of presets and themes or fetch additional catalogue entries.</p>
 <p>For color and typography changes, choose the smallest value override that does the job before adding CSS rules.</p>
 <h3>Pick a theme (the whole series)</h3>
@@ -356,15 +365,17 @@ LWP_IDENTITY_KITS_DIR="$PWD/kits" ./lightwebpres init my-brief --preset brief@1.
 ./lightwebpres init my-series --theme evergreen
 ./lightwebpres series theme set my-series --theme crimson
   </code></pre>
-<p>A theme is a word in a data file: <code>series theme set</code> rewrites the one <code>theme:</code> line of <code>templates/settings.conf</code> and nothing else. No CSS is touched — the stylesheet is composed in memory at every build.</p>
+<p>A theme selection is a token in <code>appearance.themes</code>: <code>series theme set</code> updates that list and nothing else. <code>settings.conf</code> contains active property pins only; an old active <code>theme:</code> line is rejected. No CSS is touched — the stylesheet is composed in memory at every build.</p>
 <p>By default, the build embeds the essential runtime theme bundle for the reader; <code>--no-essential-theme</code> opts out, while explicit selections add to or shape the catalogue:</p>
 <pre><code class="language-bash">
 ./lightwebpres build my-series --lang en --themes print-ink,print-grey
 ./lightwebpres build my-series --lang en --themes all
   </code></pre>
-<p>Or keep the selection in the root of <code>series.json</code>:</p>
+<p>Or keep the selection in the root <code>appearance</code> object of <code>series.json</code>:</p>
 <pre><code class="language-json">
-"themes": ["essential", "background:light", "bgh:red"]
+"appearance": {
+  "themes": ["essential", "background:light", "bgh:red"]
+}
   </code></pre>
 <p><code>essential</code> embeds Monochrome, Monochrome Night and Print Ink. A selector <code>X:Y</code> can use <code>background</code>/<code>bg</code>, <code>family</code>/<code>fam</code>, or <code>background hue</code>/<code>bgh</code>; each selector adds its matching themes and duplicates are removed. An explicit CLI <code>--themes</code> overrides the JSON list.</p>
 <p>Create or make a theme portable explicitly:</p>
@@ -375,7 +386,7 @@ LWP_IDENTITY_KITS_DIR="$PWD/kits" ./lightwebpres init my-brief --preset brief@1.
 ./lightwebpres theme path
   </code></pre>
 <p><code>theme create</code> writes a complete editable snapshot, <code>theme migrate</code> keeps only the selected theme and explicit pins in an old scaffold, and <code>theme vendor</code> copies complete snapshots into the series. No theme file uses <code>extends</code>.</p>
-<p>The effective theme in <code>templates/settings.conf</code> is always included as the first base choice, even if it is not in the list. When that file has property pins, the first runtime choice is named <code>custom(&lt;theme&gt;)</code> and the raw base theme is also present; those settings pins apply only to the custom choice. The setting is read at build time, so an author's edit remains the source of truth. <code>style.*</code> page properties and theme variables declared in <code>custom.css</code> are left alone while a reader switches. <strong>C</strong> opens the searchable Appearance picker when the build carries presentation or theme alternatives, and otherwise has nothing to open. <strong>M</strong> opens the global presenter menu; the same menu is available from the bottom-right navigation button. The selection lasts for the other pages of the same deck in the current browser session. The session key includes the deck identity and catalogue digest, so another deck on the same origin or a changed local snapshot cannot reuse an old choice. Each theme choice previews its resolved background, including its gradient, with matching foreground ink. The menu actions carry icons and their keyboard shortcuts, including <strong>I</strong> on Scroll. In the theme picker and that presenter menu, focus starts at the first useful control. In the presenter menu, left/right stay on the current row while up/down move to the nearest control on the adjacent rendered row. <code>Tab</code>, <code>Home</code> and <code>End</code> still move through the controls, and <code>Enter</code>/<code>Space</code> activate the focused one.</p>
+<p>The first token in <code>appearance.themes</code> is the initial theme policy; <code>preset</code> follows the selected presentation, while <code>essential</code> and facet selectors add ordered alternatives. An explicit list is exact. <code>settings.conf</code> contains property pins only, and those pins apply to the custom choice rather than rewriting the presentation selection. <code>style.*</code> page properties and theme variables declared in <code>custom.css</code> are left alone while a reader switches. <strong>C</strong> opens the searchable Appearance picker when the build carries presentation or theme alternatives, and otherwise has nothing to open. <strong>M</strong> opens the global presenter menu; the same menu is available from the bottom-right navigation button. The selection lasts for the other pages of the same deck in the current browser session. The session key includes the deck identity and catalogue digest, so another deck on the same origin or a changed local snapshot cannot reuse an old choice. Each theme choice previews its resolved background, including its gradient, with matching foreground ink. The menu actions carry icons and their keyboard shortcuts, including <strong>I</strong> on Scroll. In the theme picker and that presenter menu, focus starts at the first useful control. In the presenter menu, left/right stay on the current row while up/down move to the nearest control on the adjacent rendered row. <code>Tab</code>, <code>Home</code> and <code>End</code> still move through the controls, and <code>Enter</code>/<code>Space</code> activate the focused one.</p>
 <p>These commands inspect and select existing theme values. They do not design, retune or repair a palette. Use <code>theme show</code> to read the measured contrast of the shipped theme, or of the effective theme after the series' pins. <code>audit</code> reads the same resolved sheet without being asked, and speaks only when something has stopped working — a navigation control you cannot see, text the colour of its own ground, a size under the readability floor. It warns; it never refuses, and no shipped theme trips it.</p>
 <pre><code class="language-bash">
 ./lightwebpres theme show evergreen
@@ -396,7 +407,7 @@ LWP_IDENTITY_KITS_DIR="$PWD/kits" ./lightwebpres init my-brief --preset brief@1.
 ./lightwebpres verify my-series --lang en --no-essential-theme
 ./lightwebpres watch my-series --lang en --no-essential-theme
   </code></pre>
-<p>With the flag, the page carries no runtime picker unless <code>--themes</code> or <code>series.json["themes"]</code> adds one. Without it, the essential three ship on every build, deduplicated against the primary theme — so a series whose effective theme is already one of them does not see it twice.</p>
+<p>With the flag, the page carries no runtime picker unless <code>--themes</code> or <code>appearance.themes</code> adds one. Without it, the essential three ship on every build, deduplicated against the primary theme — so a series whose effective theme is already one of them does not see it twice.</p>
 <h3>Change one phrase (an instance tag)</h3>
 <p>Inside any free text, for the one place that needs it:</p>
 <pre><code class="language-markdown">
@@ -420,7 +431,7 @@ style.page.content-max: 60ch
   </code></pre>
 <p>And <code>fact-variant: warning</code> on a standard slide gives that one fact box a named look, rather than a hand-tuned colour.</p>
 <h3>Change the whole series (<code>templates/settings.conf</code>)</h3>
-<p>Every visual decision is a typed property, <code>component.axis: value</code>, and <code>settings.conf</code> lists <strong>all</strong> of them, commented out, at the values of the theme you chose — the complete surface is under your eyes, no documentation needed. Uncomment a line to <strong>pin</strong> it: it survives every theme change and every executable upgrade, because <code>lightwebpres</code> never rewrites your file.</p>
+<p>Every visual decision is a typed property, <code>component.axis: value</code>, and <code>settings.conf</code> lists the active property pins. A generated scaffold also shows the available surface in comments; uncomment a line to <strong>pin</strong> it. Pins survive every theme change and executable upgrade, because <code>lightwebpres</code> never rewrites your file.</p>
 <p>Two properties control the fact-box bold (<code>**text**</code> in a fact-box):</p>
 <ul>
 <li><code>fact.strong.pad</code> — the side padding of the highlight box around the bold text (default <code>max(3px, 0.375vmin)</code>, automatically 0 on themes with no highlight ground).</li>
@@ -431,7 +442,7 @@ style.page.content-max: 60ch
 kicker.fg: call             ← uncommented: yours, and it stays
   </code></pre>
 <p>A bare word like <code>call</code> is looked up among the theme's shared values (<code>color.call</code>, since <code>fg</code> is a colour axis); a literal like <code>#8A4B00</code> works anywhere a colour does. A mistyped key or value is a named build error pointing at the file and key. An empty value on a known property, such as <code>page.bg:</code>, removes that pin and lets the selected theme provide the value; an unknown key is still an error.</p>
-<p>Three properties people look for by name: <strong><code>page.content-max</code></strong> is the text column width, <code>84vw</code> by default — proportional to the window, with no ceiling, so a deck shown full screen uses the screen. Every type size is proportional too — the kicker, the fact label, the key figure's caption and the slide number as much as the title — which is what keeps the line length steady and the proportions between them fixed as the screen grows. Each size has a floor in pixels, and the floor is what governs a phone. <strong><code>page.block-max</code></strong> is the width of the things that are not running text — a table, a code block, a figure — sized by what they hold rather than by a count of characters; it carries a floor as well as a ceiling — <code>min(84vw, max(1100px, 102vmin))</code> — so a table grows with the text inside it and still stops before the window edge. <strong><code>page.hyphens</code></strong> (<code>manual | auto</code>) controls whether words break at end of line; it is <code>manual</code>, and nothing turns it on for you.</p>
+<p>Two properties people look for by name: <strong><code>page.content-max</code></strong> is the shared width of running text, tables, code blocks and figures, <code>84vw</code> by default — proportional to the window, with no ceiling, so a deck shown full screen uses the screen. Every type size is proportional too — the kicker, the fact label, the key figure's caption and the slide number as much as the title — which is what keeps the line length steady and the proportions between them fixed as the screen grows. Each size has a floor in pixels, and the floor is what governs a phone. <strong><code>page.hyphens</code></strong> (<code>manual | auto</code>) controls whether words break at end of line; it is <code>manual</code>, and nothing turns it on for you.</p>
 <p>After a <code>series theme set</code>, <code>audit</code> will note that the scaffold's <em>comments</em> show the old theme's values; <code>template update --scaffold</code> realigns them while keeping every pinned line.</p>
 <p>Shared theme values are <code>color.page</code>, <code>color.ink</code>, <code>color.ink-quiet</code>, <code>color.mark</code>, <code>color.call</code>, <code>color.affirm</code>, <code>color.nav</code> and the four font stacks <code>font.text</code>, <code>font.display</code>, <code>font.ui</code>, <code>font.mono</code>. Change a component property rather than its shared color when only that component should move:</p>
 <pre><code class="language-conf">

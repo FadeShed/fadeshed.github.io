@@ -17,7 +17,7 @@ jobs:
       - name: Pull the current LightWebPres main
         run: |
           git clone --depth=1 --branch main https://github.com/Fade78/lightwebpres.git "$RUNNER_TEMP/upstream"
-          test "$(git -C "$RUNNER_TEMP/upstream" rev-parse HEAD)" = ec24ec481ee3b0083cb520398d4bea82885df8bf
+          test "$(git -C "$RUNNER_TEMP/upstream" rev-parse HEAD)" = b9ef3fac9d8eea465bc5eeb3303bec1db35d4109
           echo 'Fetched the reviewed upstream main; binary identity is checked by the builder.'
       - name: Install isolated rendering checks
         run: |

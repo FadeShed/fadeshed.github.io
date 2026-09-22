@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 from bs4 import BeautifulSoup
 
-PB_REV = '36f2da3c5b57fc35e237225b8d9bd4c3c7eeb50b'
+PB_REV = '97315ada7715641dadf93364c73f9ddad0857f45'
 ROOT_URL = 'https://fadeshed.github.io/'
 TOP = ['index.html', 'index.md', 'style.css', 'llms.txt', '.nojekyll', 'assets', 'fileshed', 'pasteberth', 'lightwebpres']
 
@@ -272,7 +272,11 @@ def fileshed(output):
     dest=output/'fileshed/index.html'
     s=BeautifulSoup(dest.read_text(),'html.parser')
     s.body['class']=list(s.body.get('class',[]))+['fs-fileshed']
-    s.select_one('header > .parent').replace_with(fragment(breadcrumb('FileShed')))
+    parent=s.select_one('header > .parent')
+    if parent:
+        parent.replace_with(fragment(breadcrumb('FileShed')))
+    elif not s.select_one('header > .fs-breadcrumb'):
+        s.select_one('header').insert(0,fragment(breadcrumb('FileShed')))
     head_link(s,rel='stylesheet',href='../assets/minisites.css?v=20260909')
     footnote=s.select_one('.source-notes > .footnote')
     if footnote: set_html(footnote,'Explore the project records for its implementation, examples and technical history. <a href="overview.md">Read the detailed overview.</a>')

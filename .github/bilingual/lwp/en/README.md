@@ -6,10 +6,10 @@ A course, a research brief, a project update. Keep the overview and the detail t
 
 ## Articles
 
-1. [A document for the whole journey](../../../../../../../_temp/publication/lightwebpres/decouvrir.html) — Read the overview, explore the detail and choose how to make it yours.
-2. [Find your use case](../../../../../../../_temp/publication/lightwebpres/usages.html) — Read, write, organize, design, automate and publish. Follow a route built around your work.
-3. [Choose how to create](../../../../../../../_temp/publication/lightwebpres/demarrer.html) — Browser, external agent or editor and command line: choose the path that suits your task.
-4. [Text, with a little structure](../../../../../../../_temp/publication/lightwebpres/ecrire.html) — Four card types, explicit fields and free-form Markdown.
-5. [Change the look, not the content](../../../../../../../_temp/publication/lightwebpres/apparence.html) — Themes, presets and kits: three distinct roles, one visible choice.
-6. [Verify, then publish](../../../../../../../_temp/publication/lightwebpres/publier.html) — The right directory, the right checks, and links that stay stable.
-7. [Documentation in the right place](../../../../../../../_temp/publication/lightwebpres/ressources.html) — The manual, exact format, examples and project sources.
+1. [A document for the whole journey](public/decouvrir.html) — Read the overview, explore the detail and choose how to make it yours.
+2. [Find your use case](public/usages.html) — Read, write, organize, design, automate and publish. Follow a route built around your work.
+3. [Choose how to create](public/demarrer.html) — Browser, external agent or editor and command line: choose the path that suits your task.
+4. [Text, with a little structure](public/ecrire.html) — Five card types, explicit fields and free-form Markdown.
+5. [Change the look, not the content](public/apparence.html) — Themes, presets and kits: three distinct roles, one visible choice.
+6. [Verify, then publish](public/publier.html) — The right directory, the right checks, and links that stay stable.
+7. [Documentation in the right place](public/ressources.html) — The manual, exact format, examples and project sources.

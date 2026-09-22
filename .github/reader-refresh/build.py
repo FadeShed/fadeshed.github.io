@@ -4,8 +4,8 @@ from pathlib import Path
 import argparse,base64,hashlib,importlib.util,json,os,re,shutil,subprocess,sys,zipfile
 from bs4 import BeautifulSoup, NavigableString
 HERE=Path(__file__).resolve().parent
-LWP_REV='ec24ec481ee3b0083cb520398d4bea82885df8bf'
-ENGINE_SHA='7e63cf4b13882f1318a5a9630bbe389cd9d2b71a583790e9021604aba321f250'
+LWP_REV='b9ef3fac9d8eea465bc5eeb3303bec1db35d4109'
+ENGINE_SHA='b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962'
 PUBLIC=['.nojekyll','README.md','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','fr']
 
 def module(name,path):
@@ -28,6 +28,11 @@ def audit_demo(engine,series,locale):
     if c.returncode or any('library.md: slide 4 (comparison), table 1: ESTIMATE' not in x for x in warnings):raise RuntimeError('Unexpected demo audit finding: '+c.stdout)
 
 def writejson(path,data):path.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+def normalize_source_readme(path):
+    text=path.read_text()
+    text=re.sub(r'\]\([^)]*/lightwebpres/demo/([^)]*)\)',r'](public/\1)',text)
+    text=re.sub(r'\]\([^)]*/lightwebpres/([^)]*)\)',r'](public/\1)',text)
+    path.write_text(text)
 def zipdir(dest,root):
     with zipfile.ZipFile(dest,'w',zipfile.ZIP_DEFLATED) as z:
         for p in sorted(root.rglob('*')):
@@ -86,7 +91,7 @@ def build_guide(root,upstream,engine,dest,locale,tmp,b,ed):
     run(engine,'init',series,'--preset','lightwebpres-docs@0.1.0/docs','--lang',locale,env={'LWP_IDENTITY_KITS_DIR':str(upstream/'examples/kits')})
     for f in ['guide.md','article.md']:shutil.copyfile(source/f,series/'sources'/f)
     copytree(root/('fr' if locale=='fr' else '')/'lightwebpres/guide/img',series/'sources/img')
-    conf={'series_meta':{'title':'LightWebPres','subtitle':'Le guide' if locale=='fr' else 'The guide','presentation_preset':'lightwebpres-docs@0.1.0/docs','scroll_duration':0},'articles':[{'page_source':'guide.md','page_dest':'guide.html'}]}
+    conf={'series_meta':{'title':'LightWebPres','subtitle':'Le guide' if locale=='fr' else 'The guide','scroll_duration':0},'appearance':{'presets':['lightwebpres-docs@0.1.0/docs']},'articles':[{'page_source':'guide.md','page_dest':'guide.html'}]}
     writejson(series/'series.json',conf)
     # Keep the already translated long-form manual; rebuild its reader and revise reading guidance.
     if locale=='fr':
@@ -146,6 +151,7 @@ def main(root,upstream,output):
         # Source archive remains reconstructible with the current engine.
         (series/'build-site.py').write_text('import subprocess,sys\nsubprocess.run([sys.executable,"lightwebpres","build",".","--lang","'+locale+'"],check=True)\n')
         shutil.copyfile(engine,series/'lightwebpres');shutil.copyfile(upstream/'COPYING',series/'COPYING');shutil.copyfile(upstream/'COPYING.EXCEPTION',series/'COPYING.EXCEPTION')
+        normalize_source_readme(series/'README.md');normalize_source_readme(series/'example/README.md')
         zipdir(dest/'downloads/site-sources.zip',series)
         for page in sorted(dest.rglob('*.html')):
             if 'reference' in page.relative_to(dest).parts:continue
@@ -210,7 +216,9 @@ def main(root,upstream,output):
     print('REFRESH_READY',str(output),flush=True)
 
 def refresh_manifest(output):
-    data={'schema':1,'default_language':'en','french_prefix':'/fr/','engine_sha256':ENGINE_SHA,'files':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in output.rglob('*') if p.is_file() and p.relative_to(output).as_posix()!='assets/bilingual-manifest.json'}}
+    public=(output/name for name in PUBLIC)
+    files=(p for src in public for p in (src.rglob('*') if src.is_dir() else [src]) if p.is_file())
+    data={'schema':1,'default_language':'en','french_prefix':'/fr/','engine_sha256':ENGINE_SHA,'files':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p!=output/'assets/bilingual-manifest.json'}}
     writejson(output/'assets/bilingual-manifest.json',data)
 
 if __name__=='__main__':

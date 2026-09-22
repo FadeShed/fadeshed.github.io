@@ -1,1 +1,18 @@
-{"series_meta": {"title": "LightWebPres", "subtitle": "The guide", "presentation_preset": "lightwebpres-docs@0.1.0/docs", "scroll_duration": 0}, "articles": [{"page_source": "guide.md", "page_dest": "guide.html"}]}
+{
+  "series_meta": {
+    "title": "LightWebPres",
+    "subtitle": "The guide",
+    "scroll_duration": 0
+  },
+  "appearance": {
+    "presets": [
+      "lightwebpres-docs@0.1.0/docs"
+    ]
+  },
+  "articles": [
+    {
+      "page_source": "guide.md",
+      "page_dest": "guide.html"
+    }
+  ]
+}

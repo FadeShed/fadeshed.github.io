@@ -1,8 +1,12 @@
 {
   "series_meta": {
     "title": "My first series",
-    "presentation_preset": "lightwebpres-docs@0.1.0/docs",
     "scroll_duration": 0
+  },
+  "appearance": {
+    "presets": [
+      "lightwebpres-docs@0.1.0/docs"
+    ]
   },
   "articles": [
     {

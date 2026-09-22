@@ -4,14 +4,14 @@
 
 ## Requirements and Support
 
-The 2.1.21 implementation requires:
+The 2.1.26 implementation requires:
 
 - Python 3.11 or newer;
 - a local filesystem supported by the active platform backend;
 - a modern browser for the Web UI;
 - no third-party Python runtime dependency.
 
-Linux is the current official and tested server platform for v2.1.21. The
+Linux is the current official and tested server platform for v2.1.26. The
 Windows backend has broad Wine coverage, but native Windows/NTFS validation is
 still outstanding. A Darwin backend exists, but native macOS validation and
 official support are also outstanding. Only supported local filesystems are
@@ -31,12 +31,12 @@ manual validation on the target desktop.
 
 ### Deployable copy
 
-The supported v2.1.21 installation is the tracked `PasteBerth/` directory. It is
+The supported v2.1.26 installation is the tracked `PasteBerth/` directory. It is
 the complete code-only deployment unit: it needs no root access, installation
 script, Python package installation, or build step.
 
 ```sh
-git clone --branch v2.1.21 --depth 1 https://github.com/Fade78/pasteberth.git
+git clone --branch v2.1.26 --depth 1 https://github.com/Fade78/pasteberth.git
 cd pasteberth
 cp -a PasteBerth "$HOME/PasteBerth"
 mkdir -p "$HOME/.local/bin"
@@ -92,7 +92,11 @@ pasteberth
 Open `http://127.0.0.1:8765/` in the browser unless the configuration changes
 the address or port. The generated configuration enables authentication. The
 password hash is kept in a separate `passwd` file and is never written to
-`config.toml`.
+`config.toml`. The bearer-token registry is a separate `tokens.sqlite3` file
+beside the configuration by default. Keep the registry file private (normally
+`0600`) and make sure its parent directories are writable by the service
+account as needed, but not by other users or groups. Read and traverse
+permissions on those directories are an administrative choice.
 
 For a local trial, running without any configuration intentionally uses a
 loopback-only minimal mode with `$XDG_DATA_HOME/pasteberth/storage/default`
@@ -139,8 +143,11 @@ The browser `Origin` is still `scheme://Host[:port]`, without `/paste`.
 
 The direct-drop endpoints use the immediate peer for their loopback exception.
 A public request forwarded by a loopback proxy therefore qualifies even without
-a session. The examples below block `/api/drop/resolve` and
-`/api/zones/{id}/images/regularize` at the public proxy. Local CLI clients can
+a session. The examples below block `/api/drop/resolve` and both
+`/api/zones/{id}/images/regularize` and `/api/zones/{id}/items/regularize` at the
+public proxy. The `items` alias shipped in **2.1.22**; blocking only
+`images` would leave the same direct-drop handler exposed through `items`.
+Local CLI clients can
 still reach the backend directly; remote clients use `drop --zone ID` or the
 normal multipart upload endpoint. If you deliberately expose those routes,
 provide an appropriate proxy access policy and understand the
@@ -168,11 +175,15 @@ systemctl --user enable --now pasteberth.service
 journalctl --user -u pasteberth -f
 ```
 
-The template uses `PrivateTmp=true`; zones below `/tmp` or `/var/tmp` are not
-usable by other host processes in that mode. If optional `ProtectSystem`,
+The template uses `PrivateTmp=true` for private zones; zones below `/tmp` or
+`/var/tmp` are not usable by other host processes in that mode. For a shared
+POSIX zone using `file_group`, set `PrivateTmp=false`: the private user namespace
+otherwise masks supplementary groups and prevents Pasteberth from assigning the
+configured file group. If optional `ProtectSystem`,
 `ProtectHome`, or `ReadWritePaths` hardening is enabled, include every zone,
-parent directory that may be created, and the password path when it must be
-written.
+parent directory that may be created, the password path, and the token registry
+directory when they must be written. The service opens the token registry at
+startup when authentication is enabled.
 
 To keep a user service running after logout and start it at boot:
 
@@ -188,7 +199,7 @@ Keep Pasteberth on loopback and proxy the public HTTPS hostname:
 
 ```caddy
 pasteberth.example.internal {
-    @direct_drop path /paste/api/drop/resolve /paste/api/zones/*/images/regularize
+    @direct_drop path /paste/api/drop/resolve /paste/api/zones/*/images/regularize /paste/api/zones/*/items/regularize
     respond @direct_drop 403
     @paste path /paste /paste/*
     reverse_proxy @paste 127.0.0.1:8765 {
@@ -223,7 +234,7 @@ server {
     ssl_certificate /absolute/path/fullchain.pem;
     ssl_certificate_key /absolute/path/private-key.pem;
 
-    location ~ ^/paste/api/(drop/resolve|zones/[^/]+/images/regularize)$ {
+    location ~ ^/paste/api/(drop/resolve|zones/[^/]+/(images|items)/regularize)$ {
         return 403;
     }
 
@@ -283,6 +294,12 @@ API and copy-reference actions still return them.
   filesystem paths transit the application.
 - Keep the backend on loopback behind a reverse proxy whenever possible.
 - Keep authentication enabled and create the password with `pasteberth passwd`.
+- Store bearer tokens only in protected secret managers, environment injection,
+  or protected stdin sources; never put them in URLs, cookies, logs, command
+  history, or committed service files.
+- Back up the token registry with the configuration and password file; it
+  contains token hashes, grants, revocations, and suspension state, but no
+  recoverable bearer secrets.
 - With authentication enabled, leave `allowed_hosts` empty for a deployment-chosen
   hostname or list explicit canonical hostnames to restrict the service.
 - Never leave `allowed_hosts` empty in an anonymous configuration.
@@ -330,7 +347,7 @@ that all clipboard or downloaded content is sanitized.
 
 The next major platform goal is native Windows and macOS support with the same
 transaction and security guarantees. That work is intentionally separate from
-the v2.1.21 support matrix and must not be represented as already supported.
+the v2.1.26 support matrix and must not be represented as already supported.
 The repository contains opt-in `platform_windows` and `platform_macos` CI jobs;
 enable them only after registering native runners with
 `PASTEBERTH_NATIVE_WINDOWS_CI=1` or `PASTEBERTH_NATIVE_MACOS_CI=1`.

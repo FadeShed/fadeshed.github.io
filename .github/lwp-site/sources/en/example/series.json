@@ -15,9 +15,11 @@
       "page_source": "ma-page.md"
     }
   ],
-  "themes": [
-    "nebula",
-    "essential",
-    "pop-lemon"
-  ]
+  "appearance": {
+    "themes": [
+      "nebula",
+      "essential",
+      "pop-lemon"
+    ]
+  }
 }

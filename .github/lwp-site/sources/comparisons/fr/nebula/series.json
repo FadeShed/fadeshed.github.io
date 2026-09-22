@@ -1,8 +1,15 @@
 {
   "series_meta": {
     "title": "Ma première série",
-    "presentation_preset": "builtin/standard",
     "scroll_duration": 0
+  },
+  "appearance": {
+    "presets": [
+      "builtin/standard"
+    ],
+    "themes": [
+      "nebula"
+    ]
   },
   "articles": [
     {

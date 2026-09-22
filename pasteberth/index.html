@@ -759,8 +759,8 @@ cp -T --update=none-fail -- report.pdf "$DEST" &amp;&amp;
 </span>
 </button>
 <p class="small-note">
-<span class="fr" lang="fr">Simulation accélérée. Le navigateur visible interroge le service toutes les 10 secondes. Les requêtes de vue déclenchent un scan asynchrone ; une réponse ultérieure expose son résultat. Ce n’est ni un watcher filesystem ni une boucle autonome permanente.</span>
-<span class="en" lang="en">Accelerated simulation. The visible browser polls every 10 seconds. Overview requests trigger an asynchronous scan; a later response exposes its result. This is neither a filesystem watcher nor a standalone perpetual scanning loop.</span>
+<span class="fr" lang="fr">Simulation accélérée, sans scan réel. Le navigateur visible interroge toujours le service toutes les 10 secondes. Depuis 2.1.22, après la fin d’un rafraîchissement, les requêtes de vue ne peuvent déclencher le prochain scan asynchrone qu’après une pause égale au maximum de 10 secondes et de la durée totale du dernier rafraîchissement. Une réponse ultérieure expose le résultat. Aucun délai maximal strict ne borne les appels filesystem ; ce n’est ni un watcher ni une boucle autonome permanente.</span>
+<span class="en" lang="en">Accelerated simulation, without a real scan. The visible browser still polls every 10 seconds. Since 2.1.22, after a refresh completes, overview requests become eligible to start the next asynchronous scan only after a cooldown of max(10 seconds, last full refresh duration). A later response exposes the result. There is no hard filesystem-call timeout, filesystem watcher or standalone perpetual scanning loop.</span>
 </p>
 </div>
 <div class="discovery-visual">

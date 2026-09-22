@@ -13,20 +13,29 @@
   const URL_PREFIX = document.body.dataset.urlPrefix || "";
   const REFRESH_INTERVAL_MS = 10_000;
   const INTERNAL_TRANSFER_MIME = "application/x-pasteberth-transfer";
+  const TRANSIENT_FOCUS_CLASSES = new Set([
+    "active", "open", "selected", "bulk-selected", "dragging", "dragging-item", "attention",
+  ]);
 
   function appPath(path) {
     return `${URL_PREFIX}${path}`;
   }
 
   const state = {
-    zones: [],            // [{id,label,color,retain,count,upload_limit_bytes,images:[...]}]
+    zones: [],            // [{id,label,color,retain,count,upload_limit_bytes,items:[...]}]
     activeId: null,
     authEnabled: true,
+    accessAdmin: false,
+    accessAdminLoaded: false,
+    tokenAdmin: null,
+    accessRequestInFlight: false,
     showFullPath: true,
+    maxArchiveFiles: null,
     offline: false,
     selectedByZone: Object.create(null),
     knownItemSignaturesByZone: Object.create(null),
     newItemIdsByZone: Object.create(null),
+    commentDraftsByZone: Object.create(null),
     copyFeedbackByItem: Object.create(null),
     copyFeedbackTimers: Object.create(null),
     copyAttemptByItem: Object.create(null),
@@ -55,11 +64,24 @@
   let copyAttemptSequence = 0;
   let activePreviewController = null;
   let groupOptionsClose = null;
+  let tabLayoutResizeTimer = null;
+  const tabZoneRebalanceFrames = new WeakMap();
+  const tabZoneResizeObserver = typeof window.ResizeObserver === "function"
+    ? new window.ResizeObserver(entries => {
+      const mains = new Set();
+      for (const entry of entries) {
+        const main = entry.target.closest(".tab-zone-main");
+        if (main) mains.add(main);
+      }
+      for (const main of mains) scheduleTabZoneRebalance(main);
+    })
+    : null;
 
   const grid = document.getElementById("grid");
   const groupTabs = document.getElementById("group-tabs");
   const statusEl = document.getElementById("status");
   const statusText = document.getElementById("status-text");
+  const accessButton = document.getElementById("access-button");
   const logoutForm = document.getElementById("logout-form");
   const toastEl = document.getElementById("toast");
   const pvToastEl = document.getElementById("pv-toast");
@@ -79,6 +101,20 @@
   const replacementZone = document.getElementById("replace-zone");
   const replacementCancel = document.getElementById("replace-cancel");
   const replacementConfirm = document.getElementById("replace-confirm");
+  const accessDialog = document.getElementById("access-dialog");
+  const accessBackdrop = document.getElementById("access-backdrop");
+  const accessClose = document.getElementById("access-close");
+  const tokenForm = document.getElementById("token-form");
+  const tokenLabel = document.getElementById("token-label");
+  const tokenDuration = document.getElementById("token-duration");
+  const tokenPermanent = document.getElementById("token-permanent");
+  const addGrantButton = document.getElementById("add-grant");
+  const tokenGrants = document.getElementById("token-grants");
+  const tokenSecret = document.getElementById("token-secret");
+  const tokenList = document.getElementById("token-list");
+  const refreshTokensButton = document.getElementById("refresh-tokens");
+  const suspensionList = document.getElementById("suspension-list");
+  const accessMessage = document.getElementById("access-message");
   const filePicker = document.getElementById("file-picker");
   const replacementQueue = [];
   const dialogInvokers = new WeakMap();
@@ -134,15 +170,19 @@
     return n + " B";
   }
 
-  function fmtTime(iso) {
+  function fmtTime(iso, includeDate = false) {
     const d = new Date(iso);
-    return d.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    if (!iso || Number.isNaN(d.getTime())) return "Unknown time";
+    const time = d.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    if (includeDate || Date.now() - d.getTime() > 24 * 60 * 60 * 1000) {
+      return d.toLocaleDateString("en", { year: "numeric", month: "2-digit", day: "2-digit" })
+        + " " + time;
+    }
+    return time;
   }
 
   function fmtDateTime(iso) {
-    const d = new Date(iso);
-    return d.toLocaleDateString("en", { year: "numeric", month: "2-digit", day: "2-digit" })
-      + " " + fmtTime(iso);
+    return fmtTime(iso, true);
   }
 
   function toast(message, kind = "info") {
@@ -236,13 +276,15 @@
     let res;
     try {
       const requestOptions = Object.assign({}, options || {});
+      const redirectOnUnauthorized = requestOptions.redirectOnUnauthorized !== false;
+      delete requestOptions.redirectOnUnauthorized;
       requestOptions.headers = Object.assign({ Accept: "application/json" }, requestOptions.headers || {});
       res = await fetch(appPath(path), requestOptions);
     } catch (err) {
       if (err && err.name === "AbortError") throw err;
       throw new Error("network unreachable");
     }
-    if (res.status === 401 && state.authEnabled) {
+    if (res.status === 401 && state.authEnabled && redirectOnUnauthorized) {
       window.location.href = appPath("/login");
       throw new Error("session expired");
     }
@@ -258,7 +300,7 @@
         not_found: "Resource not found",
         internal: "Internal server error",
         unknown_zone: "Unknown zone",
-        unknown_image: "Unknown image",
+        unknown_item: "Unknown item",
         invalid_filename: "The dropped filename is invalid",
         empty_upload: "The upload is empty",
         invalid_image: "The image is invalid or corrupted",
@@ -267,10 +309,10 @@
         too_large: "The upload is too large",
         payload_too_large: "The upload is too large",
         storage_low: "Not enough disk space",
-        retention_error: "Image retention failed",
+        retention_error: "Item retention failed",
         storage_conflict: "Name taken by an unmanaged file",
         replacement_required: "This name already exists; confirm replacement",
-        destination_error: "The image destination is unavailable",
+        destination_error: "The item destination is unavailable",
         zone_busy: "This zone is busy; try again shortly",
         preview_busy: "Too many previews are currently being served",
         rate_limited: "Too many attempts; try again later",
@@ -288,6 +330,509 @@
     }
     return payload;
   }
+
+  // ---------------------------------------------------------- access admin
+
+  function tokenCatalog() {
+    const catalog = state.tokenAdmin?.catalog;
+    return {
+      zones: Array.isArray(catalog?.zones) ? catalog.zones : [],
+      groups: Array.isArray(catalog?.groups) ? catalog.groups : [],
+    };
+  }
+
+  function setAccessMessage(message, kind = "") {
+    if (!accessMessage) return;
+    accessMessage.textContent = message || "";
+    accessMessage.className = `access-message ${kind}`.trim();
+    accessMessage.hidden = !message;
+  }
+
+  function clearTokenSecret() {
+    if (!tokenSecret) return;
+    tokenSecret.replaceChildren();
+    tokenSecret.hidden = true;
+  }
+
+  function showTokenSecret(credential, action = "Created") {
+    if (!tokenSecret || typeof credential !== "string" || !credential) return;
+    tokenSecret.replaceChildren();
+    const title = document.createElement("strong");
+    title.textContent = `${action} token secret`;
+    const warning = document.createElement("p");
+    warning.textContent = "Copy it now. Pasteberth cannot recover this secret later.";
+    const line = document.createElement("div");
+    line.className = "token-secret-line";
+    const value = document.createElement("code");
+    value.textContent = credential;
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "small-btn";
+    copy.textContent = "Copy";
+    copy.addEventListener("click", async () => {
+      if (await writeClipboard(credential)) toast("Token secret copied");
+      else toast("Could not copy the token secret", "error");
+    });
+    line.append(value, copy);
+    tokenSecret.append(title, warning, line);
+    tokenSecret.hidden = false;
+  }
+
+  function addGrantRow(initial = {}) {
+    if (!tokenGrants) return;
+    const row = document.createElement("fieldset");
+    row.className = "token-grant-row";
+    const legend = document.createElement("legend");
+    legend.textContent = "Grant";
+    row.appendChild(legend);
+
+    const controls = document.createElement("div");
+    controls.className = "grant-controls";
+    const scopeLabel = document.createElement("label");
+    scopeLabel.textContent = "Scope";
+    const scopeSelect = document.createElement("select");
+    scopeSelect.className = "grant-scope";
+    for (const [value, label] of [
+      ["zone", "Zone"],
+      ["group", "Group"],
+      ["path", "PATH"],
+      ["global", "Global"],
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      scopeSelect.appendChild(option);
+    }
+    scopeSelect.value = initial.scope_type || "zone";
+    scopeLabel.appendChild(scopeSelect);
+    const valueLabel = document.createElement("label");
+    valueLabel.className = "grant-value-label";
+    const valueCaption = document.createElement("span");
+    valueLabel.appendChild(valueCaption);
+    const valueWrap = document.createElement("span");
+    valueLabel.appendChild(valueWrap);
+    controls.append(scopeLabel, valueLabel);
+
+    const permissions = document.createElement("div");
+    permissions.className = "grant-permissions";
+    const permissionInputs = {};
+    for (const name of ["L", "R", "W"]) {
+      const label = document.createElement("label");
+      label.className = "check-row";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.dataset.permission = name;
+      input.checked = Array.isArray(initial.permissions) && initial.permissions.includes(name);
+      const text = document.createElement("span");
+      text.textContent = name;
+      label.append(input, text);
+      permissions.appendChild(label);
+      permissionInputs[name] = input;
+    }
+    controls.appendChild(permissions);
+
+    const replaceLabel = document.createElement("label");
+    replaceLabel.className = "check-row grant-replace-label";
+    const replaceInput = document.createElement("input");
+    replaceInput.type = "checkbox";
+    replaceInput.className = "grant-replace";
+    replaceInput.checked = initial.allow_replace === true;
+    const replaceText = document.createElement("span");
+    replaceText.textContent = "Allow named replacement";
+    replaceLabel.append(replaceInput, replaceText);
+    controls.appendChild(replaceLabel);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "small-btn danger-btn grant-remove";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => row.remove());
+    controls.appendChild(remove);
+    row.appendChild(controls);
+
+    let currentValue = typeof initial.scope_value === "string" ? initial.scope_value : "";
+    const updateValueControl = () => {
+      const scope = scopeSelect.value;
+      valueWrap.replaceChildren();
+      if (scope === "global") {
+        valueLabel.hidden = true;
+      } else {
+        valueLabel.hidden = false;
+        valueCaption.textContent = scope === "zone"
+          ? "Zone ID"
+          : scope === "group"
+            ? "Group"
+            : "Absolute path";
+        if (scope === "path") {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "grant-value";
+          input.maxLength = 4096;
+          input.value = currentValue;
+          input.placeholder = "/srv/pasteberth/project";
+          valueWrap.appendChild(input);
+        } else {
+          const select = document.createElement("select");
+          select.className = "grant-value";
+          const empty = document.createElement("option");
+          empty.value = "";
+          empty.textContent = scope === "zone" ? "Select a zone" : "Select a group";
+          select.appendChild(empty);
+          const entries = scope === "zone" ? tokenCatalog().zones : tokenCatalog().groups;
+          for (const entry of entries) {
+            const option = document.createElement("option");
+            option.value = scope === "zone" ? entry.id : entry.name;
+            option.textContent = scope === "zone"
+              ? `${entry.label || entry.id} (${entry.id})`
+              : entry.name;
+            select.appendChild(option);
+          }
+          if (currentValue && !entries.some(entry => (
+            scope === "zone" ? entry.id : entry.name
+          ) === currentValue)) {
+            const option = document.createElement("option");
+            option.value = currentValue;
+            option.textContent = `${currentValue} (not active)`;
+            select.appendChild(option);
+          }
+          select.value = currentValue;
+          valueWrap.appendChild(select);
+        }
+      }
+    };
+    scopeSelect.addEventListener("change", () => {
+      currentValue = "";
+      updateValueControl();
+    });
+    valueWrap.addEventListener("change", () => {
+      currentValue = valueWrap.querySelector(".grant-value")?.value || "";
+    });
+    valueWrap.addEventListener("input", () => {
+      currentValue = valueWrap.querySelector(".grant-value")?.value || "";
+    });
+    const syncReplacement = () => {
+      const enabled = permissionInputs.W.checked;
+      replaceInput.disabled = !enabled;
+      if (!enabled) replaceInput.checked = false;
+    };
+    permissionInputs.W.addEventListener("change", syncReplacement);
+    syncReplacement();
+    updateValueControl();
+    tokenGrants.appendChild(row);
+  }
+
+  function collectTokenGrants() {
+    const rows = [...(tokenGrants?.querySelectorAll(".token-grant-row") || [])];
+    if (!rows.length) throw new Error("Add at least one grant");
+    return rows.map((row) => {
+      const scopeType = row.querySelector(".grant-scope")?.value;
+      const scopeValue = row.querySelector(".grant-value")?.value || "";
+      if (scopeType !== "global" && !scopeValue.trim()) {
+        throw new Error("Every non-global grant needs a target");
+      }
+      const permissions = ["L", "R", "W"].filter((name) => (
+        row.querySelector(`[data-permission="${name}"]`)?.checked
+      ));
+      return {
+        scope_type: scopeType,
+        scope_value: scopeType === "global" ? "" : scopeValue,
+        permissions,
+        allow_replace: Boolean(row.querySelector(".grant-replace")?.checked),
+      };
+    });
+  }
+
+  function resetTokenForm() {
+    if (!tokenForm) return;
+    tokenForm.reset();
+    tokenDuration.disabled = false;
+    tokenGrants.replaceChildren();
+    addGrantRow();
+  }
+
+  function tokenTime(value) {
+    if (value === null || value === undefined) return "Never";
+    const milliseconds = Number(value) * 1000;
+    if (!Number.isFinite(milliseconds) || milliseconds > 8640000000000000) return "Far future";
+    const date = new Date(milliseconds);
+    return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString();
+  }
+
+  function suspensionKey(scopeType, scopeValue = "") {
+    return `${scopeType}\u0000${scopeValue}`;
+  }
+
+  function suspensionSet() {
+    return new Set((state.tokenAdmin?.suspensions || []).map((item) => (
+      suspensionKey(item.scope_type, item.scope_value || "")
+    )));
+  }
+
+  function renderTokenList() {
+    if (!tokenList) return;
+    tokenList.replaceChildren();
+    const records = Array.isArray(state.tokenAdmin?.tokens) ? state.tokenAdmin.tokens : [];
+    if (!records.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "No bearer tokens have been issued.";
+      tokenList.appendChild(empty);
+      return;
+    }
+    for (const token of records) {
+      const card = document.createElement("article");
+      card.className = `token-card token-state-${token.state || "unknown"}`;
+      const head = document.createElement("div");
+      head.className = "token-card-head";
+      const title = document.createElement("h4");
+      title.textContent = token.label || "Unnamed token";
+      const stateBadge = document.createElement("span");
+      stateBadge.className = "token-state";
+      stateBadge.textContent = token.state || "unknown";
+      head.append(title, stateBadge);
+      const identifier = document.createElement("code");
+      identifier.textContent = token.token_id || "";
+      const expiry = document.createElement("p");
+      expiry.className = "muted token-meta";
+      expiry.textContent = `Created ${tokenTime(token.created_at)}; expires ${tokenTime(token.expires_at)}`;
+      const grants = document.createElement("ul");
+      grants.className = "token-grant-summary";
+      for (const grant of token.grants || []) {
+        const item = document.createElement("li");
+        const target = grant.scope_type === "global"
+          ? "all zones"
+          : `${grant.scope_type}: ${grant.scope_value || ""}`;
+        const rights = (grant.permissions || []).join("") || "none";
+        item.textContent = `${target} [${rights}] - ${grant.status || "unknown"}`;
+        grants.appendChild(item);
+      }
+      const actions = document.createElement("div");
+      actions.className = "token-actions";
+      const extend = document.createElement("button");
+      extend.type = "button";
+      extend.className = "small-btn";
+      extend.textContent = "Extend";
+      extend.disabled = token.state === "revoked";
+      extend.addEventListener("click", () => tokenLifecycleAction(token, "extend"));
+      const rotate = document.createElement("button");
+      rotate.type = "button";
+      rotate.className = "small-btn";
+      rotate.textContent = "Rotate";
+      rotate.disabled = token.state === "revoked";
+      rotate.addEventListener("click", () => tokenLifecycleAction(token, "rotate"));
+      const revoke = document.createElement("button");
+      revoke.type = "button";
+      revoke.className = "small-btn danger-btn";
+      revoke.textContent = "Revoke";
+      revoke.disabled = token.state === "revoked";
+      revoke.addEventListener("click", () => tokenRevokeAction(token));
+      actions.append(extend, rotate, revoke);
+      card.append(head, identifier, expiry, grants, actions);
+      tokenList.appendChild(card);
+    }
+  }
+
+  function renderSuspensions() {
+    if (!suspensionList) return;
+    suspensionList.replaceChildren();
+    const catalog = tokenCatalog();
+    const definitions = [
+      { scope_type: "global", scope_value: "", label: "All bearer tokens" },
+      ...catalog.zones.map((zone) => ({
+        scope_type: "zone", scope_value: zone.id,
+        label: `Zone: ${zone.label || zone.id} (${zone.id})`,
+      })),
+      ...catalog.groups.map((group) => ({
+        scope_type: "group", scope_value: group.name,
+        label: `Group: ${group.name}`,
+      })),
+    ];
+    if (!definitions.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "No suspendable scopes are configured.";
+      suspensionList.appendChild(empty);
+      return;
+    }
+    const active = suspensionSet();
+    for (const definition of definitions) {
+      const row = document.createElement("div");
+      row.className = "suspension-row";
+      const label = document.createElement("span");
+      label.textContent = definition.label;
+      const status = document.createElement("span");
+      const suspended = active.has(suspensionKey(definition.scope_type, definition.scope_value));
+      status.className = suspended ? "token-state token-state-suspended" : "muted";
+      status.textContent = suspended ? "suspended" : "active";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = suspended ? "small-btn" : "small-btn danger-btn";
+      button.textContent = suspended ? "Resume" : "Suspend";
+      button.addEventListener("click", () => setTokenSuspension(
+        definition.scope_type,
+        definition.scope_value,
+        !suspended,
+      ));
+      row.append(label, status, button);
+      suspensionList.appendChild(row);
+    }
+  }
+
+  function renderTokenAdmin() {
+    renderTokenList();
+    renderSuspensions();
+    if (tokenGrants && !tokenGrants.children.length) addGrantRow();
+  }
+
+  async function loadTokenAdmin() {
+    if (!state.authEnabled || !accessButton) return null;
+    if (state.accessRequestInFlight) return state.tokenAdmin;
+    state.accessRequestInFlight = true;
+    try {
+      const payload = await api("/api/tokens", { redirectOnUnauthorized: false });
+      if (!payload || !Array.isArray(payload.tokens)) throw new Error("invalid access response");
+      state.tokenAdmin = payload;
+      state.accessAdmin = true;
+      state.accessAdminLoaded = true;
+      accessButton.hidden = false;
+      renderTokenAdmin();
+      return payload;
+    } catch (err) {
+      state.accessAdmin = false;
+      state.accessAdminLoaded = true;
+      accessButton.hidden = true;
+      if (isDialogOpen(accessDialog)) setAccessMessage(err.message, "error");
+      return null;
+    } finally {
+      state.accessRequestInFlight = false;
+    }
+  }
+
+  function tokenDurationPrompt(action) {
+    const raw = window.prompt(
+      `${action} duration in seconds (leave blank for a permanent token):`,
+      "2592000",
+    );
+    if (raw === null) return undefined;
+    if (!raw.trim()) return null;
+    const value = Number(raw);
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      setAccessMessage("Duration must be a positive integer.", "error");
+      return undefined;
+    }
+    return value;
+  }
+
+  async function tokenLifecycleAction(token, action) {
+    const duration = tokenDurationPrompt(action === "rotate" ? "Rotation" : "Extension");
+    if (duration === undefined) return;
+    try {
+      const payload = await api(
+        `/api/tokens/${encodeURIComponent(token.token_id)}/${action}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ duration_seconds: duration }),
+        },
+      );
+      if (action === "rotate") showTokenSecret(payload.token, "Rotated");
+      setAccessMessage(`${action === "rotate" ? "Token rotated" : "Token extended"}.`);
+      await loadTokenAdmin();
+    } catch (err) {
+      setAccessMessage(err.message, "error");
+    }
+  }
+
+  async function tokenRevokeAction(token) {
+    if (!window.confirm(`Revoke token ${token.label || token.token_id}?`)) return;
+    try {
+      await api(`/api/tokens/${encodeURIComponent(token.token_id)}`, { method: "DELETE" });
+      setAccessMessage("Token revoked.");
+      await loadTokenAdmin();
+    } catch (err) {
+      setAccessMessage(err.message, "error");
+    }
+  }
+
+  async function setTokenSuspension(scopeType, scopeValue, suspended) {
+    try {
+      await api("/api/token-suspensions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scope_type: scopeType,
+          scope_value: scopeValue,
+          suspended,
+        }),
+      });
+      setAccessMessage(suspended ? "Scope suspended." : "Scope resumed.");
+      await loadTokenAdmin();
+    } catch (err) {
+      setAccessMessage(err.message, "error");
+    }
+  }
+
+  async function openAccessPanel() {
+    if (!state.accessAdmin && !(await loadTokenAdmin())) return;
+    clearTokenSecret();
+    setAccessMessage("");
+    openDialog(accessDialog, accessButton);
+  }
+
+  function closeAccessPanel() {
+    if (!accessDialog) return;
+    if (closeDialog(accessDialog)) return;
+    clearTokenSecret();
+    setAccessMessage("");
+    restoreDialogInvoker(accessDialog);
+  }
+
+  if (accessButton) accessButton.addEventListener("click", openAccessPanel);
+  if (accessClose) accessClose.addEventListener("click", closeAccessPanel);
+  if (accessDialog) accessDialog.addEventListener("close", () => {
+    clearTokenSecret();
+    setAccessMessage("");
+    restoreDialogInvoker(accessDialog);
+  });
+  if (accessDialog) accessDialog.addEventListener("click", (event) => {
+    if (event.target === accessDialog) closeAccessPanel();
+  });
+  if (accessBackdrop) accessBackdrop.addEventListener("click", closeAccessPanel);
+  if (addGrantButton) addGrantButton.addEventListener("click", () => addGrantRow());
+  if (refreshTokensButton) refreshTokensButton.addEventListener("click", async () => {
+    await loadTokenAdmin();
+    setAccessMessage("Access data refreshed.");
+  });
+  if (tokenPermanent) tokenPermanent.addEventListener("change", () => {
+    tokenDuration.disabled = tokenPermanent.checked;
+    if (tokenPermanent.checked) tokenDuration.value = "";
+  });
+  if (tokenForm) tokenForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      const duration = tokenPermanent.checked ? null : Number(tokenDuration.value);
+      if (duration !== null && (!Number.isSafeInteger(duration) || duration <= 0)) {
+        throw new Error("Duration must be a positive integer or permanent.");
+      }
+      const label = tokenLabel.value.trim();
+      if (!label) throw new Error("A token label is required.");
+      const payload = await api("/api/tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label,
+          duration_seconds: duration,
+          grants: collectTokenGrants(),
+        }),
+      });
+      showTokenSecret(payload.token, "Created");
+      setAccessMessage("Token created. Copy the secret before closing this panel.");
+      resetTokenForm();
+      await loadTokenAdmin();
+    } catch (err) {
+      setAccessMessage(err.message, "error");
+    }
+  });
 
   // ---------------------------------------------------------------- clipboard
 
@@ -735,6 +1280,8 @@
       item.width,
       item.height,
       item.changed_at,
+      item.sha256,
+      item.etag,
     ]);
   }
 
@@ -779,7 +1326,7 @@
     const currentZoneIds = new Set();
     for (const zone of zones) {
       currentZoneIds.add(zone.id);
-      const current = new Map(zone.images.map(item => [item.id, itemSignature(item)]));
+      const current = new Map(zone.items.map(item => [item.id, itemSignature(item)]));
       const known = state.knownItemSignaturesByZone[zone.id];
       const newIds = newItemIds(zone.id);
       if (detectNewItems) {
@@ -831,11 +1378,11 @@
 
   function selectedItems(zone) {
     const selected = selectedItemIds(zone.id);
-    return zone.images.filter(item => selected.has(item.id));
+    return zone.items.filter(item => selected.has(item.id));
   }
 
   function selectHistoryItem(zone, itemId, event) {
-    const ids = zone.images.map(item => item.id);
+    const ids = zone.items.map(item => item.id);
     const itemIndex = ids.indexOf(itemId);
     if (itemIndex < 0) return;
     const toggle = event.ctrlKey || event.metaKey;
@@ -887,7 +1434,7 @@
     return ok;
   }
 
-  function downloadArchive(zone, items) {
+  function downloadArchive(zone, items, event) {
     if (zone.busy || state.batchBusyZoneIds.has(zone.id)) {
       toast("This zone is busy; try again shortly", "error");
       return;
@@ -896,13 +1443,18 @@
       toast("ZIP downloads are disabled for this zone", "error");
       return;
     }
+    if (state.maxArchiveFiles !== null && items.length > state.maxArchiveFiles) {
+      event.stopPropagation();
+      toast(`ZIP downloads allow a maximum of ${state.maxArchiveFiles} files; ${items.length} selected`, "error");
+      return;
+    }
     const target = `pb-archive-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const frame = document.createElement("iframe");
     frame.name = target;
     frame.hidden = true;
     const form = document.createElement("form");
     form.method = "post";
-    form.action = appPath(`/api/zones/${encodeURIComponent(zone.id)}/images/archive`);
+    form.action = appPath(`/api/zones/${encodeURIComponent(zone.id)}/items/archive`);
     form.target = target;
     form.hidden = true;
     for (const item of items) {
@@ -932,7 +1484,7 @@
     renderAll();
     try {
       const result = await apiWithZoneRetry(
-        `/api/zones/${encodeURIComponent(zone.id)}/images/batch-delete`,
+        `/api/zones/${encodeURIComponent(zone.id)}/items/batch-delete`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -970,7 +1522,7 @@
     state.batchBusyZoneIds.add(targetZone.id);
     renderAll();
     try {
-      const result = await apiWithZoneRetry("/api/transfers", {
+      const result = await apiWithZoneRetry("/api/transfers?schema=items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1095,7 +1647,7 @@
       archive.setAttribute("aria-label", `Download ${items.length} files as ZIP`);
       archive.disabled = zone.allow_zip_download === false;
       archive.title = archive.disabled ? "ZIP downloads are disabled for this zone" : "";
-      archive.addEventListener("click", () => downloadArchive(zone, items));
+      archive.addEventListener("click", event => downloadArchive(zone, items, event));
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "delete-btn";
@@ -1139,10 +1691,10 @@
     count.className = "zone-count";
     const limit = zone.retain;
     const retention = limit == null ? "" : ` / ${limit}`;
-    count.textContent = `${zone.images.length}${retention}`;
+    count.textContent = `${zone.items.length}${retention}`;
     count.setAttribute(
       "aria-label",
-      `${zone.images.length} files in ${zone.label}; show upload details`,
+      `${zone.items.length} files in ${zone.label}; show upload details`,
     );
     count.setAttribute("aria-expanded", "false");
 
@@ -1248,7 +1800,7 @@
       el.appendChild(busy);
     }
 
-    if (zone.images.length === 0) {
+    if (zone.items.length === 0) {
       const hint = document.createElement("div");
       hint.className = "drop-hint";
       hint.textContent = zone.id === state.activeId
@@ -1259,13 +1811,13 @@
       const selected = selectedItem(zone);
       const selectedItemsInZone = selectedItems(zone);
       el.appendChild(renderLatest(zone, selected, selectedItemsInZone));
-      el.appendChild(renderThumbs(zone.id, zone.images, selected.id, selectedItemIds(zone.id)));
+      el.appendChild(renderThumbs(zone.id, zone.items, selected.id, selectedItemIds(zone.id)));
     }
     return el;
   }
 
   function selectedItem(zone) {
-    return zone.images.find(item => item.id === state.selectedByZone[zone.id]) || zone.images[0];
+    return zone.items.find(item => item.id === state.selectedByZone[zone.id]) || zone.items[0];
   }
 
   function itemForControl(control) {
@@ -1274,7 +1826,7 @@
     const zone = state.zones.find(item => item.id === zoneEl.dataset.zone);
     if (!zone) return null;
     const itemId = control.closest("[data-item-id]")?.dataset.itemId;
-    return zone.images.find(item => item.id === itemId) || selectedItem(zone);
+    return zone.items.find(item => item.id === itemId) || selectedItem(zone);
   }
 
   function zoneForControl(control) {
@@ -1319,7 +1871,7 @@
     const submit = form.querySelector("button[type='submit']");
     if (submit) submit.disabled = true;
     return api(
-      `/api/zones/${encodeURIComponent(zoneId)}/images/${encodeURIComponent(itemId)}/comment`,
+      `/api/zones/${encodeURIComponent(zoneId)}/items/${encodeURIComponent(itemId)}/comment`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1327,9 +1879,10 @@
       },
     ).then(updated => {
       const zone = state.zones.find(item => item.id === zoneId);
-      const index = zone ? zone.images.findIndex(item => item.id === itemId) : -1;
-      if (zone && index >= 0) zone.images[index] = Object.assign({}, zone.images[index], updated);
-      rerenderZone(zoneId);
+      const index = zone ? zone.items.findIndex(item => item.id === itemId) : -1;
+      if (zone && index >= 0) zone.items[index] = Object.assign({}, zone.items[index], updated);
+      discardCommentDraft(zoneId, itemId);
+      rerenderZone(zoneId, { preserveCommentDraft: false });
       toast("Comment saved");
     }).catch(err => {
       toast(err.message, "error");
@@ -1362,7 +1915,10 @@
       cancel.type = "button";
       cancel.className = "ghost-btn";
       cancel.textContent = "Cancel";
-      cancel.addEventListener("click", () => rerenderZone(zoneId));
+      cancel.addEventListener("click", () => {
+        discardCommentDraft(zoneId, item.id);
+        rerenderZone(zoneId, { preserveCommentDraft: false });
+      });
       input.addEventListener("keydown", event => {
         if (event.key !== "Enter") return;
         event.stopPropagation();
@@ -1377,6 +1933,8 @@
       form.append(input, save, cancel);
       control.replaceChildren(form);
       input.focus();
+      const main = control.closest(".tab-zone-main");
+      if (main) rebalanceTabZoneColumns(main);
     });
     control.appendChild(button);
     return control;
@@ -1386,6 +1944,7 @@
     const card = document.createElement("div");
     card.className = "latest";
     card.dataset.itemId = item.id;
+    card.dataset.itemSignature = itemSignature(item);
 
     if (selectedItemsInZone.length > 1) {
       card.classList.add("selection-latest");
@@ -1442,7 +2001,7 @@
       "aria-label",
       `${actionLabel} to the clipboard`,
     );
-    imageCopy.dataset.preview = item.preview_url;
+    imageCopy.dataset.preview = item.content_url;
     imageCopy.dataset.kind = item.kind;
     imageCopy.dataset.filename = item.filename;
     imageCopy.dataset.mime = item.mime || "";
@@ -1451,7 +2010,7 @@
     download.className = "download-btn";
     download.textContent = downloadLabel(item.filename);
     download.setAttribute("aria-label", downloadLabel(item.filename));
-    download.dataset.preview = item.preview_url;
+    download.dataset.preview = item.content_url;
     download.dataset.filename = item.filename;
     const clear = document.createElement("button");
     clear.type = "button";
@@ -1471,7 +2030,7 @@
           : `Preview ${item.filename}`,
       );
       zoom.dataset.ref = item.reference;
-      zoom.dataset.preview = item.preview_url;
+      zoom.dataset.preview = item.content_url;
       zoom.dataset.kind = item.kind;
       zoom.dataset.filename = item.filename;
     }
@@ -1497,9 +2056,14 @@
       const img = document.createElement("img");
       img.className = "thumb-big";
       img.dataset.itemId = item.id;
-      setPreviewSource(img, item.preview_url);
+      setPreviewSource(img, item.content_url);
       img.alt = `Latest image ${item.filename}`;
       img.title = itemDetails(zoneId, item);
+      const hasDimensions = item.width > 0 && item.height > 0;
+      if (hasDimensions) {
+        img.width = item.width;
+        img.height = item.height;
+      }
       img.loading = "lazy";
       img.tabIndex = 0;
       img.setAttribute("role", "button");
@@ -1507,6 +2071,12 @@
         "aria-label",
         `Open preview of ${item.filename}${newAccessibleSuffix(zoneId, item.id)}`,
       );
+      if (!hasDimensions) {
+        img.addEventListener("load", () => {
+          const main = card.closest(".tab-zone-main");
+          if (main) scheduleTabZoneRebalance(main);
+        });
+      }
       card.append(img, right);
     } else {
       const box = document.createElement("div");
@@ -1553,7 +2123,7 @@
       if (item.kind === "image") {
         const img = document.createElement("img");
         img.className = "thumb";
-        setPreviewSource(img, item.preview_url);
+        setPreviewSource(img, item.content_url);
         img.alt = item.filename;
         img.loading = "lazy";
         wrap.appendChild(img);
@@ -1665,6 +2235,242 @@
     return state.groups.filter(groupIsDisplayed);
   }
 
+  function captureThumbScrollTops() {
+    const positions = new Map();
+    for (const thumbs of grid.querySelectorAll(".zone[data-zone] .thumbs")) {
+      const zone = thumbs.closest(".zone[data-zone]");
+      if (zone) positions.set(zone.dataset.zone, thumbs.scrollTop);
+    }
+    return positions;
+  }
+
+  function restoreThumbScrollTops(positions) {
+    for (const [zoneId, scrollTop] of positions) {
+      const thumbs = grid.querySelector(
+        `.zone[data-zone="${CSS.escape(zoneId)}"] .thumbs`,
+      );
+      if (thumbs) thumbs.scrollTop = scrollTop;
+    }
+  }
+
+  function captureTabSidebarScroll() {
+    const sidebar = grid.querySelector(".tab-zone-list");
+    return sidebar ? { left: sidebar.scrollLeft, top: sidebar.scrollTop } : null;
+  }
+
+  function restoreTabSidebarScroll(position) {
+    if (!position) return;
+    const sidebar = grid.querySelector(".tab-zone-list");
+    if (!sidebar) return;
+    sidebar.scrollLeft = position.left;
+    sidebar.scrollTop = position.top;
+  }
+
+  function captureGridFocus() {
+    const active = document.activeElement;
+    if (!active || active === document.body || !grid.contains(active)) return null;
+    const owner = active.closest(".zone[data-zone], .tab-zone-link");
+    if (!owner) return null;
+    const item = active.closest("[data-item-id]");
+    return {
+      classes: [...active.classList].filter(name => !TRANSIENT_FOCUS_CLASSES.has(name)),
+      focusType: active.closest(".comment-control") ? "comment" : null,
+      itemId: item?.dataset.itemId || null,
+      tagName: active.tagName,
+      zoneId: owner.dataset.zone,
+    };
+  }
+
+  function captureExternalFocus() {
+    const active = document.activeElement;
+    return active && active !== document.body && !grid.contains(active) ? active : null;
+  }
+
+  function restoreExternalFocus(active) {
+    if (active?.isConnected && typeof active.focus === "function") active.focus();
+  }
+
+  function restoreGridFocus(descriptor) {
+    if (!descriptor) return;
+    const candidates = grid.querySelectorAll("button, select, textarea, input, [tabindex]");
+    for (const candidate of candidates) {
+      if (candidate.tagName !== descriptor.tagName) continue;
+      if (!descriptor.classes.every(name => candidate.classList.contains(name))) continue;
+      const owner = candidate.closest(".zone[data-zone], .tab-zone-link");
+      if (!owner || owner.dataset.zone !== descriptor.zoneId) continue;
+      const item = candidate.closest("[data-item-id]");
+      if ((item?.dataset.itemId || null) !== descriptor.itemId) continue;
+      candidate.focus();
+      return;
+    }
+    if (descriptor.focusType === "comment") {
+      const button = grid.querySelector(
+        `.zone[data-zone="${CSS.escape(descriptor.zoneId)}"] `
+          + `.latest[data-item-id="${CSS.escape(descriptor.itemId)}"] .comment-btn`,
+      );
+      if (button) button.focus();
+    }
+  }
+
+  function captureCommentDrafts() {
+    for (const editor of grid.querySelectorAll(".comment-editor")) {
+      const zone = editor.closest(".zone[data-zone]");
+      const item = editor.closest(".latest[data-item-id]");
+      const input = editor.querySelector("textarea");
+      if (!zone || !item || !input) continue;
+      const currentZone = state.zones.find(candidate => candidate.id === zone.dataset.zone);
+      const currentItem = currentZone?.items.find(
+        candidate => candidate.id === item.dataset.itemId,
+      );
+      const signature = item.dataset.itemSignature;
+      if (!currentItem || signature !== itemSignature(currentItem)) {
+        discardCommentDraft(zone.dataset.zone, item.dataset.itemId);
+        continue;
+      }
+      const drafts = state.commentDraftsByZone[zone.dataset.zone]
+        || (state.commentDraftsByZone[zone.dataset.zone] = Object.create(null));
+      drafts[item.dataset.itemId] = { value: input.value, signature };
+    }
+  }
+
+  function discardCommentDraft(zoneId, itemId) {
+    const drafts = state.commentDraftsByZone[zoneId];
+    if (!drafts) return;
+    delete drafts[itemId];
+    if (!Object.keys(drafts).length) delete state.commentDraftsByZone[zoneId];
+  }
+
+  function restoreCommentDrafts() {
+    for (const [zoneId, drafts] of Object.entries(state.commentDraftsByZone)) {
+      for (const [itemId, value] of Object.entries(drafts)) {
+        const zone = state.zones.find(candidate => candidate.id === zoneId);
+        const item = zone?.items.find(candidate => candidate.id === itemId);
+        if (!item || value.signature !== itemSignature(item)) {
+          discardCommentDraft(zoneId, itemId);
+          continue;
+        }
+        const button = grid.querySelector(
+          `.zone[data-zone="${CSS.escape(zoneId)}"] `
+            + `.latest[data-item-id="${CSS.escape(itemId)}"] .comment-btn`,
+        );
+        if (!button) continue;
+        const control = button.closest(".comment-control");
+        button.click();
+        const editor = control?.querySelector(".comment-editor");
+        const input = editor?.querySelector("textarea");
+        if (input) input.value = value.value;
+      }
+    }
+  }
+
+  function tabZoneColumnCount(main, zoneCount) {
+    if (!zoneCount) return 0;
+    const styles = getComputedStyle(main);
+    const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const minimumZoneWidth = 27 * rootFontSize;
+    const gap = Number.parseFloat(styles.columnGap) || 14;
+    const horizontalPadding = (Number.parseFloat(styles.paddingLeft) || 0)
+      + (Number.parseFloat(styles.paddingRight) || 0);
+    const availableWidth = Math.max(0, main.clientWidth - horizontalPadding);
+    return Math.max(
+      1,
+      Math.min(
+        zoneCount,
+        Math.floor((availableWidth + gap) / (minimumZoneWidth + gap)),
+      ),
+    );
+  }
+
+  function cancelScheduledTabZoneRebalance(main) {
+    if (!tabZoneRebalanceFrames.has(main)) return;
+    window.cancelAnimationFrame(tabZoneRebalanceFrames.get(main));
+    tabZoneRebalanceFrames.delete(main);
+  }
+
+  function releaseTabZoneObservers(root) {
+    const mains = root.matches?.(".tab-zone-main")
+      ? [root]
+      : [...root.querySelectorAll(".tab-zone-main")];
+    for (const main of mains) {
+      cancelScheduledTabZoneRebalance(main);
+      if (!tabZoneResizeObserver) continue;
+      tabZoneResizeObserver.unobserve(main);
+      for (const zone of main.querySelectorAll(":scope > .zone[data-zone]")) {
+        tabZoneResizeObserver.unobserve(zone);
+      }
+    }
+  }
+
+  function distributeTabZoneElements(main, elements, columnCount) {
+    const styles = getComputedStyle(main);
+    const gap = Number.parseFloat(styles.columnGap) || 14;
+    const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
+    const paddingRight = Number.parseFloat(styles.paddingRight) || 0;
+    const paddingTop = Number.parseFloat(styles.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0;
+    const availableWidth = Math.max(0, main.clientWidth - paddingLeft - paddingRight);
+    const columnWidth = Math.max(
+      0,
+      (availableWidth - gap * (columnCount - 1)) / columnCount,
+    );
+    const columnHeights = Array.from({ length: columnCount }, () => 0);
+    main.style.removeProperty("grid-template-columns");
+    main.replaceChildren(...elements);
+    for (const zone of elements) {
+      const columnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      zone.style.position = "absolute";
+      zone.style.width = `${columnWidth}px`;
+      zone.style.left = `${paddingLeft + columnIndex * (columnWidth + gap)}px`;
+      zone.style.top = `${paddingTop + columnHeights[columnIndex]}px`;
+      columnHeights[columnIndex] += zone.getBoundingClientRect().height + gap;
+      tabZoneResizeObserver?.observe(zone);
+    }
+    const contentHeight = Math.max(...columnHeights, 0) - (elements.length ? gap : 0);
+    main.style.height = `${paddingTop + contentHeight + paddingBottom}px`;
+    main.dataset.columnCount = String(columnCount);
+    tabZoneResizeObserver?.observe(main);
+  }
+
+  function rebalanceTabZoneColumns(main) {
+    cancelScheduledTabZoneRebalance(main);
+    const elements = new Map(
+      [...main.querySelectorAll(":scope > .zone[data-zone]")]
+        .map(element => [element.dataset.zone, element]),
+    );
+    const zones = getVisibleZones()
+      .map(zone => elements.get(zone.id))
+      .filter(Boolean);
+    if (zones.length !== elements.size) return;
+    if (!zones.length) {
+      releaseTabZoneObservers(main);
+      main.replaceChildren();
+      main.style.removeProperty("grid-template-columns");
+      main.style.removeProperty("height");
+      delete main.dataset.columnCount;
+      return;
+    }
+    const focus = captureGridFocus();
+    const columns = tabZoneColumnCount(main, zones.length);
+    distributeTabZoneElements(main, zones, columns);
+    restoreGridFocus(focus);
+  }
+
+  function scheduleTabZoneRebalance(main) {
+    if (tabZoneRebalanceFrames.has(main)) return;
+    const frame = window.requestAnimationFrame(() => {
+      tabZoneRebalanceFrames.delete(main);
+      if (main.isConnected) rebalanceTabZoneColumns(main);
+    });
+    tabZoneRebalanceFrames.set(main, frame);
+  }
+
+  function renderTabZoneColumns(main, zones) {
+    if (!zones.length) return;
+    const elements = zones.map(renderZone);
+    const columnCount = tabZoneColumnCount(main, elements.length);
+    distributeTabZoneElements(main, elements, columnCount);
+  }
+
   function reconcileActiveGroup() {
     const previous = state.activeGroupId;
     if (!state.groups.length) {
@@ -1686,6 +2492,12 @@
   }
 
   function renderAll() {
+    const thumbScrollTops = captureThumbScrollTops();
+    const tabSidebarScroll = captureTabSidebarScroll();
+    const focus = captureGridFocus();
+    const externalFocus = captureExternalFocus();
+    captureCommentDrafts();
+    releaseTabZoneObservers(grid);
     grid.replaceChildren();
     const visibleZones = getVisibleZones();
     const visibleIds = new Set(visibleZones.map(zone => zone.id));
@@ -1706,6 +2518,11 @@
     if (!group || !tabLayout) {
       state.tabSelectionAnchorId = null;
       for (const zone of visibleZones) grid.appendChild(renderZone(zone));
+      restoreCommentDrafts();
+      restoreThumbScrollTops(thumbScrollTops);
+      restoreGridFocus(focus);
+      restoreTabSidebarScroll(tabSidebarScroll);
+      restoreExternalFocus(externalFocus);
       return;
     }
 
@@ -1743,9 +2560,14 @@
     main.id = "tab-zone-main";
     main.setAttribute("aria-label", "Open zones");
     const openZones = visibleZones.filter(zone => state.openZoneIds.includes(zone.id));
-    for (const zone of openZones) main.appendChild(renderZone(zone));
     if (showTabSidebar) grid.append(list, main);
     else grid.append(main);
+    renderTabZoneColumns(main, openZones);
+    restoreCommentDrafts();
+    restoreThumbScrollTops(thumbScrollTops);
+    restoreGridFocus(focus);
+    restoreTabSidebarScroll(tabSidebarScroll);
+    restoreExternalFocus(externalFocus);
   }
 
   function toggleOpenZone(zoneId, event = {}) {
@@ -1801,7 +2623,7 @@
   }
 
   function applicationDialogOpen() {
-    return isDialogOpen(pv) || isDialogOpen(replacementDialog);
+    return isDialogOpen(pv) || isDialogOpen(replacementDialog) || isDialogOpen(accessDialog);
   }
 
   function dialogInvokerSelector(candidate) {
@@ -1905,10 +2727,25 @@
     return true;
   }
 
-  function rerenderZone(zoneId) {
+  function rerenderZone(zoneId, { preserveCommentDraft = true } = {}) {
     const zone = state.zones.find(z => z.id === zoneId);
     const old = grid.querySelector(`.zone[data-zone="${CSS.escape(zoneId)}"]`);
-    if (zone && old) old.replaceWith(renderZone(zone));
+    if (zone && old) {
+      const focus = captureGridFocus();
+      const externalFocus = captureExternalFocus();
+      if (preserveCommentDraft) captureCommentDrafts();
+      const oldThumbs = old.querySelector(".thumbs");
+      const next = renderZone(zone);
+      const nextThumbs = next.querySelector(".thumbs");
+      if (oldThumbs && nextThumbs) nextThumbs.scrollTop = oldThumbs.scrollTop;
+      tabZoneResizeObserver?.unobserve(old);
+      old.replaceWith(next);
+      restoreCommentDrafts();
+      restoreGridFocus(focus);
+      restoreExternalFocus(externalFocus);
+      const main = next.closest(".tab-zone-main");
+      if (main) rebalanceTabZoneColumns(main);
+    }
   }
 
   function refreshUploadedZone(zoneId) {
@@ -2171,30 +3008,30 @@
     const controller = new AbortController();
     activeRefreshController = controller;
     try {
-      const overview = await api("/api/zones", { signal: controller.signal });
+      const overview = await api("/api/zones?schema=items", { signal: controller.signal });
       const previousZones = new Map(state.zones.map(zone => [zone.id, zone]));
       const nextZones = [];
       for (const z of overview.zones) {
         const previous = previousZones.get(z.id);
         if (z.busy) {
           nextZones.push(Object.assign({}, z, {
-            images: previous ? previous.images : [],
+            items: previous ? previous.items : [],
             busy: true,
           }));
           continue;
         }
         try {
-          const images = Array.isArray(z.images)
-            ? z.images
+          const items = Array.isArray(z.items)
+            ? z.items
             : (await api(
-              `/api/zones/${encodeURIComponent(z.id)}/images`,
+              `/api/zones/${encodeURIComponent(z.id)}/items`,
               { signal: controller.signal },
-            )).images;
-          nextZones.push(Object.assign({}, z, { images, busy: false }));
+            )).items;
+          nextZones.push(Object.assign({}, z, { items, busy: false }));
         } catch (err) {
           if (err.code !== "zone_busy") throw err;
           nextZones.push(Object.assign({}, z, {
-            images: previous ? previous.images : [],
+            items: previous ? previous.items : [],
             busy: true,
           }));
         }
@@ -2204,12 +3041,20 @@
       updateNewItemState(nextZones);
       state.authEnabled = overview.auth_enabled !== false;
       state.showFullPath = overview.show_full_path !== false;
+      state.maxArchiveFiles = overview.max_archive_files ?? null;
       logoutForm.hidden = !state.authEnabled;
+      if (!state.authEnabled) {
+        state.accessAdmin = false;
+        state.accessAdminLoaded = true;
+        if (accessButton) accessButton.hidden = true;
+      } else if (!state.accessAdminLoaded || isDialogOpen(accessDialog)) {
+        await loadTokenAdmin();
+      }
       state.zones = nextZones;
       state.groups = overview.groups || [];
       for (const zoneId of Object.keys(state.selectedByZone)) {
         const zone = state.zones.find(z => z.id === zoneId);
-        if (!zone || !zone.images.some(item => item.id === state.selectedByZone[zoneId])) {
+        if (!zone || !zone.items.some(item => item.id === state.selectedByZone[zoneId])) {
           delete state.selectedByZone[zoneId];
         }
       }
@@ -2220,7 +3065,7 @@
           delete state.selectionAnchorByZone[zoneId];
           continue;
         }
-        const validIds = new Set(zone.images.map(item => item.id));
+        const validIds = new Set(zone.items.map(item => item.id));
         const selected = selectedItemIds(zoneId);
         for (const itemId of selected) {
           if (!validIds.has(itemId)) selected.delete(itemId);
@@ -2346,17 +3191,22 @@
     const zone = state.zones.find(z => z.id === zoneId);
     if (!zone) return;
     // A named drop can replace an existing stored name. Keep one history entry.
-    zone.images = zone.images.filter(existing => existing.id !== item.id);
-    zone.images.unshift(item);
-    if (zone.images.length > zone.retain) {
-      zone.images.length = zone.retain;
+    const existing = zone.items.find(candidate => candidate.id === item.id);
+    const sameDuplicate = item.duplicate
+      && existing
+      && itemSignature(existing) === itemSignature(item);
+    if (!sameDuplicate) discardCommentDraft(zoneId, item.id);
+    zone.items = zone.items.filter(existing => existing.id !== item.id);
+    zone.items.unshift(item);
+    if (zone.items.length > zone.retain) {
+      zone.items.length = zone.retain;
     }
     rememberItem(zoneId, item);
   }
 
   function countNewUploads(zoneId, candidates) {
     const zone = state.zones.find(item => item.id === zoneId);
-    const knownNames = new Set(zone ? zone.images.map(item => item.filename) : []);
+    const knownNames = new Set(zone ? zone.items.map(item => item.filename) : []);
     let additions = 0;
     for (const candidate of candidates) {
       const file = candidate.file;
@@ -2371,7 +3221,7 @@
   function confirmRetention(zoneId, incomingCount) {
     const zone = state.zones.find(item => item.id === zoneId);
     if (!zone || incomingCount <= 0) return true;
-    const excess = zone.images.length + incomingCount - zone.retain;
+    const excess = zone.items.length + incomingCount - zone.retain;
     if (excess <= 0) return true;
     const itemLabel = excess === 1 ? "item" : "items";
     const uploadLabel = incomingCount === 1 ? "this upload" : `${incomingCount} uploads`;
@@ -2422,11 +3272,11 @@
       ) return null;
       const fd = new FormData();
       // Preserve the filename only for candidates that carry a named-file policy.
-      fd.append("image", file, file.name || "clipboard");
+      fd.append("file", file, file.name || "clipboard");
       if (preserveName) fd.append("preserve_name", "1");
       if (allowReplace) fd.append("replace", "1");
       fd.append("creation_method", creationMethod);
-      const item = await api(`/api/zones/${encodeURIComponent(zoneId)}/images`,
+      const item = await api(`/api/zones/${encodeURIComponent(zoneId)}/items`,
         { method: "POST", body: fd });
       refreshGeneration += 1;
       if (activeRefreshController) activeRefreshController.abort();
@@ -2579,7 +3429,7 @@
 
   function hasManagedName(zoneId, filename) {
     const zone = state.zones.find(z => z.id === zoneId);
-    return Boolean(zone && zone.images.some(item => item.filename === filename));
+    return Boolean(zone && zone.items.some(item => item.filename === filename));
   }
 
   function showNextReplacementPrompt() {
@@ -2616,7 +3466,11 @@
 
   function openDialog(dialog, invoker = document.activeElement) {
     rememberDialogInvoker(dialog, invoker);
-    const backdrop = dialog === pv ? previewBackdrop : replacementBackdrop;
+    const backdrop = dialog === pv
+      ? previewBackdrop
+      : dialog === replacementDialog
+        ? replacementBackdrop
+        : accessBackdrop;
     if (typeof dialog.showModal === "function") {
       dialog.classList.remove("dialog-fallback");
       if (backdrop) backdrop.hidden = true;
@@ -2631,7 +3485,11 @@
   }
 
   function closeDialog(dialog, returnValue = "") {
-    const backdrop = dialog === pv ? previewBackdrop : replacementBackdrop;
+    const backdrop = dialog === pv
+      ? previewBackdrop
+      : dialog === replacementDialog
+        ? replacementBackdrop
+        : accessBackdrop;
     if (dialog.classList.contains("dialog-fallback")) {
       dialog.classList.remove("dialog-fallback");
       dialog.removeAttribute("open");
@@ -2661,16 +3519,17 @@
     return null;
   }
 
-  async function deleteImage(zoneId, filename) {
+  async function deleteItem(zoneId, filename) {
     if (!window.confirm(`Delete ${filename} from the disk?`)) return;
     refreshGeneration += 1;
     if (activeRefreshController) activeRefreshController.abort();
     try {
-      await api(`/api/zones/${encodeURIComponent(zoneId)}/images/${encodeURIComponent(filename)}`,
+      await api(`/api/zones/${encodeURIComponent(zoneId)}/items/${encodeURIComponent(filename)}`,
         { method: "DELETE" });
       const zone = state.zones.find(z => z.id === zoneId);
       if (zone) {
-        zone.images = zone.images.filter(item => item.id !== filename);
+        zone.items = zone.items.filter(item => item.id !== filename);
+        discardCommentDraft(zoneId, filename);
         clearNewItems(zoneId, [filename]);
         if (state.selectedByZone[zoneId] === filename) delete state.selectedByZone[zoneId];
         const selected = selectedItemIds(zoneId);
@@ -2862,13 +3721,13 @@
       const item = itemForControl(zoomBtn);
       const zoneId = zoneForControl(zoomBtn);
       if (item && item.kind === "image") {
-        openPreview(item.preview_url, item.reference, item.filename, zoneId, item.id);
+        openPreview(item.content_url, item.reference, item.filename, zoneId, item.id);
       } else if (item) openContentPreview(item, zoneId);
       return;
     }
     const deleteBtn = event.target.closest(".delete-btn");
     if (deleteBtn && deleteBtn.dataset.filename) {
-      deleteImage(deleteBtn.dataset.zone, deleteBtn.dataset.filename);
+      deleteItem(deleteBtn.dataset.zone, deleteBtn.dataset.filename);
       return;
     }
     const thumbWrap = event.target.closest(".thumb-wrap");
@@ -2883,7 +3742,7 @@
       const item = itemForControl(bigThumb);
       const zoneId = zoneForControl(bigThumb);
       if (item && item.kind === "image") {
-        openPreview(item.preview_url, item.reference, item.filename, zoneId, item.id);
+        openPreview(item.content_url, item.reference, item.filename, zoneId, item.id);
       } else if (item) openContentPreview(item, zoneId);
       return;
     }
@@ -2905,7 +3764,7 @@
       const item = itemForControl(bigThumb);
       const zoneId = zoneForControl(bigThumb);
       if (item && item.kind === "image") {
-        openPreview(item.preview_url, item.reference, item.filename, zoneId, item.id);
+        openPreview(item.content_url, item.reference, item.filename, zoneId, item.id);
       } else if (item) openContentPreview(item, zoneId);
       return;
     }
@@ -2948,7 +3807,7 @@
     const thumbWrap = event.target.closest(".thumb-wrap");
     if (!thumbWrap || !event.dataTransfer) return;
     const zone = state.zones.find(item => item.id === thumbWrap.closest(".zone")?.dataset.zone);
-    const item = zone?.images.find(candidate => candidate.id === thumbWrap.dataset.itemId);
+    const item = zone?.items.find(candidate => candidate.id === thumbWrap.dataset.itemId);
     if (!zone || !item) return;
     const selected = selectedItems(zone);
     const items = selected.some(candidate => candidate.id === item.id) ? selected : [item];
@@ -3032,13 +3891,14 @@
   });
 
   document.addEventListener("keydown", (event) => {
-    const fallbackDialog = [pv, replacementDialog]
+    const fallbackDialog = [pv, replacementDialog, accessDialog]
       .find(dialog => dialog.classList.contains("dialog-fallback"));
     if (fallbackDialog) {
       if (event.key === "Escape") {
         event.preventDefault();
         if (fallbackDialog === pv) closePreview();
-        else closeReplacementPrompt(false);
+        else if (fallbackDialog === replacementDialog) closeReplacementPrompt(false);
+        else closeAccessPanel();
       } else if (event.key === "Tab") {
         trapFallbackDialog(event, fallbackDialog);
       }
@@ -3079,7 +3939,7 @@
       if (zone) setActive(zone.id, { announce: true });
     } else if (event.key === "c" || event.key === "C") {
       const zone = getVisibleZones().find(z => z.id === state.activeId);
-      if (zone && zone.images.length) {
+      if (zone && zone.items.length) {
         const item = selectedItem(zone);
         copyLink(
           item.reference,
@@ -3188,11 +4048,11 @@
     pvRef.hidden = !state.showFullPath;
     pvDownload.textContent = downloadLabel(item.filename);
     pvDownload.setAttribute("aria-label", downloadLabel(item.filename));
-    pvDownload.dataset.preview = item.preview_url;
+    pvDownload.dataset.preview = item.content_url;
     pvDownload.dataset.filename = item.filename;
     pvDelete.dataset.zone = zoneId || "";
     pvDelete.dataset.filename = item.filename;
-    pvCopyImage.dataset.preview = item.preview_url;
+    pvCopyImage.dataset.preview = item.content_url;
     pvCopyImage.dataset.kind = item.kind;
     pvCopyImage.dataset.mime = item.mime || "";
     setPreviewItemLabels(item.filename);
@@ -3200,7 +4060,7 @@
       const controller = new AbortController();
       activePreviewController = controller;
       try {
-        const response = await fetchPreview(item.preview_url, {
+        const response = await fetchPreview(item.content_url, {
           credentials: "same-origin",
           headers: { Accept: "text/plain" },
           signal: controller.signal,
@@ -3214,7 +4074,7 @@
           text = htmlInspection.plain;
         }
         if (generation !== previewGeneration) return;
-        setRawHtmlButton(Boolean(htmlInspection && htmlInspection.changed), item.preview_url);
+        setRawHtmlButton(Boolean(htmlInspection && htmlInspection.changed), item.content_url);
         openTextPreview(text, item.filename, invoker);
       } catch (err) {
         if (err && err.name === "AbortError") return;
@@ -3226,7 +4086,7 @@
       return;
     }
     // Binary content: direct download (Content-Disposition: attachment).
-    downloadContent(item.preview_url, item.filename);
+    downloadContent(item.content_url, item.filename);
   }
   function closePreview() {
     invalidatePreviewLoad();
@@ -3258,11 +4118,11 @@
     const zoneId = pvDelete.dataset.zone;
     const filename = pvDelete.dataset.filename;
     const zone = state.zones.find(
-      z => z.id === zoneId && z.images.some(i => i.id === filename),
+      z => z.id === zoneId && z.items.some(i => i.id === filename),
     );
     if (zone) {
       closePreview();
-      deleteImage(zone.id, filename);
+      deleteItem(zone.id, filename);
     }
   });
   document.getElementById("pv-close").addEventListener("click", closePreview);
@@ -3287,6 +4147,16 @@
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") boot(true);
+  });
+
+  window.addEventListener("resize", () => {
+    if (!grid.classList.contains("tab-layout")) return;
+    clearTimeout(tabLayoutResizeTimer);
+    tabLayoutResizeTimer = window.setTimeout(() => {
+      tabLayoutResizeTimer = null;
+      const main = grid.querySelector(".tab-zone-main");
+      if (main) rebalanceTabZoneColumns(main);
+    }, 100);
   });
 
   // Lightweight synchronization across tabs and machines.

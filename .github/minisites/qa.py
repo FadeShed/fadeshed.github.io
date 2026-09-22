@@ -5,6 +5,7 @@ import functools
 import hashlib
 import http.server
 import json
+import os
 import re
 import threading
 import urllib.parse
@@ -52,7 +53,7 @@ def run(root, report, base_url=None):
         base_url='http://127.0.0.1:'+str(server.server_port)+'/'
     try:
         with sync_playwright() as p:
-            browser=p.chromium.launch(headless=True)
+            browser=p.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM'))
             for product in ['', 'fileshed/','pasteberth/','lightwebpres/']:
                 for width in [320,390,768,1024,1440]:
                     ctx=browser.new_context(viewport={'width':width,'height':960 if width>600 else 844},locale='fr-FR')
