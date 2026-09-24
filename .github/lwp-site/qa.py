@@ -55,17 +55,35 @@ def run(root,report,base=None):
                 if relative.parts[0]=='reference':continue
                 s=BeautifulSoup(path.read_text(),'html.parser')
                 check('No private repository link '+prefix+str(relative),'fadeshed-internal-docs' not in path.read_text())
-                for node in s.find_all(['a','img','script','link','iframe']):
-                    ref=node.get('href') if node.name in ['a','link'] else node.get('src')
-                    if not ref or ref.startswith(('data:','blob:','http:','https:','mailto:','javascript:','tel:')):continue
-                    u=urllib.parse.urlsplit(ref);p=urllib.parse.unquote(u.path)
-                    target=(root/p.lstrip('/') if p.startswith('/') else path.parent/p) if p else path
-                    if target.is_dir():target=target/'index.html'
-                    target=target.resolve();refs+=1
-                    if not target.is_relative_to(root) or not target.is_file():errors.append((str(path.relative_to(root)),ref));continue
-                    if u.fragment and target.suffix=='.html':
-                        if target not in ids:ids[target]={x.get('id') for x in BeautifulSoup(target.read_text(),'html.parser').find_all(id=True)}
-                        if urllib.parse.unquote(u.fragment) not in ids[target]:errors.append((str(path.relative_to(root)),ref))
+                # Combined HTML retains authored destinations in its templates.
+                # The native reader maps them to views embedded in this document.
+                bundle=s.select_one('#lwp-series-data');embedded={}
+                if bundle:
+                    data=json.loads(bundle.string)
+                    check('Embedded series contract '+prefix+str(relative),data.get('version')==1 and bool(s.select_one('#lwp-series-view')))
+                    embedded={v['key']:BeautifulSoup(v['content'],'html.parser') for v in data['views']}
+                documents=[s]+list(embedded.values())
+                for doc in documents:
+                    for node in doc.find_all(['a','img','script','link','iframe']):
+                        ref=node.get('href') if node.name in ['a','link'] else node.get('src')
+                        if not ref or ref.startswith(('data:','blob:','http:','https:','mailto:','javascript:','tel:')):continue
+                        u=urllib.parse.urlsplit(ref);p=urllib.parse.unquote(u.path);refs+=1
+                        if embedded and node.name=='a' and not node.has_attr('download') and not u.query and p and not p.startswith('/'):
+                            key=p[2:] if p.startswith('./') else p
+                            if key=='index.html':key=data.get('home','')
+                            if key in embedded:
+                                if u.fragment and not embedded[key].find(id=urllib.parse.unquote(u.fragment)):errors.append((str(path.relative_to(root)),ref))
+                                continue
+                        if embedded and not p and u.fragment and doc is not s:
+                            if not doc.find(id=urllib.parse.unquote(u.fragment)):errors.append((str(path.relative_to(root)),ref))
+                            continue
+                        target=(root/p.lstrip('/') if p.startswith('/') else path.parent/p) if p else path
+                        if target.is_dir():target=target/'index.html'
+                        target=target.resolve()
+                        if not target.is_relative_to(root) or not target.is_file():errors.append((str(path.relative_to(root)),ref));continue
+                        if u.fragment and target.suffix=='.html':
+                            if target not in ids:ids[target]={x.get('id') for x in BeautifulSoup(target.read_text(),'html.parser').find_all(id=True)}
+                            if urllib.parse.unquote(u.fragment) not in ids[target]:errors.append((str(path.relative_to(root)),ref))
                 for node in s.select('script,style,pre,code'):node.decompose()
                 check('Versionless public presentation '+prefix+str(relative),not re.search(r'LightWebPres\s+v?\d+\.\d+\.\d+',s.get_text(' ',strip=True)))
         check('Local pages, assets and anchors',not errors,{'references':refs,'errors':errors[:20]})
