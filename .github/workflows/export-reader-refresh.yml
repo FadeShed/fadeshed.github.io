@@ -1,4 +1,4 @@
-name: Export reader refresh inputs
+name: Export current public source snapshot
 on:
   push:
     branches: [main]
@@ -7,35 +7,21 @@ on:
 permissions:
   contents: read
 jobs:
-  export:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Export selected site inputs and fetch current renderer
+      - name: Archive tracked public files without credentials or untracked inputs
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import os,shutil,subprocess
-          out=Path(os.environ['RUNNER_TEMP'])/'reader-input';out.mkdir()
-          for name in ['.nojekyll','README.md','index.html','index.md','llms.txt','style.css','assets','fileshed','pasteberth','lightwebpres','fr','.github/bilingual','.github/minisites','.github/restore-lightwebpres','.github/reader-refresh','.github/workflows/check-live-reader-refresh.yml']:
-              src=Path(name);dst=out/'website'/name
-              if not src.exists():continue
-              if src.is_symlink() or (src.is_dir() and any(p.is_symlink() for p in src.rglob('*'))):raise RuntimeError('Symlink in input')
-              dst.parent.mkdir(parents=True,exist_ok=True)
-              if src.is_dir():shutil.copytree(src,dst)
-              else:shutil.copyfile(src,dst)
-          temp=Path(os.environ['RUNNER_TEMP'])/'lwp-source'
-          subprocess.run(['git','clone','--depth=1','--branch','main','https://github.com/Fade78/lightwebpres.git',str(temp)],check=True)
-          revision=subprocess.check_output(['git','-C',str(temp),'rev-parse','HEAD'],text=True).strip()
-          (out/'LWP_COMMIT').write_text(revision+'\n');(out/'SITE_COMMIT').write_text(os.environ['GITHUB_SHA']+'\n')
-          subprocess.run(['git','-C',str(temp),'archive','--format=tar','--output',str(out/'lightwebpres-source.tar'),'HEAD'],check=True)
-          print('Latest renderer fetched:',revision)
-          PY
+          mkdir -p "$RUNNER_TEMP/snapshot"
+          git archive --format=tar --output="$RUNNER_TEMP/snapshot/website.tar" HEAD
+          git rev-parse HEAD > "$RUNNER_TEMP/snapshot/COMMIT"
+          sha256sum "$RUNNER_TEMP/snapshot/website.tar" > "$RUNNER_TEMP/snapshot/SHA256SUMS"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: reader-refresh-input
-          path: ${{ runner.temp }}/reader-input
-          include-hidden-files: true
+          name: current-public-source
+          path: ${{ runner.temp }}/snapshot
           retention-days: 3
+          if-no-files-found: error
