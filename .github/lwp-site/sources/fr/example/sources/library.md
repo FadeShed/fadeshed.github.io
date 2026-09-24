@@ -1,4 +1,7 @@
 <!-- lwp:meta -->
+unit_index: on
+unit_index_max_columns: 2
+unit_index_selector: type:standard | type:full-article
 page_title: Une petite bibliothèque. Un lieu commun. — LightWebPres
 page_desc: Une proposition à lire, discuter et conserver.
 card_title: Une petite bibliothèque. Un lieu commun.

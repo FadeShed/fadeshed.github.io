@@ -40,6 +40,17 @@ Ouvrez le dossier de bibliothèque pour découvrir une proposition, son tableau 
 ---
 
 <!-- lwp:slide -->
+slug: du-sommaire-au-detail
+## Choisissez la profondeur. Gardez vos repères.
+summary: Un sommaire relie les idées principales, le comparatif et la note de travail complète.
+
+Ouvrez le sommaire de l’exemple. Choisissez une fiche pour la vue d’ensemble ou la note pour les explications. Le moteur produit les entrées et leurs liens depuis l’article ; l’auteur n’a pas à entretenir une seconde liste à la main.
+
+<a href="demo/library.html#lwp-index">Explorer le sommaire →</a> · <a href="demo/library.html#detail">Lire la note complète →</a>
+
+---
+
+<!-- lwp:slide -->
 slug: commandes
 ## Un menu lecteur. Pas une obligation de clavier.
 summary: Sur téléphone, touchez le menu pour accéder au zoom − / + / Réinitialiser, à l’ajustement du texte et au défilement des tableaux.
@@ -67,6 +78,17 @@ summary: Le lecteur ouvre le HTML dans un navigateur. Conservez les images réf�
 Publiez le dossier de sortie complet sur un hébergement statique, ou transmettez directement les fichiers. Gardez le projet source pour les modifications et les reconstructions.
 
 <div class="lwp-web-actions"><a class="lwp-web-button" href="publier.html">Préparer votre publication →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: deux-livraisons
+## Une collection. Deux façons de la transmettre.
+summary: Les mêmes sources produisent des pages web reliées ou une série réunie dans un HTML.
+
+Le site convient à une collection publiée à une adresse stable. Le HTML unique convient à un document à envoyer ou conserver : son index permet de choisir explicitement un article. Ces deux livraisons gardent les mêmes sources et la même identité réutilisable.
+
+<a href="demo/index.html">Explorer l’exemple multipage →</a> · <a href="downloads/publication.html" download>Télécharger la même série en HTML ↓</a>
 
 ---
 

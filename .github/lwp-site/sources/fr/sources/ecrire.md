@@ -97,6 +97,26 @@ Un lien Markdown relatif ne devient pas un lien cliquable. Un simple `---` déco
 ---
 
 <!-- lwp:slide -->
+slug: sommaire
+kicker: DE LA VUE D’ENSEMBLE AU DÉTAIL
+## Donnez un sommaire au document.
+summary: Un unit-index relie les fiches et le texte d’appui d’un article. Ce n’est pas l’index de toute la série.
+
+<pre><code>&lt;!-- lwp:slide:unit-index --&gt;
+slug: contents
+## Dans ce document
+index-max-columns: 2
+index-selector: type:standard | type:full-article</code></pre>
+
+Le moteur produit les entrées et leurs liens. Cette sélection inclut les fiches de contenu et le texte long, pas la couverture ni la navigation. Deux colonnes est un maximum adaptatif, pas une grille imposée au téléphone.
+
+Pour une insertion automatique après la couverture, placez `unit_index: on`, `unit_index_max_columns: 2` et `unit_index_selector: type:standard | type:full-article` dans les métadonnées de l’article. L’exemple utilise cette méthode. Gardez les slugs des fiches quand leurs titres ou leur ordre changent.
+
+<a href="demo/library.html#lwp-index">Essayer le sommaire généré →</a>
+
+---
+
+<!-- lwp:slide -->
 slug: texte-long
 kicker: AU-DELÀ DES FICHES
 ## La synthèse n’a pas à porter toute l’explication.

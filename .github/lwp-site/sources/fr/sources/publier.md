@@ -29,9 +29,23 @@ python3 lightwebpres audit ma-serie --lang fr --strict
 python3 lightwebpres verify ma-serie --lang fr
 ```
 
-Sans `--strict`, **audit peut sortir avec un code zéro malgré ses avertissements**. `verify` demande les mêmes options de rendu que le build et ne prend pas en charge `--inline-images`.
+Sans `--strict`, **audit peut sortir avec un code zéro malgré ses avertissements**. `verify` demande la même langue et les mêmes options de rendu que le build, y compris `--single-html` et `--inline-images` lorsqu’elles sont utilisées.
 
 Si votre sortie est déjà suivie dans Git, lancez `verify` **avant** de reconstruire pour ne pas effacer la preuve d’un décalage.
+
+---
+
+<!-- lwp:slide -->
+slug: deux-livraisons
+kicker: CHOISIR LE LIVRABLE
+## Un site ou un HTML. Les sources restent les mêmes.
+summary: L’organisation du contenu et la livraison des fichiers sont deux choix distincts.
+
+**Pages reliées :** publiez le dossier de sortie. Chaque article possède son adresse ; l’index de la série permet d’en choisir un autre.
+
+**HTML unique :** réunissez la série dans un fichier. Son index embarqué permet de changer volontairement d’article ; les articles ne sont pas empilés dans une présentation interminable.
+
+<a href="demo/index.html">Ouvrir l’exemple multipage →</a> · <a href="downloads/publication.html" download>Obtenir la même série en HTML ↓</a>
 
 ---
 
@@ -53,6 +67,23 @@ public/
 Le HTML se lit aussi localement. Mais une adresse locale n’est pas une adresse publique : un QR code à partager demande une URL HTTP(S) accessible depuis l’appareil du destinataire.
 
 Retirer une source ne supprime pas automatiquement un ancien fichier hébergé. Examinez la proposition de `clean` et les fichiers restés sur l’hôte.
+
+---
+
+<!-- lwp:slide -->
+slug: html-unique
+kicker: UN FICHIER À ENVOYER OU CONSERVER
+## Construisez le fichier. Vérifiez ce même fichier.
+summary: Choisissez un dossier de sortie séparé et les mêmes options pour construire et vérifier.
+
+```bash
+python3 lightwebpres build ma-serie --lang fr --single-html publication.html --inline-images --output partage
+python3 lightwebpres verify ma-serie --lang fr --single-html publication.html --inline-images --output partage
+```
+
+Ouvrez `partage/publication.html`. `--inline-images` incorpore les images et ressources locales prises en charge ; ce n’est pas une promesse de capturer toutes les dépendances externes. Avant d’envoyer le fichier, testez-le sans réseau et gardez avec lui les éventuelles ressources encore référencées.
+
+Conservez aussi le projet source : le HTML publié est un livrable, pas votre original modifiable.
 
 ---
 

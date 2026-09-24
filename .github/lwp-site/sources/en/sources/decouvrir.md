@@ -40,6 +40,17 @@ Open the library briefing to see a proposal, its comparison table and the comple
 ---
 
 <!-- lwp:slide -->
+slug: du-sommaire-au-detail
+## Choose your depth. Keep your bearings.
+summary: A contents list connects the key ideas, the comparison and the complete working note.
+
+Open the example at its contents. Choose a card for the overview or the working note for the explanation. The engine generates the entries and their links from the article; the author does not have to maintain a second list by hand.
+
+<a href="demo/library.html#lwp-index">Explore the contents →</a> · <a href="demo/library.html#detail">Read the complete note →</a>
+
+---
+
+<!-- lwp:slide -->
 slug: commandes
 ## A reader menu. Not a keyboard requirement.
 summary: On a phone, tap the menu to reach zoom − / + / Reset, text fitting and table scrolling.
@@ -67,6 +78,17 @@ summary: The reader opens HTML in a browser. Keep referenced images and kit asse
 Publish the complete output directory on static hosting, or share the files directly. Keep the source project for editing and rebuilding.
 
 <div class="lwp-web-actions"><a class="lwp-web-button" href="publier.html">Prepare your publication →</a></div>
+
+---
+
+<!-- lwp:slide -->
+slug: deux-livraisons
+## One collection. Two ways to hand it over.
+summary: The same sources can become linked web pages or a series gathered into one HTML file.
+
+The website suits a collection published at a stable address. The combined HTML suits a document to send or keep: its index lets the reader deliberately choose an article. Neither delivery changes the source articles or their reusable identity.
+
+<a href="demo/index.html">Explore the multipage example →</a> · <a href="downloads/publication.html" download>Download the same series in HTML ↓</a>
 
 ---
 

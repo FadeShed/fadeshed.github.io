@@ -4,17 +4,12 @@
 .index-page:has(.lwp-web-home) { padding: 0 6vw; }
 .slide:has(.lwp-web-frame) { padding: 55px 8vw 65px; }
 .slide-cover:has(.lwp-web-cover) { justify-content: flex-start; }
-.slide:has(.lwp-web-frame) .comparison-table { min-width: 0; }
-.slide:has(.lwp-web-frame) .comparison-table td { overflow-wrap: anywhere; }
 .slide:has(.lwp-web-frame) .slide-source { max-width: 85ch; }
 .slide:has(.lwp-web-frame) code { overflow-wrap: anywhere; }
 .slide:has(.lwp-web-frame) pre code { overflow-wrap: normal; }
 @media (max-width: 700px) {
   .index-page:has(.lwp-web-home) { padding: 0 24px; }
   .slide:has(.lwp-web-frame) { padding: 28px 28px 65px; }
-  .slide:has(.lwp-web-frame) .comparison-table { font-size: 14px; }
-  .slide:has(.lwp-web-frame) .comparison-table th,
-  .slide:has(.lwp-web-frame) .comparison-table td { padding: 10px 9px; }
 }
 @media print {
   .index-page:has(.lwp-web-home) { padding: 15mm; }
@@ -46,6 +41,10 @@
 .lwp-presentation--lightwebpres-site .lwp-web-home-grid>.intro,.lwp-presentation--lightwebpres-site .lwp-web-home-grid>.intro>p{display:contents!important}
 .fs-hero-actions{grid-column:1/4;grid-row:3}.fs-preview-caption{display:block;font-size:12px;line-height:1.6;margin-top:14px;color:var(--color-ink-quiet)}
 @media(max-width:700px){.fs-hero-actions{grid-column:1/-1;grid-row:3}}
+
+
+
+
 
 
 /* BEGIN SITE PROPOSAL */

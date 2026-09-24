@@ -1,4 +1,7 @@
 <!-- lwp:meta -->
+unit_index: on
+unit_index_max_columns: 2
+unit_index_selector: type:standard | type:full-article
 page_title: A small library. A shared place. — LightWebPres
 page_desc: A proposal to read, discuss and keep.
 card_title: A small library. A shared place.

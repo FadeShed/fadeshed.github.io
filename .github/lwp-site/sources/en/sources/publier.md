@@ -29,9 +29,23 @@ python3 lightwebpres audit my-series --lang en --strict
 python3 lightwebpres verify my-series --lang en
 ```
 
-Without `--strict`, **audit can exit with code zero despite warnings**. `verify` requires the same rendering options as the build and does not support `--inline-images`.
+Without `--strict`, **audit can exit with code zero despite warnings**. `verify` requires the same language and rendering options as the build, including `--single-html` and `--inline-images` when used.
 
 If your output is already tracked in Git, run `verify` **before** rebuilding so you do not erase evidence of drift.
+
+---
+
+<!-- lwp:slide -->
+slug: deux-livraisons
+kicker: CHOOSE THE DELIVERABLE
+## A website or one HTML. The sources stay the same.
+summary: Organizing the content and delivering the files are different choices.
+
+**Linked pages:** publish the output directory. Readers can open an article at its own address and use the series index to choose another.
+
+**Combined HTML:** gather the series into one file. Its embedded index lets readers switch articles deliberately; the articles are not stacked into one endless deck.
+
+<a href="demo/index.html">Open the multipage example →</a> · <a href="downloads/publication.html" download>Get the same series in HTML ↓</a>
 
 ---
 
@@ -53,6 +67,23 @@ public/
 The HTML can also be read locally. But a local address is not a public one: a QR code to share requires an HTTP(S) URL reachable from the recipient's device.
 
 Removing a source does not automatically delete an old hosted file. Review what `clean` proposes and what remains on the host.
+
+---
+
+<!-- lwp:slide -->
+slug: html-unique
+kicker: A FILE TO SEND OR KEEP
+## Build the file. Verify the same file.
+summary: Use a separate output directory and the same options for building and verification.
+
+```bash
+python3 lightwebpres build my-series --lang en --single-html publication.html --inline-images --output shared
+python3 lightwebpres verify my-series --lang en --single-html publication.html --inline-images --output shared
+```
+
+Open `shared/publication.html`. `--inline-images` embeds supported local images and resources; it is not a promise to capture every external dependency. Before sending the file, test it without a network and keep any remaining referenced resources with it.
+
+Keep the source project too: the published HTML is a deliverable, not your editable master.
 
 ---
 

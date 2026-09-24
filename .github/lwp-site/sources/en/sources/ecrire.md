@@ -97,6 +97,26 @@ A relative Markdown link does not become a clickable link. A plain `---` splits 
 ---
 
 <!-- lwp:slide -->
+slug: sommaire
+kicker: FROM OVERVIEW TO DETAIL
+## Give the document a contents list.
+summary: A unit-index connects the cards and supporting text inside one article. It is not the index of the whole series.
+
+<pre><code>&lt;!-- lwp:slide:unit-index --&gt;
+slug: contents
+## Inside this document
+index-max-columns: 2
+index-selector: type:standard | type:full-article</code></pre>
+
+The engine generates the entries and their links. This selection includes content cards and long-form text, not the cover or navigation. Two columns is a responsive maximum, not a fixed mobile grid.
+
+For automatic insertion after the cover, put `unit_index: on`, `unit_index_max_columns: 2` and `unit_index_selector: type:standard | type:full-article` in the article metadata. The example uses this route. Keep card slugs stable when changing titles or order.
+
+<a href="demo/library.html#lwp-index">Try the generated contents →</a>
+
+---
+
+<!-- lwp:slide -->
 slug: texte-long
 kicker: BEYOND THE CARDS
 ## The summary need not carry the whole explanation.
