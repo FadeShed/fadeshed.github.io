@@ -55,19 +55,24 @@ def run(root,report,base=None):
                 if relative.parts[0]=='reference':continue
                 s=BeautifulSoup(path.read_text(),'html.parser')
                 check('No private repository link '+prefix+str(relative),'fadeshed-internal-docs' not in path.read_text())
-                # Combined HTML retains authored destinations in its templates.
-                # The native reader maps them to views embedded in this document.
+                # Authored links in a combined file resolve to embedded views.
                 bundle=s.select_one('#lwp-series-data');embedded={}
                 if bundle:
                     data=json.loads(bundle.string)
                     check('Embedded series contract '+prefix+str(relative),data.get('version')==1 and bool(s.select_one('#lwp-series-view')))
                     embedded={v['key']:BeautifulSoup(v['content'],'html.parser') for v in data['views']}
-                documents=[s]+list(embedded.values())
-                for doc in documents:
+                for doc in [s]+list(embedded.values()):
                     for node in doc.find_all(['a','img','script','link','iframe']):
                         ref=node.get('href') if node.name in ['a','link'] else node.get('src')
                         if not ref or ref.startswith(('data:','blob:','http:','https:','mailto:','javascript:','tel:')):continue
                         u=urllib.parse.urlsplit(ref);p=urllib.parse.unquote(u.path);refs+=1
+                        if embedded and node.name=='a' and not p and u.fragment.startswith('lwp/'):
+                            parts=u.fragment.split('/');key=None;target=''
+                            if parts==['lwp','index']:key=data.get('home','')
+                            elif len(parts) in (3,4) and parts[:2]==['lwp','a']:
+                                key=urllib.parse.unquote(parts[2]);target=urllib.parse.unquote(parts[3]) if len(parts)==4 else ''
+                            if key not in embedded or (target and not embedded[key].find(id=target)):errors.append((str(path.relative_to(root)),ref))
+                            continue
                         if embedded and node.name=='a' and not node.has_attr('download') and not u.query and p and not p.startswith('/'):
                             key=p[2:] if p.startswith('./') else p
                             if key=='index.html':key=data.get('home','')
