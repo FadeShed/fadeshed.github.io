@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build-and-verify:
-    if: github.repository == 'FadeShed/fadeshed.github.io'
+    if: github.repository == 'FadeShed/fadeshed.github.io' && (github.event_name == 'workflow_dispatch' || !startsWith(github.event.head_commit.message, 'Rebuild the complete bilingual portal'))
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -57,7 +57,11 @@ jobs:
           changed=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
           for name in changed:
               if not (name.startswith(('lightwebpres/','fr/lightwebpres/','.github/lwp-site/sources/')) or name in ['assets/bilingual-manifest.json','.github/lwp-site/migration-state.json']):raise RuntimeError('Out-of-scope change: '+name)
-          if not changed:raise RuntimeError('No publication changes to apply')
+          if not changed:
+              proof={'status':'unchanged','parent':base,'candidate':base,'changed_files':[],'checks':result['checks'],'passed':result['passed']}
+              (report/'prepared-commit.json').write_text(json.dumps(proof,indent=2)+'\n')
+              print('The tested output already matches the repository. No candidate commit is needed.')
+              raise SystemExit(0)
           with tempfile.TemporaryDirectory(dir=temp) as secret_dir:
               askpass=pathlib.Path(secret_dir)/'askpass'
               askpass.write_text('#!/bin/sh\ncase "$1" in *Username*) printf "%s\\n" "x-access-token";; *) printf "%s\\n" "$GH_TOKEN";; esac\n');askpass.chmod(0o700)
