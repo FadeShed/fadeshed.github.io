@@ -1,60 +1,82 @@
-name: Verify and prepare complete minisites
+name: Build and verify minisites
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths:
+      - '.github/lwp-site/**'
       - '.github/workflows/publish-minisites.yml'
-      - '.github/minisites/publication.bundle'
-      - '.github/minisites/refine.py'
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
-  group: minisites-publication
+  group: canonical-minisites-build
   cancel-in-progress: false
 jobs:
-  verify:
+  build-and-verify:
+    if: github.repository == 'FadeShed/fadeshed.github.io'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
-      - name: Check out the exact website revision
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Verify and unpack publication sources
+      - name: Apply the reviewed source migration once
         run: |
-          python3 - <<'PY'
-          import base64, hashlib, json, lzma
-          from pathlib import Path
-          root=Path('.github/minisites')
-          packed=base64.b64decode((root/'publication.bundle').read_text().strip(),validate=True)
-          expected='5b1eeef6c7e30c1ff1b4a1e59465707624b5d40e2c1db7df8566ee7510437091'
-          if hashlib.sha256(packed).hexdigest()!=expected: raise RuntimeError('Publication source checksum mismatch')
-          files=json.loads(lzma.decompress(packed))
-          if set(files)!={'harmonize.py','qa.py','prepare_commit.py'}: raise RuntimeError('Unexpected source files')
-          for name,content in files.items(): (root/name).write_text(content,encoding='utf-8')
-          PY
-          python3 .github/minisites/refine.py
-      - name: Install isolated browser test tooling
+          if ! test -f .github/lwp-site/migration-state.json; then
+            python3 .github/lwp-site/migrate-chrome.py
+          fi
+      - name: Install isolated checks
         run: |
-          python3 -m venv "$RUNNER_TEMP/minisites-venv"
-          "$RUNNER_TEMP/minisites-venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
-          "$RUNNER_TEMP/minisites-venv/bin/python" -m playwright install --with-deps chromium
-      - name: Restore and harmonize public files
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install -r .github/lwp-site/requirements.txt
+          "$RUNNER_TEMP/venv/bin/python" -m playwright install --with-deps chromium
+      - name: Build both complete editions from canonical sources
         run: |
-          "$RUNNER_TEMP/minisites-venv/bin/python" .github/minisites/harmonize.py --root . --output "$RUNNER_TEMP/publication"
-      - name: Check links, downloads, responsive layouts, demo and browser builder
+          "$RUNNER_TEMP/venv/bin/python" .github/lwp-site/build.py --output "$RUNNER_TEMP/publication" --report "$RUNNER_TEMP/qa/native"
+      - name: Check reader, languages, comparisons, downloads and browser builds
         run: |
-          "$RUNNER_TEMP/minisites-venv/bin/python" .github/minisites/qa.py "$RUNNER_TEMP/publication" "$RUNNER_TEMP/qa"
-      - name: Prepare the verified Git commit without moving main
+          "$RUNNER_TEMP/venv/bin/python" .github/lwp-site/qa.py "$RUNNER_TEMP/publication" "$RUNNER_TEMP/qa/browser"
+      - name: Prepare one tested candidate with a grouped Git push
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/minisites/prepare_commit.py
-      - name: Retain review evidence
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,shutil,subprocess,tempfile
+          root=pathlib.Path.cwd();temp=pathlib.Path(os.environ['RUNNER_TEMP']);report=temp/'qa'
+          result=json.loads((report/'browser/report.json').read_text())
+          if result['checks']!=result['passed']:raise RuntimeError('Incomplete browser checks')
+          base=os.environ['GITHUB_SHA'];repo=os.environ['GITHUB_REPOSITORY']
+          if repo!='FadeShed/fadeshed.github.io':raise RuntimeError('Wrong destination')
+          for name in ['lightwebpres','fr/lightwebpres']:
+              shutil.copytree(temp/'publication'/name,root/name,dirs_exist_ok=True)
+          shutil.copyfile(temp/'publication/assets/bilingual-manifest.json',root/'assets/bilingual-manifest.json')
+          paths=['lightwebpres','fr/lightwebpres','assets/bilingual-manifest.json','.github/lwp-site/sources','.github/lwp-site/migration-state.json']
+          subprocess.run(['git','add','--',*paths],check=True)
+          changed=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          for name in changed:
+              if not (name.startswith(('lightwebpres/','fr/lightwebpres/','.github/lwp-site/sources/')) or name in ['assets/bilingual-manifest.json','.github/lwp-site/migration-state.json']):raise RuntimeError('Out-of-scope change: '+name)
+          if not changed:raise RuntimeError('No publication changes to apply')
+          with tempfile.TemporaryDirectory(dir=temp) as secret_dir:
+              askpass=pathlib.Path(secret_dir)/'askpass'
+              askpass.write_text('#!/bin/sh\ncase "$1" in *Username*) printf "%s\\n" "x-access-token";; *) printf "%s\\n" "$GH_TOKEN";; esac\n');askpass.chmod(0o700)
+              env=os.environ.copy();env.update({'GIT_ASKPASS':str(askpass),'GIT_TERMINAL_PROMPT':'0'})
+              url='https://github.com/'+repo+'.git'
+              remote=subprocess.check_output(['git','-c','credential.helper=','ls-remote',url,'refs/heads/main'],env=env,text=True).split()[0]
+              if remote!=base:raise RuntimeError('Main advanced; preserve concurrent work')
+              subprocess.run(['git','-c','user.name=github-actions[bot]','-c','user.email=41898282+github-actions[bot]@users.noreply.github.com','commit','-m','Rebuild the complete bilingual portal from canonical sources and current kits'],check=True)
+              sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();branch='publication/lwp-'+os.environ['GITHUB_RUN_ID']
+              subprocess.run(['git','-c','credential.helper=','push',url,'HEAD:refs/heads/'+branch],env=env,check=True)
+          proof={'status':'prepared','parent':base,'candidate':sha,'branch':branch,'changed_files':changed,'checks':result['checks'],'passed':result['passed']}
+          (report/'prepared-commit.json').write_text(json.dumps(proof,indent=2)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('## Tested publication candidate\n\n```json\n'+json.dumps(proof,indent=2)+'\n```\n')
+          PY
+      - name: Retain exact verification evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: minisites-publication-qa
+          name: canonical-minisites-qa
           path: ${{ runner.temp }}/qa
+          retention-days: 14
           if-no-files-found: warn
-          retention-days: 3

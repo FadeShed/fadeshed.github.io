@@ -1,0 +1,8 @@
+{
+  "repository": "Fade78/lightwebpres",
+  "commit": "b9ef3fac9d8eea465bc5eeb3303bec1db35d4109",
+  "sha256": "b474b38b171c7c8ae1d73d9bb5721549675ca8bc8b7a5e1f266861eb896be962",
+  "executable": "tools/lightwebpres",
+  "sources": "sources",
+  "policy": "Update the renderer and validate canonical source editions together; never replay historical bootstrap bundles."
+}

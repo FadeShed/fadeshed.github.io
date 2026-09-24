@@ -1,29 +1,47 @@
-# LightWebPres published site sources
+# LightWebPres portal: one source of truth
 
-The editable sources corresponding to the approved product portal are in this directory.
+The editable portal lives in `sources/`. `engine-lock.json` identifies the reviewed renderer in `tools/lightwebpres`; kit manifests and themes travel with each series. The build does not import `.github/bilingual/lwp` or execute a historical payload.
 
-- `sources/en/` and `sources/fr/`: the seven portal chapters and their Identity Kit.
-- `sources/comparisons/`: the same article rendered with native, documentation, Field Notes and Nebula presentation choices.
-- `sources/guides/`: the reader guide source editions.
-- `tools/`: the renderer, required notices and reviewed integration helpers.
+## Build and check
 
-Keep the complete published portal under `lightwebpres/` and `fr/lightwebpres/`. An isolated native rebuild does not reproduce every gallery, browser-builder, download or shared navigation resource. Do not replace the complete portal with that partial output.
-
-## Preview a source edit
-
-From the repository root, with a new output directory:
+Install `requirements.txt` in a virtual environment, then run from the repository root:
 
 ```sh
-python3 .github/lwp-site/tools/render-native.py --lang en --output work/lwp-en-check
-python3 .github/lwp-site/tools/render-native.py --lang fr --output work/lwp-fr-check
+python3 .github/lwp-site/build.py --output work/site --report work/native-qa
+python3 .github/lwp-site/qa.py work/site work/browser-qa
 ```
 
-The helper builds, audits and verifies the native source pages. Serve only its generated `public/` directory when inspecting it. The helpers have not become a one-command deployment system for the complete portal.
+Use a new output directory and serve only that directory. The builder regenerates both portal editions, examples, guide, four identity comparisons, gallery and downloadable source projects. It verifies native output before applying the shared FadeShed navigation. It also produces `downloads/publication.html`: a complete series with embedded images and matching native verification options.
 
-## Publication checks
+The browser shell, Pyodide distribution, reference documents and illustrations are tracked static inputs assembled with those generated pages. They are not fetched silently from a moving upstream branch. Review and update them alongside the renderer lock. Browser QA performs actual ZIP builds in both languages. The builder checks that the workshop home, FileShed and Pasteberth remain unchanged. Source downloads are native projects, not a full hosting environment.
 
-Install the browser-check dependencies in an isolated environment and run `.github/lwp-publication/qa.py` against a public-only staging directory. The `check-live-reader-refresh.yml` workflow exercises the deployed portal and compares committed bytes to served files.
+## Kit migration
 
-The fragment files and `resume.py` in `.github/lwp-publication/` are historical recovery inputs for one interrupted transfer. Recovery is manual-only; it is not the source format for subsequent edits. Do not replay an old restoration or bilingual bootstrap over the current portal.
+`migrate-chrome.py` explicitly moves the previously vendored guide and Field Notes visual chrome to typed Theme properties, retaining structural wrappers and localized content. The initial migration records `migration-state.json`; subsequent builds use the committed source files directly. It does not modify LightWebPres or migrate arbitrary third-party kits.
 
-Neutral URLs are English; French lives explicitly under `/fr/`. Keep both editions, native LightWebPres controls and the language/navigation conventions together. Changes outside the product portal need a separate, explicit scope.
+## Publication
+
+Two maintained workflows remain:
+
+- `publish-minisites.yml`: builds and checks canonical source changes, then pushes one tested candidate to `publication/lwp-<run-id>`. Its report records the exact parent and candidate commit.
+- `check-live-reader-refresh.yml`: checks deployed bytes and browser journeys when generated files reach main. GitHub Pages keeps its current hosting configuration.
+
+Advance main to the candidate only when it still matches the recorded parent; never force-push or overwrite other work. With authenticated Git:
+
+```sh
+git fetch origin
+git switch main
+git pull --ff-only
+git merge --ff-only origin/publication/lwp-<run-id>
+git push origin main
+```
+
+An authorized connector can also fast-forward main to the recorded candidate. That final user-authenticated action triggers Pages; a runner's repository token push alone does not. No personal token from a conversation is embedded in the workflow.
+
+Historical workflows are preserved under `.github/legacy-workflows/`, outside the active directory. Do not restore them or replay the old bundles over current sources.
+
+## Checks and conventions
+
+The suite reads the renderer lock and checks current native controls. Role destinations, locale routes, comparator choices, downloaded documents and actual browser builds are the contracts. Tests are ordinary Python; no source substitution followed by `exec` occurs in the test runner.
+
+English is the neutral URL; French uses `/fr/`. Keep native zoom, no redundant Reading & zoom button, versionless public prose, and original licenses. Visually review the two languages and the comparison images after kit changes. Chromium mobile emulation is not physical iOS/Android testing.

@@ -1,4 +1,4 @@
-name: Check published LightWebPres portal
+name: Verify deployed minisites
 on:
   push:
     branches: [main]
@@ -8,9 +8,10 @@ on:
       - 'assets/bilingual-manifest.json'
       - 'assets/minisites.*'
       - 'fr/assets/minisites.*'
-      - '.github/lwp-publication/qa.py'
-      - '.github/reader-refresh/qa.py'
-      - '.github/workflows/check-live-reader-refresh.yml'
+      - 'fileshed/**'
+      - 'fr/fileshed/**'
+      - 'pasteberth/**'
+      - 'fr/pasteberth/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,24 +21,24 @@ concurrency:
 jobs:
   verify-live:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Install isolated browser checks
+      - name: Install isolated checks
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/python" -m pip install beautifulsoup4==4.15.0 playwright==1.62.0
+          "$RUNNER_TEMP/venv/bin/python" -m pip install -r .github/lwp-site/requirements.txt
           "$RUNNER_TEMP/venv/bin/python" -m playwright install --with-deps chromium
-      - name: Verify that Pages serves the committed publication
+      - name: Confirm the actual files served by Pages
         id: served
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,json,os,time,urllib.request
-          selection=['index.html','usages.html','demarrer.html','apparence.html','img/concepts/docs.webp','img/concepts/field-notes.webp','concepts/docs/first-page.html','concepts/field-notes/first-page.html','demo/library.html','web/lightwebpres','web/index.html','guide/guide.html','themes.html','llms.txt']
-          files=[p+'lightwebpres/'+n for p in ['', 'fr/'] for n in selection]
+          selection=['index.html','usages.html','demarrer.html','apparence.html','concepts/docs/first-page.html','concepts/field-notes/first-page.html','demo/library.html','downloads/publication.html','web/lightwebpres','web/index.html','guide/guide.html','themes.html','llms.txt']
+          files=[prefix+'lightwebpres/'+name for prefix in ['', 'fr/'] for name in selection]
           files+=['index.html','fr/index.html','fileshed/index.html','fr/fileshed/index.html','pasteberth/demo.html','fr/pasteberth/demo.html','assets/bilingual-manifest.json','assets/minisites.js','assets/minisites.css']
           out=Path(os.environ['RUNNER_TEMP'])/'qa';out.mkdir(exist_ok=True)
           pending=set(files);results={}
@@ -45,48 +46,42 @@ jobs:
               for name in sorted(pending):
                   expected=hashlib.sha256(Path(name).read_bytes()).hexdigest()
                   try:
-                      url='https://fadeshed.github.io/'+name+'?check='+os.environ['GITHUB_SHA']
-                      with urllib.request.urlopen(url,timeout=25) as response:
+                      with urllib.request.urlopen('https://fadeshed.github.io/'+name+'?check='+os.environ['GITHUB_SHA'],timeout=25) as response:
                           body=response.read();status=response.status
-                      actual=hashlib.sha256(body).hexdigest()
-                      results[name]={'path':name,'status':status,'expected':expected,'actual':actual,'match':actual==expected}
+                      actual=hashlib.sha256(body).hexdigest();results[name]={'path':name,'status':status,'expected':expected,'actual':actual,'match':actual==expected}
                   except Exception as error:results[name]={'path':name,'match':False,'error':str(error)}
               pending={name for name in pending if not results[name]['match']}
               (out/'deployed-bytes.json').write_text(json.dumps(list(results.values()),indent=2)+'\n')
-              if not pending:
-                  print('Committed and served bytes match:',len(files),'files');break
-              print('Waiting for Pages:',sorted(pending),flush=True);time.sleep(10)
-          else:raise RuntimeError('Publication has not propagated')
+              if not pending:break
+              time.sleep(10)
+          else:raise RuntimeError('Pages propagation not confirmed')
           PY
-      - name: Exercise both public editions, identity comparisons and browser builds
+      - name: Exercise the deployed pages and browser builder
         id: browser
         run: |
-          "$RUNNER_TEMP/venv/bin/python" .github/lwp-publication/qa.py . "$RUNNER_TEMP/qa" --base-url https://fadeshed.github.io/
-      - name: Record exact verification state
+          "$RUNNER_TEMP/venv/bin/python" .github/lwp-site/qa.py . "$RUNNER_TEMP/qa" --base-url https://fadeshed.github.io/
+      - name: Record exact publication state
         if: always()
         env:
-          SERVED_OUTCOME: ${{ steps.served.outcome }}
-          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+          SERVED: ${{ steps.served.outcome }}
+          BROWSER: ${{ steps.browser.outcome }}
         run: |
           python3 - <<'PY'
-          from datetime import datetime,timezone
+          import json,os
           from pathlib import Path
-          import hashlib,json,os,subprocess
+          from datetime import datetime,timezone
           out=Path(os.environ['RUNNER_TEMP'])/'qa';out.mkdir(exist_ok=True)
-          served=json.loads((out/'deployed-bytes.json').read_text()) if (out/'deployed-bytes.json').exists() else []
           tests=json.loads((out/'report.json').read_text()) if (out/'report.json').exists() else {}
-          complete=os.environ['SERVED_OUTCOME']=='success' and os.environ['BROWSER_OUTCOME']=='success'
-          proof={'repository':os.environ['GITHUB_REPOSITORY'],'commit':os.environ['GITHUB_SHA'],'tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'run_id':os.environ['GITHUB_RUN_ID'],'run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checked_at':datetime.now(timezone.utc).isoformat(),'base_url':'https://fadeshed.github.io/','status':'verified' if complete else 'incomplete','served_outcome':os.environ['SERVED_OUTCOME'],'browser_outcome':os.environ['BROWSER_OUTCOME'],'served_files':len(served),'served_matches':sum(bool(v.get('match')) for v in served),'checks':tests.get('checks'),'passed':tests.get('passed'),'scope':'Committed bytes and live Chromium journeys in both languages, including identity comparison and browser ZIP builds. Mobile emulation, not physical Android or iOS devices.','evidence_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [out/'report.json',out/'deployed-bytes.json'] if p.exists()}}
-          (out/'verification-state.json').write_text(json.dumps(proof,ensure_ascii=False,indent=2)+'\n')
-          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as summary:
-              summary.write('## Publication verification\n\n```json\n'+json.dumps(proof,indent=2)+'\n```\n')
-          print(json.dumps(proof,indent=2))
+          served=json.loads((out/'deployed-bytes.json').read_text()) if (out/'deployed-bytes.json').exists() else []
+          proof={'repository':os.environ['GITHUB_REPOSITORY'],'commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],'checked_at':datetime.now(timezone.utc).isoformat(),'status':'verified' if os.environ['SERVED']=='success' and os.environ['BROWSER']=='success' else 'incomplete','checks':tests.get('checks'),'passed':tests.get('passed'),'served_files':len(served),'served_matches':sum(bool(x.get('match')) for x in served),'scope':'Live Chromium browser journeys; touch emulation, not physical phones. Downloaded standalone HTML is also exercised from the checked-out file.'}
+          (out/'verification-state.json').write_text(json.dumps(proof,indent=2)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('```json\n'+json.dumps(proof,indent=2)+'\n```\n')
           PY
-      - name: Retain live verification evidence
+      - name: Retain evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: approved-lwp-live-qa
+          name: deployed-minisites-qa
           path: ${{ runner.temp }}/qa
           retention-days: 14
           if-no-files-found: warn
